@@ -69,8 +69,8 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
         heartbeatJob = null
     }
 
-    fun startConnectLoop() {
-        runBlocking { connect() }
+    suspend fun startConnectLoop() {
+        connect()
         client.launch {
             var isReconnect = false
             while (isActive) {

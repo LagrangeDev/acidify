@@ -107,7 +107,7 @@ object YogurtApp {
             AppInfo.Bundled.Linux
         }
         t.println("使用协议 ${appInfo.os} ${appInfo.currentVersion} (AppId: ${appInfo.subAppId})")
-        val bot = Bot(
+        val bot = Bot.create(
             appInfo = appInfo,
             sessionStore = sessionStore,
             signProvider = signProvider,

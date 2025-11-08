@@ -61,13 +61,11 @@ import kotlin.random.Random
 /**
  * Acidify Bot 实例
  */
-class Bot(
+class Bot private constructor(
     val appInfo: AppInfo,
     val sessionStore: SessionStore,
     signProvider: SignProvider,
     scope: CoroutineScope,
-    minLogLevel: LogLevel,
-    logHandler: LogHandler,
 ) : CoroutineScope by scope {
     private val logger = this.createLogger(this)
     internal val client = LagrangeClient(appInfo, sessionStore, signProvider, this::createLogger, scope)
@@ -152,22 +150,6 @@ class Bot(
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })
         }
-    }
-
-    init {
-        launch {
-            sharedLogFlow
-                .filter { it.level >= minLogLevel }
-                .collect {
-                    logHandler.handleLog(
-                        it.level,
-                        it.tag,
-                        it.messageSupplier(),
-                        it.throwable
-                    )
-                }
-        }
-        client.packetContext.startConnectLoop()
     }
 
     /**
@@ -1492,4 +1474,34 @@ class Bot(
         DeleteGroupFolder,
         DeleteGroupFolder.Req(groupUin, folderId)
     )
+
+    companion object {
+        suspend fun create(
+            appInfo: AppInfo,
+            sessionStore: SessionStore,
+            signProvider: SignProvider,
+            scope: CoroutineScope,
+            minLogLevel: LogLevel,
+            logHandler: LogHandler,
+        ): Bot = Bot(
+            appInfo = appInfo,
+            sessionStore = sessionStore,
+            signProvider = signProvider,
+            scope = scope,
+        ).apply {
+            launch {
+                sharedLogFlow
+                    .filter { it.level >= minLogLevel }
+                    .collect {
+                        logHandler.handleLog(
+                            it.level,
+                            it.tag,
+                            it.messageSupplier(),
+                            it.throwable
+                        )
+                    }
+            }
+            client.packetContext.startConnectLoop()
+        }
+    }
 }

@@ -43,14 +43,16 @@ class BotTest {
     } else {
         SessionStore.empty()
     }
-    private val bot = Bot(
-        appInfo = runBlocking { defaultSignProvider.getAppInfo() }!!,
-        sessionStore = session,
-        signProvider = defaultSignProvider,
-        scope = defaultScope,
-        minLogLevel = LogLevel.VERBOSE,
-        logHandler = SimpleLogHandler,
-    )
+    private val bot = runBlocking {
+        Bot.create(
+            appInfo = defaultSignProvider.getAppInfo()!!,
+            sessionStore = session,
+            signProvider = defaultSignProvider,
+            scope = defaultScope,
+            minLogLevel = LogLevel.VERBOSE,
+            logHandler = SimpleLogHandler,
+        )
+    }
 
     init {
         bot.launch {

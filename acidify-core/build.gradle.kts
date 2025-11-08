@@ -14,6 +14,11 @@ group = "org.ntqqrev"
 version = "0.2.1"
 
 kotlin {
+    js(IR) {
+        nodejs()
+        binaries.library()
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization)
