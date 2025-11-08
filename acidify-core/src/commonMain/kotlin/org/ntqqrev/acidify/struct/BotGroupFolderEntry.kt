@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 群文件夹条目
  *
@@ -11,6 +13,7 @@ package org.ntqqrev.acidify.struct
  * @property creatorUin 创建者 QQ 号
  * @property totalFileCount 文件总数
  */
+@JsExport
 data class BotGroupFolderEntry(
     val folderId: String,
     val parentFolderId: String,

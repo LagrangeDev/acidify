@@ -4,10 +4,12 @@ import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.common.CacheUtility
 import org.ntqqrev.acidify.struct.BotGroupData
 import org.ntqqrev.acidify.struct.BotGroupMemberData
+import kotlin.js.JsExport
 
 /**
  * 群实体
  */
+@JsExport
 class BotGroup internal constructor(
     bot: Bot,
     data: BotGroupData,

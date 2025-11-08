@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 群公告信息
  * @property groupUin 群号
@@ -9,6 +11,7 @@ package org.ntqqrev.acidify.struct
  * @property content 公告内容
  * @property imageUrl 公告图片 URL，可能为 `null`
  */
+@JsExport
 data class BotGroupAnnouncement(
     val groupUin: Long,
     val announcementId: String,

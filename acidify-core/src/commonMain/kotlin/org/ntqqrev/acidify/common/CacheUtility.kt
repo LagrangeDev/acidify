@@ -5,6 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.entity.AbstractEntity
+import kotlin.js.JsExport
 
 /**
  * Bot 缓存服务
@@ -17,6 +18,7 @@ import org.ntqqrev.acidify.entity.AbstractEntity
  * @property updateCache 更新缓存的函数，返回键到数据绑定的映射
  * @property entityFactory 实体工厂函数，用于创建新的实体实例
  */
+@JsExport
 class CacheUtility<K, V : AbstractEntity<D>, D>(
     val bot: Bot,
     private val updateCache: suspend (bot: Bot) -> Map<K, D>,

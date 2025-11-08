@@ -3,6 +3,7 @@ package org.ntqqrev.acidify.entity
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.struct.BotGroupMemberData
 import org.ntqqrev.acidify.struct.GroupMemberRole
+import kotlin.js.JsExport
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -11,6 +12,7 @@ import kotlin.time.TimeSource
  * 群成员实体
  * @property group 所属的群实体
  */
+@JsExport
 class BotGroupMember internal constructor(
     bot: Bot,
     data: BotGroupMemberData,

@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * Bot 好友数据
  * @property uin 好友的 QQ 号
@@ -13,6 +15,7 @@ package org.ntqqrev.acidify.struct
  * @property categoryId 好友所在的分组 ID
  * @property categoryName 好友所在的分组名称
  */
+@JsExport
 data class BotFriendData(
     val uin: Long,
     val uid: String,

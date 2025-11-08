@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.event
 
+import kotlin.js.JsExport
+
 /**
  * 群文件上传事件
  * @property groupUin 群号
@@ -9,6 +11,7 @@ package org.ntqqrev.acidify.event
  * @property fileName 文件名称
  * @property fileSize 文件大小（字节）
  */
+@JsExport
 class GroupFileUploadEvent(
     val groupUin: Long,
     val userUin: Long,

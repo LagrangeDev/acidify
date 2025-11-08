@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.logging
 
+import kotlin.js.JsExport
+
 /**
  * 日志消息
  * @property level 日志级别
@@ -7,6 +9,7 @@ package org.ntqqrev.acidify.logging
  * @property messageSupplier 延迟提供的日志消息
  * @property throwable 可选的异常对象，仅在 WARN 或 ERROR 级别时提供
  */
+@JsExport
 class LogMessage(
     val level: LogLevel,
     val tag: String,

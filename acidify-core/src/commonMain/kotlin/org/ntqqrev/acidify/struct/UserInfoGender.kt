@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 用户性别枚举
  */
+@JsExport
 enum class UserInfoGender(val value: Int) {
     /**
      * 未设置

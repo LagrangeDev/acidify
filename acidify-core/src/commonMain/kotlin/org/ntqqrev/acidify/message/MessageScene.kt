@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.message
 
+import kotlin.js.JsExport
+
 /**
  * 消息场景
  */
+@JsExport
 enum class MessageScene {
     /**
      * 好友消息

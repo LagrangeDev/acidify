@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.ntqqrev.acidify.common.SignProvider
+import org.ntqqrev.acidify.common.SignResult
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
 import org.ntqqrev.acidify.internal.packet.SsoResponse
@@ -206,7 +207,7 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
     }
 
     private suspend fun buildSsoReserved(command: String, payload: ByteArray, sequence: Int): ByteArray {
-        val result: SignProvider.Result? = if (signRequiredCommand.contains(command)) {
+        val result: SignResult? = if (signRequiredCommand.contains(command)) {
             client.signProvider.sign(command, sequence, payload)
         } else null
 
@@ -259,7 +260,7 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
         }
     }
 
-    private fun SignProvider.Result.toSsoSecureInfo(): PbObject<SsoSecureInfo> {
+    private fun SignResult.toSsoSecureInfo(): PbObject<SsoSecureInfo> {
         return SsoSecureInfo {
             it[sign] = this@toSsoSecureInfo.sign
             it[token] = this@toSsoSecureInfo.token

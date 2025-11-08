@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 群文件条目
  *
@@ -13,6 +15,7 @@ package org.ntqqrev.acidify.struct
  * @property uploadedTime 上传时间（Unix 时间戳，秒）
  * @property downloadedTimes 下载次数
  */
+@JsExport
 data class BotGroupFileEntry(
     val fileId: String,
     val fileName: String,

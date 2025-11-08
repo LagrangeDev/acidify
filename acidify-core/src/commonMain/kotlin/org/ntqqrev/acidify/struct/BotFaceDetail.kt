@@ -1,10 +1,13 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * Bot 表情条目
  * @property qSid 表情 ID
  * @property qDes 表情描述
  */
+@JsExport
 data class BotFaceDetail(
     val qSid: String,
     val qDes: String,

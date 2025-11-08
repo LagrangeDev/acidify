@@ -1,6 +1,7 @@
 package org.ntqqrev.acidify.event
 
 import org.ntqqrev.acidify.message.MessageScene
+import kotlin.js.JsExport
 
 /**
  * 消息撤回事件
@@ -13,6 +14,7 @@ import org.ntqqrev.acidify.message.MessageScene
  * @property operatorUid 操作者 uid
  * @property displaySuffix 撤回提示的后缀文本
  */
+@JsExport
 class MessageRecallEvent(
     val scene: MessageScene,
     val peerUin: Long,

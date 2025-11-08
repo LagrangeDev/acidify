@@ -16,7 +16,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.ntqqrev.acidify.common.*
+import org.ntqqrev.acidify.common.AppInfo
+import org.ntqqrev.acidify.common.CacheUtility
+import org.ntqqrev.acidify.common.SessionStore
+import org.ntqqrev.acidify.common.SignProvider
 import org.ntqqrev.acidify.entity.BotFriend
 import org.ntqqrev.acidify.entity.BotGroup
 import org.ntqqrev.acidify.event.AcidifyEvent
@@ -56,11 +59,15 @@ import org.ntqqrev.acidify.struct.*
 import org.ntqqrev.acidify.struct.BotFriendRequest.Companion.parseFilteredFriendRequest
 import org.ntqqrev.acidify.struct.BotFriendRequest.Companion.parseFriendRequest
 import kotlin.io.encoding.Base64
+import kotlin.js.JsExport
+import kotlin.js.JsName
+import kotlin.js.JsStatic
 import kotlin.random.Random
 
 /**
  * Acidify Bot 实例
  */
+@JsExport
 class Bot private constructor(
     val appInfo: AppInfo,
     val sessionStore: SessionStore,
@@ -155,10 +162,11 @@ class Bot private constructor(
     /**
      * 创建一个 [Logger] 实例，通常用于库内部日志记录，并将产生的日志发送到提供的 [LogHandler]。
      */
+    @JsName("createLoggerFromObject")
     fun createLogger(fromObject: Any): Logger {
         return Logger(
             this,
-            fromObject::class.qualifiedName
+            fromObject::class.simpleName
                 ?: throw IllegalStateException("Cannot create logger for anonymous class")
         )
     }
@@ -166,6 +174,7 @@ class Bot private constructor(
     /**
      * 根据一个自定义的 tag 创建一个 [Logger] 实例，通常用于匿名类或方法的日志记录，并将产生的日志发送到提供的 [LogHandler]。
      */
+    @JsName("createLoggerFromTag")
     fun createLogger(fromTag: String): Logger {
         return Logger(this, fromTag)
     }
@@ -1476,6 +1485,7 @@ class Bot private constructor(
     )
 
     companion object {
+        @JsStatic
         suspend fun create(
             appInfo: AppInfo,
             sessionStore: SessionStore,

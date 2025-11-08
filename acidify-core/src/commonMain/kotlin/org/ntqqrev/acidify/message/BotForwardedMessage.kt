@@ -4,6 +4,7 @@ import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.internal.packet.message.CommonMessage
 import org.ntqqrev.acidify.internal.protobuf.PbObject
 import org.ntqqrev.acidify.message.internal.MessageParsingContext
+import kotlin.js.JsExport
 
 /**
  * 合并转发消息中的单条消息
@@ -12,6 +13,7 @@ import org.ntqqrev.acidify.message.internal.MessageParsingContext
  * @property timestamp 消息发送的 Unix 时间戳（秒）
  * @property segments 消息内容
  */
+@JsExport
 class BotForwardedMessage(
     val senderName: String,
     val avatarUrl: String,

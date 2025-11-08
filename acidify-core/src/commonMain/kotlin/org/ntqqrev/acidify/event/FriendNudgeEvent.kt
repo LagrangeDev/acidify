@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.event
 
+import kotlin.js.JsExport
+
 /**
  * 好友戳一戳事件
  * @property userUin 好友 QQ 号
@@ -10,6 +12,7 @@ package org.ntqqrev.acidify.event
  * @property displaySuffix 戳一戳提示的后缀文本
  * @property displayActionImgUrl 戳一戳提示的动作图片 URL，用于取代动作提示文本
  */
+@JsExport
 class FriendNudgeEvent(
     val userUin: Long,
     val userUid: String,

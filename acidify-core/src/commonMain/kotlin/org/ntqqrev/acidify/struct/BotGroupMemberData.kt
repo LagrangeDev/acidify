@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * Bot 群成员数据
  * @property uin 群成员的 QQ 号
@@ -13,6 +15,7 @@ package org.ntqqrev.acidify.struct
  * @property mutedUntil 群成员的禁言截止 Unix 时间戳（秒）
  * @property role 群成员的角色（权限等级）
  */
+@JsExport
 data class BotGroupMemberData(
     val uin: Long,
     val uid: String,

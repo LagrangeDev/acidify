@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.exception
 
+import kotlin.js.JsExport
+
 /**
  * Oidb 服务调用异常
  * @property oidbCommand Oidb 命令
@@ -7,6 +9,7 @@ package org.ntqqrev.acidify.exception
  * @property oidbResult Oidb 返回码
  * @property oidbErrorMsg Oidb 错误信息
  */
+@JsExport
 class OidbException(
     val oidbCommand: Int,
     val oidbService: Int,

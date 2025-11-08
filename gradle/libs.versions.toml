@@ -3,7 +3,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin = "2.2.21"
+kotlin = "2.3.0-Beta2"
 
 kx-serialization = "1.9.0"
 kx-coroutines = "1.10.2"

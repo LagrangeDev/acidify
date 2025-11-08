@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.message
 
+import kotlin.js.JsExport
+
 /**
  * 图片子类型枚举
  */
+@JsExport
 enum class ImageSubType(val underlying: Int) {
     /**
      * 普通图片

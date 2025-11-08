@@ -2,10 +2,12 @@ package org.ntqqrev.acidify.common
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.js.JsExport
 
 /**
  * Bot 登录所模拟的 QQ 客户端信息
  */
+@JsExport
 @Serializable
 class AppInfo(
     @SerialName("Os") val os: String,

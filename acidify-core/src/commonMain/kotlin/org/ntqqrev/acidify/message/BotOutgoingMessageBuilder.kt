@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.message
 
+import kotlin.js.JsExport
+
 /**
  * 构建发送消息
  */
+@JsExport
 interface BotOutgoingMessageBuilder {
     /**
      * 添加文本消息段
@@ -80,17 +83,8 @@ interface BotOutgoingMessageBuilder {
      * 添加合并转发消息段
      * @param block 构建合并转发消息
      */
-    fun forward(block: suspend Forward.() -> Unit)
+    fun forward(block: suspend BotForwardBlockBuilder.() -> Unit)
 
     operator fun String.unaryPlus() = text(this)
 
-    interface Forward {
-        /**
-         * 添加一个伪造合并转发消息
-         * @param senderUin 该消息的发送者 QQ 号
-         * @param senderName 该消息的发送者昵称
-         * @param block 构建该消息的内容
-         */
-        fun node(senderUin: Long, senderName: String, block: suspend BotOutgoingMessageBuilder.() -> Unit)
-    }
 }

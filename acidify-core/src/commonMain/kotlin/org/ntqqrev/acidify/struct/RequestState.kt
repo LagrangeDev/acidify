@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 请求状态枚举
  */
+@JsExport
 enum class RequestState(val value: Int) {
     /**
      * 默认 / 未知状态

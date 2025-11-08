@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 二维码状态
  */
+@JsExport
 enum class QRCodeState(val value: Byte) {
     /**
      * 未知状态

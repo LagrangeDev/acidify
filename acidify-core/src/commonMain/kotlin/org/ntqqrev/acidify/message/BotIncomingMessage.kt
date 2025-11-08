@@ -8,6 +8,7 @@ import org.ntqqrev.acidify.internal.protobuf.PbObject
 import org.ntqqrev.acidify.internal.protobuf.invoke
 import org.ntqqrev.acidify.message.internal.IncomingSegmentFactory
 import org.ntqqrev.acidify.message.internal.MessageParsingContext
+import kotlin.js.JsExport
 
 /**
  * 接收消息
@@ -28,6 +29,7 @@ import org.ntqqrev.acidify.message.internal.MessageParsingContext
  * @property segments 消息内容
  * @property extraInfo 群消息的附加信息，可用于刷新群昵称、群头衔等
  */
+@JsExport
 class BotIncomingMessage(
     val scene: MessageScene,
     val peerUin: Long,

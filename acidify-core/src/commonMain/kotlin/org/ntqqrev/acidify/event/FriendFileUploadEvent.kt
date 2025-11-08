@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.event
 
+import kotlin.js.JsExport
+
 /**
  * 好友文件上传事件
  * @property userUin 好友 QQ 号
@@ -10,6 +12,7 @@ package org.ntqqrev.acidify.event
  * @property fileHash 文件的 TriSHA1 哈希值
  * @property isSelf 是否是自己发送的文件
  */
+@JsExport
 class FriendFileUploadEvent(
     val userUin: Long,
     val userUid: String,

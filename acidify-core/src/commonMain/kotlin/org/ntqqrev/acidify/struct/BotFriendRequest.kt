@@ -4,6 +4,7 @@ import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.internal.packet.oidb.FilteredFriendRequestItem
 import org.ntqqrev.acidify.internal.packet.oidb.FriendRequestItem
 import org.ntqqrev.acidify.internal.protobuf.PbObject
+import kotlin.js.JsExport
 
 /**
  * 好友请求实体
@@ -18,6 +19,7 @@ import org.ntqqrev.acidify.internal.protobuf.PbObject
  * @property via 申请来源
  * @property isFiltered 请求是否被过滤（发起自风险账户）
  */
+@JsExport
 data class BotFriendRequest(
     val time: Long,
     val initiatorUin: Long,

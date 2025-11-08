@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.event
 
+import kotlin.js.JsExport
+
 /**
  * 入群请求事件
  * @property groupUin 群号
@@ -9,6 +11,7 @@ package org.ntqqrev.acidify.event
  * @property initiatorUid 申请入群的用户 uid
  * @property comment 申请附加信息
  */
+@JsExport
 class GroupJoinRequestEvent(
     val groupUin: Long,
     val notificationSeq: Long,

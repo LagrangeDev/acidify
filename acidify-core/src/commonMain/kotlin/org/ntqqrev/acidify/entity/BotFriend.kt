@@ -3,10 +3,12 @@ package org.ntqqrev.acidify.entity
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.struct.BotFriendData
 import org.ntqqrev.acidify.struct.UserInfoGender
+import kotlin.js.JsExport
 
 /**
  * 好友实体
  */
+@JsExport
 class BotFriend internal constructor(
     bot: Bot,
     data: BotFriendData,

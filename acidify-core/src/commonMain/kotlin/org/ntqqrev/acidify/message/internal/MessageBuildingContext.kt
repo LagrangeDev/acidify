@@ -419,7 +419,7 @@ internal class MessageBuildingContext(
         }
     }
 
-    override fun forward(block: suspend BotOutgoingMessageBuilder.Forward.() -> Unit) = addAsync {
+    override fun forward(block: suspend org.ntqqrev.acidify.message.BotForwardBlockBuilder.() -> Unit) = addAsync {
         val forwardCtx = Forward(this)
         forwardCtx.block()
         val fakeMessages = forwardCtx.build()
@@ -492,7 +492,7 @@ internal class MessageBuildingContext(
 
     internal class Forward(
         val ctx: MessageBuildingContext
-    ) : BotOutgoingMessageBuilder.Forward {
+    ) : org.ntqqrev.acidify.message.BotForwardBlockBuilder {
         private val commonMsgList = mutableListOf<Deferred<FakeMessage>>()
         val nestedForwardTrace = mutableMapOf<String, List<PbObject<CommonMessage>>>()
 
@@ -626,7 +626,7 @@ internal class MessageBuildingContext(
                 previewBuilder.append("[视频]")
             }
 
-            override fun forward(block: suspend BotOutgoingMessageBuilder.Forward.() -> Unit) {
+            override fun forward(block: suspend org.ntqqrev.acidify.message.BotForwardBlockBuilder.() -> Unit) {
                 parent.forward(block)
                 previewBuilder.append("[聊天记录]")
             }

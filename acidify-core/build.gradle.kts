@@ -17,6 +17,14 @@ kotlin {
     js(IR) {
         nodejs()
         binaries.library()
+        generateTypeScriptDefinitions()
+        compilerOptions {
+            freeCompilerArgs.add("-Xes-long-as-bigint")
+        }
+    }
+
+    compilerOptions {
+        freeCompilerArgs.add("-XXLanguage:+JsAllowExportingSuspendFunctions")
     }
 
     sourceSets {

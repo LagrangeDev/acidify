@@ -3,10 +3,12 @@ package org.ntqqrev.acidify.struct
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.internal.packet.oidb.GroupNotification
 import org.ntqqrev.acidify.internal.protobuf.PbObject
+import kotlin.js.JsExport
 
 /**
  * 群通知实体
  */
+@JsExport
 sealed class BotGroupNotification {
     /**
      * 用户入群请求

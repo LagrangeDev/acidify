@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.struct
 
+import kotlin.js.JsExport
+
 /**
  * 用户信息
  * @property uin 用户的 QQ 号
@@ -15,6 +17,7 @@ package org.ntqqrev.acidify.struct
  * @property age 用户的年龄
  * @property qid 用户的 qid
  */
+@JsExport
 data class BotUserInfo(
     val uin: Long,
     val nickname: String,

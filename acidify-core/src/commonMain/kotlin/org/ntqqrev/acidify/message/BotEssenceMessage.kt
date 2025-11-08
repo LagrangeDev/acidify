@@ -3,6 +3,7 @@ package org.ntqqrev.acidify.message
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import org.ntqqrev.acidify.internal.packet.misc.GroupEssenceMsgItem
+import kotlin.js.JsExport
 
 /**
  * 群精华消息
@@ -16,6 +17,7 @@ import org.ntqqrev.acidify.internal.packet.misc.GroupEssenceMsgItem
  * @property operationTime 消息被设置精华时的 Unix 时间戳（秒）
  * @property segments 消息段列表
  */
+@JsExport
 class BotEssenceMessage(
     val groupUin: Long,
     val messageSeq: Long,

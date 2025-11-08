@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.event
 
+import kotlin.js.JsExport
+
 /**
  * 群戳一戳事件
  * @property groupUin 群号
@@ -11,6 +13,7 @@ package org.ntqqrev.acidify.event
  * @property displaySuffix 戳一戳提示的后缀文本
  * @property displayActionImgUrl 戳一戳提示的动作图片 URL，用于取代动作提示文本
  */
+@JsExport
 class GroupNudgeEvent(
     val groupUin: Long,
     val senderUin: Long,

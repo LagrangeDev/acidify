@@ -1,5 +1,7 @@
 package org.ntqqrev.acidify.event
 
+import kotlin.js.JsExport
+
 /**
  * 群成员增加事件
  * @property groupUin 群号
@@ -10,6 +12,7 @@ package org.ntqqrev.acidify.event
  * @property invitorUin 邀请者 QQ 号，如果是邀请入群
  * @property invitorUid 邀请者 uid，如果是邀请入群
  */
+@JsExport
 class GroupMemberIncreaseEvent(
     val groupUin: Long,
     val userUin: Long,

@@ -1,8 +1,11 @@
 package org.ntqqrev.acidify.message
 
+import kotlin.js.JsExport
+
 /**
  * 接收消息段
  */
+@JsExport
 sealed class BotIncomingSegment {
     /**
      * 文本消息段
