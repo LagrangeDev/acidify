@@ -2,17 +2,23 @@
 
 package org.ntqqrev.acidify
 
+import io.ktor.util.decodeBase64String
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.buffered
+import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.io.decodeFromSource
 import kotlinx.serialization.json.io.encodeToSink
 import org.ntqqrev.acidify.common.SessionStore
+import org.ntqqrev.acidify.common.UrlSignProvider
 import org.ntqqrev.acidify.event.MessageReceiveEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
 import org.ntqqrev.acidify.logging.LogLevel
@@ -22,6 +28,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BotTest {
+    val defaultSignProvider = UrlSignProvider(
+        "aHR0cHM6Ly9hcGkubnRxcXJldi5vcmcvc2lnbi8zOTAzOA==".decodeBase64String()
+    )
+    val defaultScope = CoroutineScope(Dispatchers.IO)
+    val sessionStorePath = Path("acidify-core-test-data", "session.json").also {
+        SystemFileSystem.createDirectories(it.parent!!)
+    }
+
     private val session = if (SystemFileSystem.exists(sessionStorePath)) {
         SystemFileSystem.source(sessionStorePath).buffered().use {
             Json.decodeFromSource<SessionStore>(it)
