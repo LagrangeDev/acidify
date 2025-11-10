@@ -1,11 +1,15 @@
 package org.ntqqrev.acidify.js
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.await
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.promise
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.common.SessionStore
+import org.ntqqrev.acidify.event.*
 import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.message.BotForwardedMessage
@@ -17,9 +21,24 @@ import kotlin.js.Promise
 @JsExport
 @JsName("Bot")
 class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
+    private val jobMap = mutableMapOf<dynamic, Job>()
+
     val uin: Long get() = bot.uin
     val uid: String get() = bot.uid
     val isLoggedIn: Boolean get() = bot.isLoggedIn
+
+    private inline fun <reified T : AcidifyEvent> subscribeTracking(noinline callback: (T) -> Promise<Unit>) {
+        val job = launch {
+            bot.eventFlow.filterIsInstance<T>().collect { callback(it) }
+        }
+        jobMap[callback] = job
+    }
+
+    private fun tryUnsubscribe(callback: dynamic): Boolean {
+        val job = jobMap[callback] ?: return false
+        job.cancel()
+        return true
+    }
 
     fun qrCodeLogin(queryInterval: Long = 3000L) = promise {
         bot.qrCodeLogin(queryInterval)
@@ -343,6 +362,97 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
         bot.deleteGroupFolder(groupUin, folderId)
     }
 
+    fun onBotOffline(callback: (BotOfflineEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offBotOffline(callback: (BotOfflineEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onFriendFileUpload(callback: (FriendFileUploadEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offFriendFileUpload(callback: (FriendFileUploadEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onFriendNudge(callback: (FriendNudgeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offFriendNudge(callback: (FriendNudgeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onFriendRequest(callback: (FriendRequestEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offFriendRequest(callback: (FriendRequestEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupAdminChange(callback: (GroupAdminChangeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupAdminChange(callback: (GroupAdminChangeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupEssenceMessageChange(callback: (GroupEssenceMessageChangeEvent) -> Promise<Unit>) =
+        subscribeTracking(callback)
+
+    fun offGroupEssenceMessageChange(callback: (GroupEssenceMessageChangeEvent) -> Promise<Unit>) =
+        tryUnsubscribe(callback)
+
+    fun onGroupFileUpload(callback: (GroupFileUploadEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupFileUpload(callback: (GroupFileUploadEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupInvitation(callback: (GroupInvitationEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupInvitation(callback: (GroupInvitationEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupInvitedJoinRequest(callback: (GroupInvitedJoinRequestEvent) -> Promise<Unit>) =
+        subscribeTracking(callback)
+
+    fun offGroupInvitedJoinRequest(callback: (GroupInvitedJoinRequestEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupJoinRequest(callback: (GroupJoinRequestEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupJoinRequest(callback: (GroupJoinRequestEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupMemberDecrease(callback: (GroupMemberDecreaseEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupMemberDecrease(callback: (GroupMemberDecreaseEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupMemberIncrease(callback: (GroupMemberIncreaseEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupMemberIncrease(callback: (GroupMemberIncreaseEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupMessageReaction(callback: (GroupMessageReactionEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupMessageReaction(callback: (GroupMessageReactionEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupMute(callback: (GroupMuteEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupMute(callback: (GroupMuteEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupNameChange(callback: (GroupNameChangeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupNameChange(callback: (GroupNameChangeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupNudge(callback: (GroupNudgeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupNudge(callback: (GroupNudgeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onGroupWholeMute(callback: (GroupWholeMuteEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offGroupWholeMute(callback: (GroupWholeMuteEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onMessageReceive(callback: (MessageReceiveEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offMessageReceive(callback: (MessageReceiveEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onMessageRecall(callback: (MessageRecallEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offMessageRecall(callback: (MessageRecallEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onQRCodeGenerated(callback: (QRCodeGeneratedEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offQRCodeGenerated(callback: (QRCodeGeneratedEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onQRCodeStateQuery(callback: (QRCodeStateQueryEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offQRCodeStateQuery(callback: (QRCodeStateQueryEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
+    fun onSessionStoreUpdated(callback: (SessionStoreUpdatedEvent) -> Promise<Unit>) = subscribeTracking(callback)
+
+    fun offSessionStoreUpdated(callback: (SessionStoreUpdatedEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+
     companion object {
         @JsStatic
         fun create(
@@ -368,4 +478,3 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
         }
     }
 }
-
