@@ -50,6 +50,7 @@ import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.logging.LogMessage
 import org.ntqqrev.acidify.logging.Logger
+import org.ntqqrev.acidify.logging.loggingTag
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.message.BotEssenceMessage.Companion.toBotEssenceMessage
 import org.ntqqrev.acidify.message.BotForwardedMessage.Companion.parseForwardedMessage
@@ -164,7 +165,7 @@ class Bot private constructor(
     fun createLogger(fromObject: Any): Logger {
         return Logger(
             this,
-            fromObject::class.simpleName
+            fromObject::class.loggingTag
                 ?: throw IllegalStateException("Cannot create logger for anonymous class")
         )
     }

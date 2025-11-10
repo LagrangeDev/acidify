@@ -26,6 +26,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(kotlin("reflect"))
             implementation(libs.kotlinx.serialization)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.io)
@@ -39,6 +40,22 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.ktor.client.cio)
             implementation(kotlin("test"))
+        }
+        val nativeMain by creating {
+            listOf(
+                "linuxX64",
+                "linuxArm64",
+                "macosX64",
+                "macosArm64",
+                "mingwX64"
+            ).forEach { platformName ->
+                getByName(platformName + "Main").dependsOn(this)
+            }
+        }
+        val nonJsMain by creating {
+            dependsOn(getByName("commonMain"))
+            getByName("jvmMain").dependsOn(this)
+            nativeMain.dependsOn(this)
         }
         all {
             languageSettings.optIn("kotlin.js.ExperimentalJsExport")

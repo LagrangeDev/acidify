@@ -1,6 +1,9 @@
 package org.ntqqrev.acidify.logging
 
 import kotlin.js.JsExport
+import kotlin.reflect.KClass
+
+expect val KClass<*>.loggingTag: String?
 
 /**
  * 缩短包名以用于日志输出，将中间部分缩写为首字母
