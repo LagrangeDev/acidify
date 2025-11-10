@@ -36,6 +36,7 @@ internal class TicketContext(client: LagrangeClient) : AbstractContext(client) {
     private val psKeyCache = ConcurrentMutableMap<String, KeyWithLifetime>()
     private val httpClient = HttpClient {
         install(HttpCookies)
+        followRedirects = false
     }
 
     override suspend fun postOnline() {
