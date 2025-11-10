@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package org.ntqqrev.acidify
 
 import kotlinx.coroutines.*
@@ -8,7 +10,6 @@ import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.message.BotOutgoingMessageBuilder
 import kotlin.js.Promise
-import kotlin.random.Random
 
 @JsExport
 class JsCoroutineScope(
@@ -16,7 +17,7 @@ class JsCoroutineScope(
 ) {
     internal val value = CoroutineScope(
         Dispatchers.Default
-                + if (isSupervised) SupervisorJob() else kotlinx.coroutines.Job()
+                + if (isSupervised) SupervisorJob() else Job()
     )
 
     fun cancel() {
@@ -28,23 +29,41 @@ class JsCoroutineScope(
 @JsName("Bot")
 class JsBot internal constructor(private val bot: Bot) {
     fun sendFriendMessage(
-        friendUin: Long,
-        clientSequence: Long = Random.nextLong(),
-        random: Int = Random.nextInt(),
+        friendUin: JsNumber,
         build: (BotOutgoingMessageBuilder) -> Promise<Unit>
     ) = bot.promise {
-        bot.sendFriendMessage(friendUin, clientSequence, random) {
+        bot.sendFriendMessage(friendUin.toLong()) {
+            build(this).await()
+        }
+    }
+
+    fun sendFriendMessageRich(
+        friendUin: JsNumber,
+        clientSequence: JsNumber,
+        random: Int,
+        build: (BotOutgoingMessageBuilder) -> Promise<Unit>
+    ) = bot.promise {
+        bot.sendFriendMessage(friendUin.toLong(), clientSequence.toLong(), random) {
             build(this).await()
         }
     }
 
     fun sendGroupMessage(
-        groupUin: Long,
-        clientSequence: Long = Random.nextLong(),
-        random: Int = Random.nextInt(),
+        groupUin: JsNumber,
         build: (BotOutgoingMessageBuilder) -> Promise<Unit>
     ) = bot.promise {
-        bot.sendGroupMessage(groupUin, clientSequence, random) {
+        bot.sendGroupMessage(groupUin.toLong()) {
+            build(this).await()
+        }
+    }
+
+    fun sendGroupMessageRich(
+        groupUin: JsNumber,
+        clientSequence: JsNumber,
+        random: Int,
+        build: (BotOutgoingMessageBuilder) -> Promise<Unit>
+    ) = bot.promise {
+        bot.sendGroupMessage(groupUin.toLong(), clientSequence.toLong(), random) {
             build(this).await()
         }
     }
