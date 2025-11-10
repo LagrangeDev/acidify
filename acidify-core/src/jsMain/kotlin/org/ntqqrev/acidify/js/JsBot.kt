@@ -1,8 +1,8 @@
-@file:OptIn(ExperimentalWasmJsInterop::class)
+package org.ntqqrev.acidify.js
 
-package org.ntqqrev.acidify
-
-import kotlinx.coroutines.*
+import kotlinx.coroutines.await
+import kotlinx.coroutines.promise
+import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.common.SessionStore
 import org.ntqqrev.acidify.common.SignProvider
@@ -10,20 +10,6 @@ import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.message.BotOutgoingMessageBuilder
 import kotlin.js.Promise
-
-@JsExport
-class JsCoroutineScope(
-    val isSupervised: Boolean = false
-) {
-    internal val value = CoroutineScope(
-        Dispatchers.Default
-                + if (isSupervised) SupervisorJob() else Job()
-    )
-
-    fun cancel() {
-        value.cancel()
-    }
-}
 
 @JsExport
 @JsName("Bot")
@@ -67,17 +53,18 @@ class JsBot internal constructor(private val bot: Bot) {
             build(this).await()
         }
     }
-}
 
-@JsExport
-@JsName("createBot")
-fun JsBot(
-    appInfo: AppInfo,
-    sessionStore: SessionStore,
-    signProvider: SignProvider,
-    jsScope: JsCoroutineScope,
-    minLogLevel: LogLevel,
-    logHandler: LogHandler
-): Promise<JsBot> = jsScope.value.promise {
-    JsBot(Bot.create(appInfo, sessionStore, signProvider, jsScope.value, minLogLevel, logHandler))
+    companion object {
+        @JsStatic
+        fun create(
+            appInfo: AppInfo,
+            sessionStore: SessionStore,
+            signProvider: SignProvider,
+            jsScope: JsCoroutineScope,
+            minLogLevel: LogLevel,
+            logHandler: LogHandler
+        ): Promise<JsBot> = jsScope.value.promise {
+            JsBot(Bot.Companion.create(appInfo, sessionStore, signProvider, jsScope.value, minLogLevel, logHandler))
+        }
+    }
 }
