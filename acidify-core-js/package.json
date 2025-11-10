@@ -1,0 +1,22 @@
+{
+  "name": "@acidify/core",
+  "version": "0.2.2",
+  "description": "Kotlin NTQQ protocol implementation, ported to JS",
+  "main": "dist/acidify-acidify-core.js",
+  "typings": "dist/acidify-acidify-core.d.ts",
+  "scripts": {
+    "build": "tsup && node scripts/copy-dts.mjs"
+  },
+  "files": ["dist"],
+  "keywords": [],
+  "author": "LagrangeDev",
+  "license": "GPL-3.0-only",
+  "packageManager": "pnpm@10.21.0",
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}
