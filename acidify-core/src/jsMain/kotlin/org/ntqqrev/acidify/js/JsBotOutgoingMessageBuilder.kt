@@ -15,16 +15,16 @@ class JsBotOutgoingMessageBuilder internal constructor(
         underlying.text(text)
     }
 
-    fun mention(uin: JsNumber?, name: String) {
-        underlying.mention(uin?.toLong(), name)
+    fun mention(uin: Long?, name: String) {
+        underlying.mention(uin, name)
     }
 
     fun face(faceId: Int, isLarge: Boolean = false) {
         underlying.face(faceId, isLarge)
     }
 
-    fun reply(sequence: JsNumber) {
-        underlying.reply(sequence.toLong())
+    fun reply(sequence: Long) {
+        underlying.reply(sequence)
     }
 
     fun image(
@@ -40,20 +40,20 @@ class JsBotOutgoingMessageBuilder internal constructor(
 
     fun record(
         rawSilk: ByteArray,
-        duration: JsNumber
+        duration: Long
     ) {
-        underlying.record(rawSilk, duration.toLong())
+        underlying.record(rawSilk, duration)
     }
 
     fun video(
         raw: ByteArray,
         width: Int,
         height: Int,
-        duration: JsNumber,
+        duration: Long,
         thumb: ByteArray,
         thumbFormat: ImageFormat
     ) {
-        underlying.video(raw, width, height, duration.toLong(), thumb, thumbFormat)
+        underlying.video(raw, width, height, duration, thumb, thumbFormat)
     }
 
     fun forward(block: (JsBotForwardBlockBuilder) -> Promise<Unit>) {

@@ -14,44 +14,44 @@ import kotlin.js.Promise
 @JsName("Bot")
 class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
     fun sendFriendMessage(
-        friendUin: JsNumber,
+        friendUin: Long,
         build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
-        bot.sendFriendMessage(friendUin.toLong()) {
+        bot.sendFriendMessage(friendUin) {
             val b = JsBotOutgoingMessageBuilder(this)
             build(b).await()
         }
     }
 
     fun sendFriendMessageRich(
-        friendUin: JsNumber,
-        clientSequence: JsNumber,
+        friendUin: Long,
+        clientSequence: Long,
         random: Int,
         build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
-        bot.sendFriendMessage(friendUin.toLong(), clientSequence.toLong(), random) {
+        bot.sendFriendMessage(friendUin, clientSequence, random) {
             val b = JsBotOutgoingMessageBuilder(this)
             build(b).await()
         }
     }
 
     fun sendGroupMessage(
-        groupUin: JsNumber,
+        groupUin: Long,
         build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
-        bot.sendGroupMessage(groupUin.toLong()) {
+        bot.sendGroupMessage(groupUin) {
             val b = JsBotOutgoingMessageBuilder(this)
             build(b).await()
         }
     }
 
     fun sendGroupMessageRich(
-        groupUin: JsNumber,
-        clientSequence: JsNumber,
+        groupUin: Long,
+        clientSequence: Long,
         random: Int,
         build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
-        bot.sendGroupMessage(groupUin.toLong(), clientSequence.toLong(), random) {
+        bot.sendGroupMessage(groupUin, clientSequence, random) {
             val b = JsBotOutgoingMessageBuilder(this)
             build(b).await()
         }

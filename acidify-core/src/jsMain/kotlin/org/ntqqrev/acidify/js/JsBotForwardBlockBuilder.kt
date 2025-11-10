@@ -10,12 +10,12 @@ class JsBotForwardBlockBuilder internal constructor(
     val underlying: BotForwardBlockBuilder
 ) {
     fun node(
-        senderUin: JsNumber,
+        senderUin: Long,
         senderName: String,
         block: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) {
         underlying.node(
-            senderUin.toLong(),
+            senderUin,
             senderName
         ) {
             val b = JsBotOutgoingMessageBuilder(this)
