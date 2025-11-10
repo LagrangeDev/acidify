@@ -59,7 +59,6 @@ import org.ntqqrev.acidify.struct.*
 import org.ntqqrev.acidify.struct.BotFriendRequest.Companion.parseFilteredFriendRequest
 import org.ntqqrev.acidify.struct.BotFriendRequest.Companion.parseFriendRequest
 import kotlin.io.encoding.Base64
-import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.js.JsStatic
 import kotlin.random.Random
@@ -67,7 +66,6 @@ import kotlin.random.Random
 /**
  * Acidify Bot 实例
  */
-@JsExport
 class Bot private constructor(
     val appInfo: AppInfo,
     val sessionStore: SessionStore,
