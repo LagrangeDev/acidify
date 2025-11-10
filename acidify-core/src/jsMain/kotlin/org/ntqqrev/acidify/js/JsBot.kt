@@ -59,12 +59,23 @@ class JsBot internal constructor(private val bot: Bot) {
         fun create(
             appInfo: AppInfo,
             sessionStore: SessionStore,
-            signProvider: SignProvider,
+            signProvider: JsSignProvider,
             jsScope: JsCoroutineScope,
             minLogLevel: LogLevel,
             logHandler: LogHandler
         ): Promise<JsBot> = jsScope.value.promise {
-            JsBot(Bot.Companion.create(appInfo, sessionStore, signProvider, jsScope.value, minLogLevel, logHandler))
+            JsBot(
+                Bot.create(
+                    appInfo = appInfo,
+                    sessionStore = sessionStore,
+                    signProvider = { cmd, src, seq ->
+                        signProvider.sign(cmd, src, seq).await()
+                    },
+                    scope = jsScope.value,
+                    minLogLevel = minLogLevel,
+                    logHandler = logHandler
+                )
+            )
         }
     }
 }
