@@ -23,10 +23,6 @@ kotlin {
         }
     }
 
-    compilerOptions {
-        freeCompilerArgs.add("-XXLanguage:+JsAllowExportingSuspendFunctions")
-    }
-
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization)
@@ -42,6 +38,9 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.ktor.client.cio)
             implementation(kotlin("test"))
+        }
+        all {
+            languageSettings.optIn("kotlin.js.ExperimentalJsExport")
         }
     }
 }
