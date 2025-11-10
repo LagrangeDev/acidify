@@ -1,6 +1,5 @@
 package org.ntqqrev.acidify.exception
 
-import io.ktor.http.HttpStatusCode
 import kotlin.js.JsExport
 
 /**
@@ -10,5 +9,5 @@ import kotlin.js.JsExport
 @JsExport
 class WebApiException(
     msg: String,
-    val statusCode: HttpStatusCode
+    val statusCode: Int
 ) : Exception("$msg ($statusCode)")

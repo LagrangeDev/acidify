@@ -923,7 +923,7 @@ class Bot private constructor(
         }
 
         if (!response.status.isSuccess()) {
-            throw WebApiException("获取群公告失败", response.status)
+            throw WebApiException("获取群公告失败", response.status.value)
         }
 
         val announceResp = response.body<GroupAnnounceResponse>()
@@ -993,7 +993,7 @@ class Bot private constructor(
         }
 
         if (!response.status.isSuccess()) {
-            throw WebApiException("发送群公告失败", response.status)
+            throw WebApiException("发送群公告失败", response.status.value)
         }
 
         val sendResp = response.body<GroupAnnounceSendResponse>()
@@ -1019,7 +1019,7 @@ class Bot private constructor(
         }
 
         if (!response.status.isSuccess()) {
-            throw WebApiException("删除群公告失败", response.status)
+            throw WebApiException("删除群公告失败", response.status.value)
         }
     }
 
@@ -1046,7 +1046,7 @@ class Bot private constructor(
         }
 
         if (!response.status.isSuccess()) {
-            throw WebApiException("获取群精华消息失败", response.status)
+            throw WebApiException("获取群精华消息失败", response.status.value)
         }
 
         val essenceResp = response.body<GroupEssenceResponse>()

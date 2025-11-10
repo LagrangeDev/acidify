@@ -117,4 +117,16 @@ flowchart TD
 
 要控制 Yogurt 日志的输出级别，可以在 `config.json` 中配置 `logging.coreLogLevel`，设置方式和 Kotlin/Native 平台相同。
 
-Yogurt/JVM 的日志最终由 Logback 处理，因此可以通过配置 Logback 来控制日志的输出方式和格式。JAR 文件中已经包含了一个默认的 `logback.xml`，默认向控制台输出带有颜色的、最低等级为 `DEBUG` 的日志。如果需要自定义日志配置，可以在运行时通过 `-Dlogback.configurationFile=path/to/logback.xml` 指定自定义的配置文件。
+Yogurt/JVM 的日志最终由 Logback 处理，因此可以通过配置 Logback 来控制日志的输出方式和格式。JAR 文件中已经包含了一个默认的 `logback.xml`，默认向控制台输出带有颜色的、最低等级为 `DEBUG` 的日志，内容如下：
+
+```xml
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <appender name="CONSOLE" class="org.ntqqrev.yogurt.util.YogurtConsoleAppender"/>
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
+```
+
+如果需要自定义日志配置，可以在运行时通过 `-Dlogback.configurationFile=path/to/logback.xml` 指定自定义的配置文件。你可以基于上述配置进行自定义。
