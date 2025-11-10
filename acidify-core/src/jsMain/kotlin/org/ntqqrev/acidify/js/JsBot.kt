@@ -1,5 +1,6 @@
 package org.ntqqrev.acidify.js
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.await
 import kotlinx.coroutines.promise
 import org.ntqqrev.acidify.Bot
@@ -13,11 +14,11 @@ import kotlin.js.Promise
 
 @JsExport
 @JsName("Bot")
-class JsBot internal constructor(private val bot: Bot) {
+class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
     fun sendFriendMessage(
         friendUin: JsNumber,
         build: (BotOutgoingMessageBuilder) -> Promise<Unit>
-    ) = bot.promise {
+    ) = promise {
         bot.sendFriendMessage(friendUin.toLong()) {
             build(this).await()
         }
@@ -28,7 +29,7 @@ class JsBot internal constructor(private val bot: Bot) {
         clientSequence: JsNumber,
         random: Int,
         build: (BotOutgoingMessageBuilder) -> Promise<Unit>
-    ) = bot.promise {
+    ) = promise {
         bot.sendFriendMessage(friendUin.toLong(), clientSequence.toLong(), random) {
             build(this).await()
         }
@@ -37,7 +38,7 @@ class JsBot internal constructor(private val bot: Bot) {
     fun sendGroupMessage(
         groupUin: JsNumber,
         build: (BotOutgoingMessageBuilder) -> Promise<Unit>
-    ) = bot.promise {
+    ) = promise {
         bot.sendGroupMessage(groupUin.toLong()) {
             build(this).await()
         }
@@ -48,7 +49,7 @@ class JsBot internal constructor(private val bot: Bot) {
         clientSequence: JsNumber,
         random: Int,
         build: (BotOutgoingMessageBuilder) -> Promise<Unit>
-    ) = bot.promise {
+    ) = promise {
         bot.sendGroupMessage(groupUin.toLong(), clientSequence.toLong(), random) {
             build(this).await()
         }
