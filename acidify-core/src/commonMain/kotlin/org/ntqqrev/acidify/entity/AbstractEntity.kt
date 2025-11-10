@@ -1,7 +1,6 @@
 package org.ntqqrev.acidify.entity
 
 import org.ntqqrev.acidify.Bot
-import kotlin.js.JsExport
 
 /**
  * Bot 实体基类
@@ -12,7 +11,6 @@ import kotlin.js.JsExport
  * @property bot Bot 实例
  * @property data 绑定的数据
  */
-@JsExport
 abstract class AbstractEntity<T>(
     val bot: Bot,
     internal var data: T,

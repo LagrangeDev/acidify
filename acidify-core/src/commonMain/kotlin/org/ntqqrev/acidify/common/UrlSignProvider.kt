@@ -9,14 +9,12 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.js.JsExport
 
 /**
  * 通过 HTTP 接口进行签名的 [SignProvider] 实现
  * @param url 签名服务的 URL 地址
  * @param httpProxy 可选的 HTTP 代理地址，例如 `http://127.0.0.1:7890`
  */
-@JsExport
 class UrlSignProvider(val url: String, val httpProxy: String? = null) : SignProvider {
     private val client = HttpClient {
         install(ContentNegotiation) {

@@ -1,11 +1,8 @@
 package org.ntqqrev.acidify.message
 
-import kotlin.js.JsExport
-
 /**
  * 构建发送消息
  */
-@JsExport
 interface BotOutgoingMessageBuilder {
     /**
      * 添加文本消息段

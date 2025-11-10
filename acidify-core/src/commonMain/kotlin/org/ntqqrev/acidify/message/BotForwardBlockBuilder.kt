@@ -1,8 +1,5 @@
 package org.ntqqrev.acidify.message
 
-import kotlin.js.JsExport
-
-@JsExport
 interface BotForwardBlockBuilder {
     /**
      * 添加一个伪造合并转发消息
