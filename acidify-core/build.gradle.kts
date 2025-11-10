@@ -16,6 +16,7 @@ version = "0.2.2"
 kotlin {
     js(IR) {
         nodejs()
+        useEsModules()
         binaries.library()
         generateTypeScriptDefinitions()
         compilerOptions {
