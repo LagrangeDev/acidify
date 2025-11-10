@@ -6,10 +6,8 @@ import kotlinx.coroutines.promise
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.common.SessionStore
-import org.ntqqrev.acidify.common.SignProvider
 import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
-import org.ntqqrev.acidify.message.BotOutgoingMessageBuilder
 import kotlin.js.Promise
 
 @JsExport
@@ -17,10 +15,11 @@ import kotlin.js.Promise
 class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
     fun sendFriendMessage(
         friendUin: JsNumber,
-        build: (BotOutgoingMessageBuilder) -> Promise<Unit>
+        build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
         bot.sendFriendMessage(friendUin.toLong()) {
-            build(this).await()
+            val b = JsBotOutgoingMessageBuilder(this)
+            build(b).await()
         }
     }
 
@@ -28,19 +27,21 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
         friendUin: JsNumber,
         clientSequence: JsNumber,
         random: Int,
-        build: (BotOutgoingMessageBuilder) -> Promise<Unit>
+        build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
         bot.sendFriendMessage(friendUin.toLong(), clientSequence.toLong(), random) {
-            build(this).await()
+            val b = JsBotOutgoingMessageBuilder(this)
+            build(b).await()
         }
     }
 
     fun sendGroupMessage(
         groupUin: JsNumber,
-        build: (BotOutgoingMessageBuilder) -> Promise<Unit>
+        build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
         bot.sendGroupMessage(groupUin.toLong()) {
-            build(this).await()
+            val b = JsBotOutgoingMessageBuilder(this)
+            build(b).await()
         }
     }
 
@@ -48,10 +49,11 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
         groupUin: JsNumber,
         clientSequence: JsNumber,
         random: Int,
-        build: (BotOutgoingMessageBuilder) -> Promise<Unit>
+        build: (JsBotOutgoingMessageBuilder) -> Promise<Unit>
     ) = promise {
         bot.sendGroupMessage(groupUin.toLong(), clientSequence.toLong(), random) {
-            build(this).await()
+            val b = JsBotOutgoingMessageBuilder(this)
+            build(b).await()
         }
     }
 
