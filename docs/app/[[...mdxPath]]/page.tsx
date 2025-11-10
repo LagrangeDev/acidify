@@ -14,7 +14,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { metadata } = await importPage(params.mdxPath);
   return {
     ...metadata,
-    title: metadata.title ? `Acidify | ${metadata.title}` : 'Acidify 文档',
+    title: metadata.title ? `${
+      metadata.filePath.startsWith('content/yogurt') ? 'Yogurt' : 'Acidify'
+    } | ${metadata.title}` : 'Acidify 文档',
   };
 }
 
