@@ -27,7 +27,7 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
     val uid: String get() = bot.uid
     val isLoggedIn: Boolean get() = bot.isLoggedIn
 
-    private inline fun <reified T : AcidifyEvent> subscribeTracking(noinline callback: (T) -> Promise<Unit>) {
+    private inline fun <reified T : AcidifyEvent> subscribeTracking(noinline callback: (T) -> dynamic) {
         val job = launch {
             bot.eventFlow.filterIsInstance<T>().collect { callback(it) }
         }
@@ -362,96 +362,96 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
         bot.deleteGroupFolder(groupUin, folderId)
     }
 
-    fun onBotOffline(callback: (BotOfflineEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onBotOffline(callback: (BotOfflineEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offBotOffline(callback: (BotOfflineEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offBotOffline(callback: (BotOfflineEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onFriendFileUpload(callback: (FriendFileUploadEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onFriendFileUpload(callback: (FriendFileUploadEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offFriendFileUpload(callback: (FriendFileUploadEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offFriendFileUpload(callback: (FriendFileUploadEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onFriendNudge(callback: (FriendNudgeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onFriendNudge(callback: (FriendNudgeEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offFriendNudge(callback: (FriendNudgeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offFriendNudge(callback: (FriendNudgeEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onFriendRequest(callback: (FriendRequestEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onFriendRequest(callback: (FriendRequestEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offFriendRequest(callback: (FriendRequestEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offFriendRequest(callback: (FriendRequestEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupAdminChange(callback: (GroupAdminChangeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupAdminChange(callback: (GroupAdminChangeEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupAdminChange(callback: (GroupAdminChangeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupAdminChange(callback: (GroupAdminChangeEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupEssenceMessageChange(callback: (GroupEssenceMessageChangeEvent) -> Promise<Unit>) =
+    fun onGroupEssenceMessageChange(callback: (GroupEssenceMessageChangeEvent) -> dynamic) =
         subscribeTracking(callback)
 
-    fun offGroupEssenceMessageChange(callback: (GroupEssenceMessageChangeEvent) -> Promise<Unit>) =
+    fun offGroupEssenceMessageChange(callback: (GroupEssenceMessageChangeEvent) -> dynamic) =
         tryUnsubscribe(callback)
 
-    fun onGroupFileUpload(callback: (GroupFileUploadEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupFileUpload(callback: (GroupFileUploadEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupFileUpload(callback: (GroupFileUploadEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupFileUpload(callback: (GroupFileUploadEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupInvitation(callback: (GroupInvitationEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupInvitation(callback: (GroupInvitationEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupInvitation(callback: (GroupInvitationEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupInvitation(callback: (GroupInvitationEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupInvitedJoinRequest(callback: (GroupInvitedJoinRequestEvent) -> Promise<Unit>) =
+    fun onGroupInvitedJoinRequest(callback: (GroupInvitedJoinRequestEvent) -> dynamic) =
         subscribeTracking(callback)
 
-    fun offGroupInvitedJoinRequest(callback: (GroupInvitedJoinRequestEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupInvitedJoinRequest(callback: (GroupInvitedJoinRequestEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupJoinRequest(callback: (GroupJoinRequestEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupJoinRequest(callback: (GroupJoinRequestEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupJoinRequest(callback: (GroupJoinRequestEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupJoinRequest(callback: (GroupJoinRequestEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupMemberDecrease(callback: (GroupMemberDecreaseEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupMemberDecrease(callback: (GroupMemberDecreaseEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupMemberDecrease(callback: (GroupMemberDecreaseEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupMemberDecrease(callback: (GroupMemberDecreaseEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupMemberIncrease(callback: (GroupMemberIncreaseEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupMemberIncrease(callback: (GroupMemberIncreaseEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupMemberIncrease(callback: (GroupMemberIncreaseEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupMemberIncrease(callback: (GroupMemberIncreaseEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupMessageReaction(callback: (GroupMessageReactionEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupMessageReaction(callback: (GroupMessageReactionEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupMessageReaction(callback: (GroupMessageReactionEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupMessageReaction(callback: (GroupMessageReactionEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupMute(callback: (GroupMuteEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupMute(callback: (GroupMuteEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupMute(callback: (GroupMuteEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupMute(callback: (GroupMuteEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupNameChange(callback: (GroupNameChangeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupNameChange(callback: (GroupNameChangeEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupNameChange(callback: (GroupNameChangeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupNameChange(callback: (GroupNameChangeEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupNudge(callback: (GroupNudgeEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupNudge(callback: (GroupNudgeEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupNudge(callback: (GroupNudgeEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupNudge(callback: (GroupNudgeEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onGroupWholeMute(callback: (GroupWholeMuteEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onGroupWholeMute(callback: (GroupWholeMuteEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offGroupWholeMute(callback: (GroupWholeMuteEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offGroupWholeMute(callback: (GroupWholeMuteEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onMessageReceive(callback: (MessageReceiveEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onMessageReceive(callback: (MessageReceiveEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offMessageReceive(callback: (MessageReceiveEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offMessageReceive(callback: (MessageReceiveEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onMessageRecall(callback: (MessageRecallEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onMessageRecall(callback: (MessageRecallEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offMessageRecall(callback: (MessageRecallEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offMessageRecall(callback: (MessageRecallEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onQRCodeGenerated(callback: (QRCodeGeneratedEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onQRCodeGenerated(callback: (QRCodeGeneratedEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offQRCodeGenerated(callback: (QRCodeGeneratedEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offQRCodeGenerated(callback: (QRCodeGeneratedEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onQRCodeStateQuery(callback: (QRCodeStateQueryEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onQRCodeStateQuery(callback: (QRCodeStateQueryEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offQRCodeStateQuery(callback: (QRCodeStateQueryEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offQRCodeStateQuery(callback: (QRCodeStateQueryEvent) -> dynamic) = tryUnsubscribe(callback)
 
-    fun onSessionStoreUpdated(callback: (SessionStoreUpdatedEvent) -> Promise<Unit>) = subscribeTracking(callback)
+    fun onSessionStoreUpdated(callback: (SessionStoreUpdatedEvent) -> dynamic) = subscribeTracking(callback)
 
-    fun offSessionStoreUpdated(callback: (SessionStoreUpdatedEvent) -> Promise<Unit>) = tryUnsubscribe(callback)
+    fun offSessionStoreUpdated(callback: (SessionStoreUpdatedEvent) -> dynamic) = tryUnsubscribe(callback)
 
     companion object {
         @JsStatic
