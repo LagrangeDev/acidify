@@ -163,4 +163,8 @@ fun Route.configureMilkyApiHttpRoutes() {
     serve(CreateGroupFolder)
     serve(RenameGroupFolder)
     serve(DeleteGroupFolder)
+
+    // 音乐卡片扩展 API
+    sendGroupMusicRoute()
+    sendPrivateMusicRoute()
 }

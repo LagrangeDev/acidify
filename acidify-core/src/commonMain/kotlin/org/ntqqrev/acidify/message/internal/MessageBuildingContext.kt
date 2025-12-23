@@ -485,6 +485,18 @@ internal class MessageBuildingContext(
         }
     }
 
+    override fun lightApp(jsonPayload: String) = addAsync {
+        val buffer = Buffer()
+        buffer.writeByte(0x01)
+        buffer.write(ZLib.compress(jsonPayload.encodeToByteArray()))
+
+        Elem {
+            it[lightAppElem] = LightAppElem {
+                it[bytesData] = buffer.readByteArray()
+            }
+        }
+    }
+
     suspend fun build(): List<PbObject<Elem>> = elemsList.awaitAll().flatten()
 
     internal class Forward(
@@ -626,6 +638,11 @@ internal class MessageBuildingContext(
             override fun forward(block: suspend BotForwardBlockBuilder.() -> Unit) {
                 parent.forward(block)
                 previewBuilder.append("[聊天记录]")
+            }
+
+            override fun lightApp(jsonPayload: String) {
+                parent.lightApp(jsonPayload)
+                previewBuilder.append("[卡片消息]")
             }
         }
     }

@@ -82,6 +82,12 @@ interface BotOutgoingMessageBuilder {
      */
     fun forward(block: suspend BotForwardBlockBuilder.() -> Unit)
 
+    /**
+     * 添加小程序（LightApp）消息段
+     * @param jsonPayload JSON 格式的小程序数据
+     */
+    fun lightApp(jsonPayload: String)
+
     operator fun String.unaryPlus() = text(this)
 
 }

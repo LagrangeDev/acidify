@@ -16,6 +16,8 @@ import org.ntqqrev.acidify.logging.LogLevel
 @Serializable
 class YogurtConfig(
     val signApiUrl: String = "",
+    /** 音乐卡片签名服务器 URL，留空使用默认值 (https://ss.xingzhige.com/music_card/card) */
+    val musicSignUrl: String = "",
     val reportSelfMessage: Boolean = true,
     val preloadContacts: Boolean = false,
     val transformIncomingMFaceToImage: Boolean = false,
