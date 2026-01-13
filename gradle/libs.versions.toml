@@ -8,7 +8,7 @@ kotlin = "2.3.0"
 kx-serialization = "1.10.0-RC"
 kx-coroutines = "1.10.2"
 kx-io = "0.8.2"
-kx-datetime = "0.7.1"
+kx-datetime = "0.7.1-0.6.x-compat"
 kx-atomicfu = "0.29.0"
 ktor = "3.3.3"
 
