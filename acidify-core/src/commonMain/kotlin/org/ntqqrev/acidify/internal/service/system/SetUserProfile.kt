@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.system
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.packet.oidb.SetUserProfileReq
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -12,8 +12,8 @@ internal object SetUserProfile : NoOutputOidbService<SetUserProfile.Req>(0x112a,
         val numberProps: Map<UserInfoKey, Int> = mapOf(),
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req) = SetUserProfileReq {
-        it[uin] = client.sessionStore.uin
+    override fun buildOidb(client: IClient, payload: Req) = SetUserProfileReq {
+        it[uin] = client.uin
         it[stringProps] = payload.stringProps.map { (key, value) ->
             SetUserProfileReq.StringProp {
                 it[this.key] = key.number

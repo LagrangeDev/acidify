@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.friend
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.DeleteFriendReq
 import org.ntqqrev.acidify.internal.protobuf.invoke
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
@@ -11,7 +11,7 @@ internal object DeleteFriend : NoOutputOidbService<DeleteFriend.Req>(0x126b, 0) 
         val block: Boolean,
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = DeleteFriendReq {
+    override fun buildOidb(client: IClient, payload: Req): ByteArray = DeleteFriendReq {
         it[body] = DeleteFriendReq.Body {
             it[targetUid] = payload.friendUid
             it[field2] = DeleteFriendReq.Body.Field2 {

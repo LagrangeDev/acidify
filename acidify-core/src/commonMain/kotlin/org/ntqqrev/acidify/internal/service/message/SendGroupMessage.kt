@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.message.*
 import org.ntqqrev.acidify.internal.packet.message.action.PbSendMsgReq
 import org.ntqqrev.acidify.internal.packet.message.action.PbSendMsgResp
@@ -23,7 +23,7 @@ internal object SendGroupMessage : Service<SendGroupMessage.Req, SendGroupMessag
         val sequence: Long
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: IClient, payload: Req): ByteArray {
         return PbSendMsgReq {
             it[routingHead] = SendRoutingHead {
                 it[group] = SendRoutingHead.Grp {
@@ -43,7 +43,7 @@ internal object SendGroupMessage : Service<SendGroupMessage.Req, SendGroupMessag
         }.toByteArray()
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parse(client: IClient, payload: ByteArray): Resp {
         val resp = PbSendMsgResp(payload)
         return Resp(
             result = resp.get { result },

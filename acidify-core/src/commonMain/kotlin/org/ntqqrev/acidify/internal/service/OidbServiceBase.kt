@@ -1,7 +1,7 @@
 package org.ntqqrev.acidify.internal.service
 
 import org.ntqqrev.acidify.exception.OidbException
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb
 import org.ntqqrev.acidify.internal.protobuf.invoke
 
@@ -10,17 +10,17 @@ internal abstract class OidbService<T, R>(
     val oidbService: Int,
     val isReserved: Boolean = false
 ) : Service<T, R>("OidbSvcTrpcTcp.0x${oidbCommand.toString(16)}_$oidbService") {
-    abstract fun buildOidb(client: LagrangeClient, payload: T): ByteArray
-    abstract fun parseOidb(client: LagrangeClient, payload: ByteArray): R
+    abstract fun buildOidb(client: IClient, payload: T): ByteArray
+    abstract fun parseOidb(client: IClient, payload: ByteArray): R
 
-    override fun build(client: LagrangeClient, payload: T): ByteArray = Oidb {
+    override fun build(client: IClient, payload: T): ByteArray = Oidb {
         it[command] = oidbCommand
         it[service] = oidbService
         it[body] = buildOidb(client, payload)
         it[reserved] = isReserved
     }.toByteArray()
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): R {
+    override fun parse(client: IClient, payload: ByteArray): R {
         val response = Oidb(payload)
         val oidbResult = response.get { result }
         if (oidbResult != 0) {
@@ -41,5 +41,5 @@ internal abstract class NoOutputOidbService<T>(
     oidbSubCmd: Int,
     useReserved: Boolean = false
 ) : OidbService<T, Unit>(oidbCmd, oidbSubCmd, useReserved) {
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray) = Unit
+    override fun parseOidb(client: IClient, payload: ByteArray) = Unit
 }

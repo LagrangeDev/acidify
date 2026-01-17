@@ -21,13 +21,21 @@ internal class LagrangeClient(
     val signProvider: SignProvider,
     val createLogger: (Any) -> Logger,
     scope: CoroutineScope,
-) : CoroutineScope by scope {
+) : IClient, CoroutineScope by scope {
+    override val os: String
+        get() = appInfo.os
+
+    override val uin: Long
+        get() = sessionStore.uin
+
+    override val uid: String
+        get() = sessionStore.uid
+
     val loginContext = LoginContext(this)
     val packetContext = PacketContext(this)
     val ticketContext = TicketContext(this)
     val highwayContext = HighwayContext(this)
     val pushChannel = Channel<SsoResponse>(capacity = 15, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val sendPacketDefaultTimeout = 10_000L
     val contextCollection = listOf(
         loginContext,
         packetContext,
@@ -35,19 +43,19 @@ internal class LagrangeClient(
         highwayContext,
     )
 
-    suspend fun doPostOnlineLogic() {
+    override suspend fun doPostOnlineLogic() {
         contextCollection.forEach {
             it.postOnline()
         }
     }
 
-    suspend fun doPreOfflineLogic() {
+    override suspend fun doPreOfflineLogic() {
         contextCollection.forEach {
             it.preOffline()
         }
     }
 
-    suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long = sendPacketDefaultTimeout): R {
+    override suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long): R {
         val byteArray = service.build(this, payload)
         val resp = packetContext.sendPacket(service.cmd, byteArray, timeout)
         if (resp.retCode != 0) {
@@ -58,9 +66,5 @@ internal class LagrangeClient(
             )
         }
         return service.parse(this, resp.response)
-    }
-
-    suspend fun <R> callService(service: Service<Unit, R>, timeout: Long = sendPacketDefaultTimeout): R {
-        return callService(service, Unit, timeout)
     }
 }

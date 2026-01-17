@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Req
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Resp
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -26,7 +26,7 @@ internal object UploadGroupFile : OidbService<UploadGroupFile.Req, UploadGroupFi
         val uploadPort: Int
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray {
+    override fun buildOidb(client: IClient, payload: Req): ByteArray {
         return Oidb0x6D6Req {
             it[uploadFile] = Oidb0x6D6Req.UploadFile {
                 it[groupUin] = payload.groupUin
@@ -44,7 +44,7 @@ internal object UploadGroupFile : OidbService<UploadGroupFile.Req, UploadGroupFi
         }.toByteArray()
     }
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = Oidb0x6D6Resp(payload).get { uploadFile }
         val retCode = resp.get { retCode }
         if (retCode != 0) {

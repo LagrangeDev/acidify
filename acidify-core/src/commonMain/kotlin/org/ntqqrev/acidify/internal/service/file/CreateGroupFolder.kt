@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Req
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Resp
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -16,7 +16,7 @@ internal object CreateGroupFolder : OidbService<CreateGroupFolder.Req, CreateGro
         val folderId: String
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         Oidb0x6D7Req {
             it[createFolder] = Oidb0x6D7Req.CreateFolder {
                 it[groupUin] = payload.groupUin
@@ -25,7 +25,7 @@ internal object CreateGroupFolder : OidbService<CreateGroupFolder.Req, CreateGro
             }
         }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = Oidb0x6D7Resp(payload).get { createFolder }
         val retCode = resp.get { retCode }
         if (retCode != 0) {

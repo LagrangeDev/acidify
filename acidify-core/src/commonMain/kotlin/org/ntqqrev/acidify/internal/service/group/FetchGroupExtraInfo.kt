@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupExtraInfoReq
 import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupExtraInfoResp
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -10,7 +10,7 @@ import kotlin.random.Random
 internal object FetchGroupExtraInfo : OidbService<Long, FetchGroupExtraInfo.Resp>(0x88d, 0) {
     class Resp(val latestMessageSeq: Long)
 
-    override fun buildOidb(client: LagrangeClient, payload: Long): ByteArray = FetchGroupExtraInfoReq {
+    override fun buildOidb(client: IClient, payload: Long): ByteArray = FetchGroupExtraInfoReq {
         it[random] = Random.nextInt()
         it[config] = FetchGroupExtraInfoReq.Config {
             it[groupUin] = payload
@@ -20,7 +20,7 @@ internal object FetchGroupExtraInfo : OidbService<Long, FetchGroupExtraInfo.Resp
         }
     }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = FetchGroupExtraInfoResp(payload)
         val info = resp.get { info }
         val results = info.get { results }

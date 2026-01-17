@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.BroadcastGroupFileReq
 import org.ntqqrev.acidify.internal.protobuf.invoke
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
@@ -12,7 +12,7 @@ internal object BroadcastGroupFile : NoOutputOidbService<BroadcastGroupFile.Req>
         val fileId: String
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         BroadcastGroupFileReq {
             it[body] = BroadcastGroupFileReq.Body {
                 it[groupUin] = payload.groupUin

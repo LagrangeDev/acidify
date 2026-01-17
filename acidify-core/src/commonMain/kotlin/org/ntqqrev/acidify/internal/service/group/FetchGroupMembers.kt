@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupMembersReq
 import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupMembersResp
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -19,7 +19,7 @@ internal object FetchGroupMembers : OidbService<FetchGroupMembers.Req, FetchGrou
         val memberDataList: List<BotGroupMemberData>,
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = FetchGroupMembersReq {
+    override fun buildOidb(client: IClient, payload: Req): ByteArray = FetchGroupMembersReq {
         it[groupUin] = payload.groupUin
         it[field2] = 5
         it[field3] = 2
@@ -36,7 +36,7 @@ internal object FetchGroupMembers : OidbService<FetchGroupMembers.Req, FetchGrou
         it[cookie] = payload.cookie
     }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = FetchGroupMembersResp(payload)
         return Resp(
             cookie = resp.get { cookie },

@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.system
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.FetchFaceDetailsReq
 import org.ntqqrev.acidify.internal.packet.oidb.FetchFaceDetailsResp
 import org.ntqqrev.acidify.internal.protobuf.PbObject
@@ -9,13 +9,13 @@ import org.ntqqrev.acidify.internal.service.NoInputOidbService
 import org.ntqqrev.acidify.struct.BotFaceDetail
 
 internal object FetchFaceDetails : NoInputOidbService<List<BotFaceDetail>>(0x9154, 1) {
-    override fun buildOidb(client: LagrangeClient, payload: Unit): ByteArray = FetchFaceDetailsReq {
+    override fun buildOidb(client: IClient, payload: Unit): ByteArray = FetchFaceDetailsReq {
         it[field1] = 0
         it[field2] = 7
         it[field3] = "0"
     }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): List<BotFaceDetail> {
+    override fun parseOidb(client: IClient, payload: ByteArray): List<BotFaceDetail> {
         val resp = FetchFaceDetailsResp(payload)
 
         val common = resp.get { commonFace }

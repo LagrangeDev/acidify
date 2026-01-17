@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.GroupFileListReq
 import org.ntqqrev.acidify.internal.packet.oidb.GroupFileListReqBody
 import org.ntqqrev.acidify.internal.packet.oidb.GroupFileListResp
@@ -23,7 +23,7 @@ internal object GetGroupFileList : OidbService<GetGroupFileList.Req, GetGroupFil
         val isEnd: Boolean
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         GroupFileListReq {
             it[listReq] = GroupFileListReqBody {
                 it[groupUin] = payload.groupUin
@@ -37,7 +37,7 @@ internal object GetGroupFileList : OidbService<GetGroupFileList.Req, GetGroupFil
             }
         }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = GroupFileListResp(payload).get { listResp }
         val retCode = resp.get { retCode }
 

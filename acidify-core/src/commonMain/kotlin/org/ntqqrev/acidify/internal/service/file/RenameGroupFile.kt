@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Req
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Resp
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -14,7 +14,7 @@ internal object RenameGroupFile : OidbService<RenameGroupFile.Req, Unit>(0x6d6, 
         val newFileName: String
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         Oidb0x6D6Req {
             it[renameFile] = Oidb0x6D6Req.RenameFile {
                 it[groupUin] = payload.groupUin
@@ -26,7 +26,7 @@ internal object RenameGroupFile : OidbService<RenameGroupFile.Req, Unit>(0x6d6, 
             }
         }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray) {
+    override fun parseOidb(client: IClient, payload: ByteArray) {
         val resp = Oidb0x6D6Resp(payload).get { renameFile }
         val retCode = resp.get { retCode }
         if (retCode != 0) {

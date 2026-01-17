@@ -1,7 +1,8 @@
 package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.ensureIsLagrange
 import org.ntqqrev.acidify.internal.packet.login.TlvQRCode
 import org.ntqqrev.acidify.internal.protobuf.invoke
 import org.ntqqrev.acidify.internal.service.NoInputService
@@ -11,7 +12,8 @@ import org.ntqqrev.acidify.internal.util.reader
 import org.ntqqrev.acidify.internal.util.writeBytes
 
 internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_emp") {
-    override fun build(client: LagrangeClient, payload: Unit): ByteArray {
+    override fun build(client: IClient, payload: Unit): ByteArray {
+        client.ensureIsLagrange()
         val tlvPack = TlvQRCode(client).apply {
             tlv16()
             tlv1b()
@@ -33,7 +35,8 @@ internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_
         return client.loginContext.buildCode2DPacket(packet.readByteArray(), 0x31u)
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): Result {
+    override fun parse(client: IClient, payload: ByteArray): Result {
+        client.ensureIsLagrange()
         val wtLogin = client.loginContext.parseWtLogin(payload)
         val code2d = client.loginContext.parseCode2DPacket(wtLogin)
         val reader = code2d.reader()

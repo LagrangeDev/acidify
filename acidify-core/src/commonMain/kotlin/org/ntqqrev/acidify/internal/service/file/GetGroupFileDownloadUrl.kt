@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Req
 import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Resp
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -12,7 +12,7 @@ internal object GetGroupFileDownloadUrl : OidbService<GetGroupFileDownloadUrl.Re
         val fileId: String
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         Oidb0x6D6Req {
             it[downloadFile] = Oidb0x6D6Req.DownloadFile {
                 it[groupUin] = payload.groupUin
@@ -22,7 +22,7 @@ internal object GetGroupFileDownloadUrl : OidbService<GetGroupFileDownloadUrl.Re
             }
         }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): String {
+    override fun parseOidb(client: IClient, payload: ByteArray): String {
         val resp = Oidb0x6D6Resp(payload).get { downloadFile }
         val dns = resp.get { downloadDns }
         val url = resp.get { downloadUrl }.toHexString()

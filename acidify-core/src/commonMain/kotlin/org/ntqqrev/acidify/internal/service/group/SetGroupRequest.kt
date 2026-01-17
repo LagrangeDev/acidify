@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.oidb.SetGroupRequestBody
 import org.ntqqrev.acidify.internal.packet.oidb.SetGroupRequestReq
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -17,7 +17,7 @@ internal abstract class SetGroupRequest(isFiltered: Boolean) :
         val reason: String
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         SetGroupRequestReq {
             it[accept] = payload.accept
             it[body] = SetGroupRequestBody {

@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.message.action.C2CRecallMsg
 import org.ntqqrev.acidify.internal.protobuf.invoke
 import org.ntqqrev.acidify.internal.service.NoOutputService
@@ -15,7 +15,7 @@ internal object RecallFriendMessage :
         val timestamp: Long
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: IClient, payload: Req): ByteArray {
         return C2CRecallMsg {
             it[type] = 1
             it[targetUid] = payload.targetUid

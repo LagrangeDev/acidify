@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.friend
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.packet.oidb.FetchFriendsCookie
 import org.ntqqrev.acidify.internal.packet.oidb.IncPull
@@ -17,7 +17,7 @@ internal object FetchFriends : OidbService<FetchFriends.Req, FetchFriends.Resp>(
         val friendDataList: List<BotFriendData>,
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = IncPull {
+    override fun buildOidb(client: IClient, payload: Req): ByteArray = IncPull {
         it[reqCount] = 300
         it[cookie] = FetchFriendsCookie {
             it[nextUin] = payload.nextUin
@@ -46,7 +46,7 @@ internal object FetchFriends : OidbService<FetchFriends.Req, FetchFriends.Resp>(
         )
     }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = IncPullResp(payload)
         val categories = resp.get { category }.associate { it.get { categoryId } to it.get { categoryName } }
         return Resp(

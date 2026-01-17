@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.message.media.*
 import org.ntqqrev.acidify.internal.protobuf.PbObject
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -14,7 +14,7 @@ internal abstract class RichMediaDownload(
     val businessType: Int,
     val scene: MessageScene,
 ) : OidbService<PbObject<IndexNode>, String>(oidbCommand, oidbService) {
-    override fun buildOidb(client: LagrangeClient, payload: PbObject<IndexNode>): ByteArray = NTV2RichMediaReq {
+    override fun buildOidb(client: IClient, payload: PbObject<IndexNode>): ByteArray = NTV2RichMediaReq {
         it[reqHead] = MultiMediaReqHead {
             it[common] = CommonHead {
                 it[requestId] = 1
@@ -27,7 +27,7 @@ internal abstract class RichMediaDownload(
                     MessageScene.FRIEND -> {
                         it[sceneType] = 1
                         it[c2C] = C2CUserInfo {
-                            it[targetUid] = client.sessionStore.uid
+                            it[targetUid] = client.uid
                             it[accountType] = 2
                         }
                     }
@@ -48,7 +48,7 @@ internal abstract class RichMediaDownload(
         }
     }.toByteArray()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): String =
+    override fun parseOidb(client: IClient, payload: ByteArray): String =
         NTV2RichMediaResp(payload).let {
             val download = it.get { download }
             val downloadInfo = download.get { info }
