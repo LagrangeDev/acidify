@@ -7,13 +7,13 @@ import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.service.system.FetchClientKey
 import org.ntqqrev.acidify.internal.service.system.FetchPSKey
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-internal class TicketContext(client: LagrangeClient) : AbstractContext(client) {
+internal class TicketContext(client: IClient) : AbstractContext(client) {
     internal class KeyWithLifetime(var value: String, var expireTime: Long) {
         companion object {
             fun dummy() = KeyWithLifetime("", 0L)
@@ -54,7 +54,7 @@ internal class TicketContext(client: LagrangeClient) : AbstractContext(client) {
             "https%3A%2F%2Fh5.qzone.qq.com%2Fqqnt%2Fqzoneinpcqq%2Ffriend%3Frefresh%3D0%26clientuin%3D0%26darkMode%3D0&keyindex=19&random=2599"
         val urlString = "https://ssl.ptlogin2.qq.com/jump" +
                 "?ptlang=1033" +
-                "&clientuin=${client.sessionStore.uin}" +
+                "&clientuin=${client.uin}" +
                 "&clientkey=$clientKey" +
                 "&u1=$jump"
         httpClient.get(urlString)

@@ -13,7 +13,7 @@ import org.ntqqrev.acidify.internal.util.reader
 import org.ntqqrev.acidify.internal.util.writeBytes
 import kotlin.random.Random
 
-internal class LoginContext(client: LagrangeClient) : AbstractContext(client) {
+internal class LoginContext(override val client: LagrangeClient) : AbstractContext(client) {
     private val ecdhKey =
         "04928D8850673088B343264E0C6BACB8496D697799F37211DEB25BB73906CB089FEA9639B4E0260498B51A992D50813DA8".hexToByteArray()
     private val ecdhProvider = Ecdh.generateKeyPair(Ecdh.Secp192K1)

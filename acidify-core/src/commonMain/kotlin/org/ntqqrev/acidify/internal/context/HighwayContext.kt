@@ -6,7 +6,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.packet.message.media.*
 import org.ntqqrev.acidify.internal.protobuf.PbObject
 import org.ntqqrev.acidify.internal.protobuf.invoke
@@ -15,7 +15,7 @@ import org.ntqqrev.acidify.internal.util.md5
 import org.ntqqrev.acidify.internal.util.toIpString
 import org.ntqqrev.acidify.message.MessageScene
 
-internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) {
+internal class HighwayContext(client: IClient) : AbstractContext(client) {
     private var highwayHost: String = ""
     private var highwayPort: Int = 0
     private var sigSession: ByteArray = ByteArray(0)
@@ -198,7 +198,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
             it[unknown3] = 0
             it[entry] = FileUploadEntry {
                 it[busiBuff] = ExcitingBusiInfo {
-                    it[senderUin] = client.sessionStore.uin
+                    it[senderUin] = client.uin
                     it[this.receiverUin] = receiverUin
                 }
                 it[fileEntry] = ExcitingFileEntry {
@@ -299,7 +299,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
     }
 
     private class HttpSession(
-        private val client: LagrangeClient,
+        private val client: IClient,
         private val httpClient: HttpClient,
         private val highwayHost: String,
         private val highwayPort: Int,
@@ -329,7 +329,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
             val frame = packFrame(head, block)
 
             val serverUrl =
-                "http://$highwayHost:$highwayPort/cgi-bin/httpconn?htcmd=0x6FF0087&uin=${client.sessionStore.uin}"
+                "http://$highwayHost:$highwayPort/cgi-bin/httpconn?htcmd=0x6FF0087&uin=${client.uin}"
 
             val response = httpClient.post(serverUrl) {
                 headers {
@@ -354,7 +354,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
             return ReqDataHighwayHead {
                 it[msgBaseHead] = DataHighwayHead {
                     it[version] = 1
-                    it[uin] = client.sessionStore.uin.toString()
+                    it[uin] = client.uin.toString()
                     it[command] = "PicUp.DataUp"
                     it[seq] = 0
                     it[retryTimes] = 0

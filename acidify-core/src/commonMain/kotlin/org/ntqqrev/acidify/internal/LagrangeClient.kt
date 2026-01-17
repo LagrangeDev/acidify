@@ -19,7 +19,7 @@ internal class LagrangeClient(
     val appInfo: AppInfo,
     val sessionStore: SessionStore,
     val signProvider: SignProvider,
-    val createLogger: (Any) -> Logger,
+    val loggerFactory: (Any) -> Logger,
     scope: CoroutineScope,
 ) : IClient, CoroutineScope by scope {
     override val os: String
@@ -42,6 +42,8 @@ internal class LagrangeClient(
         ticketContext,
         highwayContext,
     )
+
+    override fun createLogger(forObject: Any): Logger = loggerFactory(forObject)
 
     override suspend fun doPostOnlineLogic() {
         contextCollection.forEach {

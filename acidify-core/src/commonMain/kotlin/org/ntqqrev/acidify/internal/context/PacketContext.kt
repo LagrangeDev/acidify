@@ -25,7 +25,7 @@ import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.internal.util.*
 import kotlin.random.Random
 
-internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
+internal class PacketContext(override val client: LagrangeClient) : AbstractContext(client) {
     private var sequence = Random.nextInt(0x10000, 0x20000)
     private val host = "msfwifi.3g.qq.com"
     private val port = 8080
@@ -162,7 +162,6 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
 
     private fun buildService(sso: ByteArray): Buffer {
         val packet = Buffer()
-
         packet.barrier(Prefix.UINT_32 or Prefix.INCLUDE_PREFIX) {
             writeInt(12)
             writeByte(if (client.sessionStore.d2.isEmpty()) 2 else 1)
@@ -171,7 +170,6 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
             writeString(client.sessionStore.uin.toString(), Prefix.UINT_32 or Prefix.INCLUDE_PREFIX)
             writeBytes(TeaProvider.encrypt(sso, client.sessionStore.d2Key))
         }
-
         return packet
     }
 
