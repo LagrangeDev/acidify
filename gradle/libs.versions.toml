@@ -15,7 +15,7 @@ ktor = "3.3.3"
 milky = "1.1.0"
 
 korlibs = "6.0.0"
-xmlutil = "1.0.0-rc1"
+xmlutil = "1.0.0-rc2"
 mordant = "3.0.2"
 logback = "1.5.24"
 build-konfig = "0.17.1"
