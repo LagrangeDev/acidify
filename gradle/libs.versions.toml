@@ -5,7 +5,7 @@
 [versions]
 kotlin = "2.3.0"
 
-kx-serialization = "1.10.0-RC"
+kx-serialization = "1.10.0"
 kx-coroutines = "1.10.2"
 kx-io = "0.8.2"
 kx-datetime = "0.7.1-0.6.x-compat"
