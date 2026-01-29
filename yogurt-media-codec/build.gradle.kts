@@ -27,4 +27,15 @@ kotlin {
             extraOpts("-libraryPath", libraryPath(targetName))
         }
     }
+
+    mingwX64 {
+        binaries.all {
+            linkerOpts(
+                "-Wl,-Bstatic",
+                "-lstdc++",
+                "-lgcc",
+                "-Wl,-Bdynamic"
+            )
+        }
+    }
 }
