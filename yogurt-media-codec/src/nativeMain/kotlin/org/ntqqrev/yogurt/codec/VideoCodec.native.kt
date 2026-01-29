@@ -2,22 +2,17 @@
 
 package org.ntqqrev.yogurt.codec
 
+import liblagrangecodec.*
 import kotlinx.cinterop.*
 import kotlin.time.Duration.Companion.seconds
 
 actual fun getVideoInfo(videoData: ByteArray): VideoInfo = memScoped {
-    val inputData = allocArray<ByteVar>(videoData.size)
-    for (i in videoData.indices) {
-        inputData[i] = videoData[i]
-    }
-    val inputDataRef = StableRef.create(inputData)
-    val infoStruct = alloc<VideoInfoStruct>()
-    val result = CodecLibrary.videoGetSize.invoke(
-        inputDataRef.get(),
-        videoData.size,
-        infoStruct.ptr
+    val infoStruct = alloc<liblagrangecodec.VideoInfo>()
+    val result = video_get_size(
+        video_data = videoData.asUByteArray().toCValues(),
+        data_len = videoData.size,
+        info = infoStruct.ptr
     )
-    inputDataRef.dispose()
     require(result == 0) { "videoGetSize failed with code $result" }
     return VideoInfo(
         width = infoStruct.width,
@@ -27,26 +22,20 @@ actual fun getVideoInfo(videoData: ByteArray): VideoInfo = memScoped {
 }
 
 actual fun getVideoFirstFrameJpg(videoData: ByteArray): ByteArray = memScoped {
-    val inputData = allocArray<ByteVar>(videoData.size)
-    for (i in videoData.indices) {
-        inputData[i] = videoData[i]
-    }
-    val inputDataRef = StableRef.create(inputData)
-    val outputDataPtr = alloc<CPointerVar<ByteVar>>()
+    val outputDataPtr = alloc<CPointerVar<UByteVar>>()
     val outputLenPtr = alloc<IntVar>()
-    val result = CodecLibrary.videoFirstFrame.invoke(
-        inputDataRef.get(),
-        videoData.size,
-        outputDataPtr,
-        outputLenPtr.ptr
+    val result = video_first_frame(
+        video_data = videoData.asUByteArray().toCValues(),
+        data_len =  videoData.size,
+        out = outputDataPtr.ptr,
+        out_len = outputLenPtr.ptr
     )
-    inputDataRef.dispose()
     require(result == 0) { "videoFirstFrame failed with code $result" }
     val outputLen = outputLenPtr.value
     val outputData = outputDataPtr.value!!
     val byteArray = ByteArray(outputLen)
     for (i in 0 until outputLen) {
-        byteArray[i] = outputData[i]
+        byteArray[i] = outputData[i].toByte()
     }
     return byteArray
 }
