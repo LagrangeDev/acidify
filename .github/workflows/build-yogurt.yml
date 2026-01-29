@@ -104,7 +104,6 @@ jobs:
         run: |
           mkdir -p artifacts/lib/${{ matrix.platform }}
           cp ./yogurt/build/bin/${{ matrix.target }}/releaseExecutable/yogurt${{ matrix.ext }} artifacts/
-          cp ./yogurt-media-codec/lib/${{ matrix.platform }}/${{ matrix.dynamic-lib-prefix }}lagrangecodec${{ matrix.dynamic-lib-ext }} artifacts/lib/${{ matrix.platform }}/
 
       - name: Upload ${{ matrix.target }} executable
         uses: actions/upload-artifact@v4
@@ -230,14 +229,6 @@ jobs:
               shutil.copy2(binary_src, binary_dest)
               if binary_dest.suffix == ".kexe":
                   binary_dest.chmod(0o755)
-
-              lib_src = payload_root / "lib"
-              if not lib_src.exists():
-                  raise FileNotFoundError(f"Missing codec library for {cfg['artifact']}")
-              lib_dest = package_dir / "lib"
-              if lib_dest.exists():
-                  shutil.rmtree(lib_dest)
-              shutil.copytree(lib_src, lib_dest)
 
           package_files = [
               packages_dir / "yogurt-win32-x64" / "package.json",
