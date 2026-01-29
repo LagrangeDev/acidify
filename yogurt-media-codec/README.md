@@ -2,27 +2,12 @@
 
 Yogurt 的多媒体编解码支持模块，是 [LagrangeCodec](https://github.com/LagrangeDev/LagrangeCodec) 的 Kotlin 绑定。
 
-在 JVM 平台，该模块使用 JNA 调用 LagrangeCodec 的动态链接库；在 Native 平台，该模块通过 `kotlinx.cinterop` 调用 LagrangeCodec 的动态链接库。
+在 JVM 平台，该模块使用 JNA 调用 LagrangeCodec 的动态链接库；在 Native 平台，该模块通过 Kotlin C Interop 静态链接 LagrangeCodec 的静态库。JVM 平台的 jar 文件已经将动态库文件包含在内。
 
-JVM 平台的 jar 文件已经将动态库文件包含在内；Native 平台的可执行文件需要在运行时加载动态库文件。具体来说，Native
-平台的程序在运行时，其工作目录下需要包含 LagrangeCodec 的动态链接库文件，目录结构为：
+项目的 `src/jvmMain/resources` 目录下包含了各个平台的动态库文件；`src/nativeMain/lib` 目录下包含了各个平台的静态库文件。静态库文件编译自 [Wesley-Young/LagrangeCodec](https://github.com/Wesley-Young/LagrangeCodec) 仓库，对原仓库的构建逻辑进行了一些调整以适应 Kotlin/Native 链接静态库的需求。
+
+在链接 `mingwX64` 目标的应用程序时，需要指定如下的 `linkerOpts`：
 
 ```
-working-directory/
-├── lib/
-│   ├── windows-x64/           (for Windows x64)
-│   │   └── lagrangecodec.dll
-│   ├── windows-x86/           (for Windows x86)
-│   │   └── lagrangecodec.dll
-│   ├── linux-x64/             (for Linux x64)
-│   │   └── liblagrangecodec.so
-│   ├── linux-arm64/           (for Linux arm64)
-│   │   └── liblagrangecodec.so
-│   ├── macos-arm64/           (for macOS arm64)
-│   │   └── liblagrangecodec.dylib
-│   └── macos-x64/             (for macOS x64)
-│       └── liblagrangecodec.dylib
-└── application.jar/exe/kexe
+-Wl,-Bstatic -lstdc++ -lgcc -Wl,-Bdynamic
 ```
-
-上述目录结构也说明了该模块支持的平台。
