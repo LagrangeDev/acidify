@@ -47,6 +47,17 @@ kotlin {
             }
         }
     }
+
+    mingwX64 {
+        binaries.all {
+            linkerOpts(
+                "-Wl,-Bstatic",
+                "-lstdc++",
+                "-lgcc",
+                "-Wl,-Bdynamic"
+            )
+        }
+    }
 }
 
 val gitHashProvider = providers.exec {
