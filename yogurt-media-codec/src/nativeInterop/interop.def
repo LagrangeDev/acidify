@@ -1,13 +1,13 @@
 package = liblagrangecodec
 headers = stdint.h
 
-staticLibraries.mingw = libLagrangeCodec.a libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a libzlib.a
+staticLibraries.mingw = libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a libzlib.a libLagrangeCodec.a
 linkerOpts.mingw = -lstdc++ -lws2_32
 
-staticLibraries.linux = libLagrangeCodec.a libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a libz.a
+staticLibraries.linux = libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a libz.a libLagrangeCodec.a
 linkerOpts.linux = -lstdc++ -lm -ldl -lpthread
 
-staticLibraries.osx = libLagrangeCodec.a libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a libz.a
+staticLibraries.osx = libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a libz.a libLagrangeCodec.a
 linkerOpts.osx = -lc++
 
 ---
