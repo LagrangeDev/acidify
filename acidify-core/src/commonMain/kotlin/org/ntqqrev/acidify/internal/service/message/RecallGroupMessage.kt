@@ -1,9 +1,9 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.action.GroupRecallMsg
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.action.GroupRecallMsg
 import org.ntqqrev.acidify.internal.service.NoOutputService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object RecallGroupMessage :
     NoOutputService<RecallGroupMessage.Req>("trpc.msg.msg_svc.MsgService.SsoGroupRecallMsg") {
@@ -13,16 +13,16 @@ internal object RecallGroupMessage :
     )
 
     override fun build(client: LagrangeClient, payload: Req): ByteArray {
-        return GroupRecallMsg {
-            it[type] = 1
-            it[groupUin] = payload.groupUin
-            it[info] = GroupRecallMsg.Info {
-                it[sequence] = payload.sequence
-                it[field3] = 0
-            }
-            it[field4] = GroupRecallMsg.Field4 {
-                it[field1] = 0
-            }
-        }.toByteArray()
+        return GroupRecallMsg(
+            type = 1,
+            groupUin = payload.groupUin,
+            info = GroupRecallMsg.Info(
+                sequence = payload.sequence,
+                field3 = 0,
+            ),
+            field4 = GroupRecallMsg.Field4(
+                field1 = 0,
+            ),
+        ).pbEncode()
     }
 }

@@ -1,11 +1,11 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.action.SsoReadedReportC2C
-import org.ntqqrev.acidify.internal.packet.message.action.SsoReadedReportGroup
-import org.ntqqrev.acidify.internal.packet.message.action.SsoReadedReportReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.action.SsoReadedReportC2C
+import org.ntqqrev.acidify.internal.proto.message.action.SsoReadedReportGroup
+import org.ntqqrev.acidify.internal.proto.message.action.SsoReadedReportReq
 import org.ntqqrev.acidify.internal.service.NoOutputService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object ReportMessageRead :
     NoOutputService<ReportMessageRead.Req>("trpc.msg.msg_svc.MsgService.SsoReadedReport") {
@@ -19,22 +19,21 @@ internal object ReportMessageRead :
     override fun build(client: LagrangeClient, payload: Req): ByteArray {
         return if (payload.targetUid != null) {
             // Friend message
-            SsoReadedReportReq {
-                it[c2c] = SsoReadedReportC2C {
-                    it[targetUid] = payload.targetUid
-                    it[time] = payload.time
-                    it[startSequence] = payload.startSequence
-                }
-            }.toByteArray()
+            SsoReadedReportReq(
+                c2c = SsoReadedReportC2C(
+                    targetUid = payload.targetUid,
+                    time = payload.time,
+                    startSequence = payload.startSequence,
+                )
+            ).pbEncode()
         } else {
             // Group message
-            SsoReadedReportReq {
-                it[group] = SsoReadedReportGroup {
-                    it[groupUin] = payload.groupUin!!
-                    it[startSequence] = payload.startSequence
-                }
-            }.toByteArray()
+            SsoReadedReportReq(
+                group = SsoReadedReportGroup(
+                    groupUin = payload.groupUin!!,
+                    startSequence = payload.startSequence,
+                )
+            ).pbEncode()
         }
     }
 }
-

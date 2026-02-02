@@ -1,11 +1,11 @@
 package org.ntqqrev.acidify
 
 import org.ntqqrev.acidify.exception.MessageSendException
-import org.ntqqrev.acidify.internal.packet.message.media.FileId
-import org.ntqqrev.acidify.internal.packet.message.media.IndexNode
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.media.FileId
+import org.ntqqrev.acidify.internal.proto.message.media.IndexNode
 import org.ntqqrev.acidify.internal.service.group.FetchGroupExtraInfo
 import org.ntqqrev.acidify.internal.service.message.*
+import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.message.internal.MessageBuildingContext
 import org.ntqqrev.acidify.message.internal.MessageParsingContext.Companion.parseForwardedMessage
@@ -108,10 +108,10 @@ suspend fun Bot.recallFriendMessage(
         )
     ).firstOrNull() ?: throw IllegalStateException("消息不存在")
 
-    val contentHead = raw.get { contentHead }
-    val random = contentHead.get { random }
-    val timestamp = contentHead.get { time }
-    val privateSequence = contentHead.get { this.sequence }
+    val contentHead = raw.contentHead
+    val random = contentHead.random
+    val timestamp = contentHead.time
+    val privateSequence = contentHead.sequence
 
     client.callService(
         RecallFriendMessage,
@@ -206,13 +206,13 @@ suspend fun Bot.getDownloadUrl(resourceId: String): String {
         .replace("-", "+")
         .replace("_", "/")
         .padEnd(actualLength, '=')
-    val fileIdDecoded = FileId(Base64.decode(normalizedBase64))
-    val appId = fileIdDecoded.get { appId }
-    val indexNode = IndexNode {
-        it[fileUuid] = resourceId
-        it[storeId] = fileIdDecoded.get { storeId }
-        it[ttl] = fileIdDecoded.get { ttl }
-    }
+    val fileIdDecoded = Base64.decode(normalizedBase64).pbDecode<FileId>()
+    val appId = fileIdDecoded.appId
+    val indexNode = IndexNode(
+        fileUuid = resourceId,
+        storeId = fileIdDecoded.storeId,
+        ttl = fileIdDecoded.ttl,
+    )
     return client.callService(
         when (appId) {
             1402 -> RichMediaDownload.PrivateRecord

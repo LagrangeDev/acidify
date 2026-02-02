@@ -1,24 +1,24 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.action.SsoGetPeerSeqReq
-import org.ntqqrev.acidify.internal.packet.message.action.SsoGetPeerSeqResp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.action.SsoGetPeerSeqReq
+import org.ntqqrev.acidify.internal.proto.message.action.SsoGetPeerSeqResp
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import kotlin.math.max
 
 internal object GetFriendLatestSequence : Service<String, Long>("trpc.msg.msg_svc.MsgService.SsoGetPeerSeq") {
     override fun build(client: LagrangeClient, payload: String): ByteArray {
-        return SsoGetPeerSeqReq {
-            it[peerUid] = payload
-        }.toByteArray()
+        return SsoGetPeerSeqReq(
+            peerUid = payload
+        ).pbEncode()
     }
 
     override fun parse(client: LagrangeClient, payload: ByteArray): Long {
-        val resp = SsoGetPeerSeqResp(payload)
-        val seq1 = resp.get { seq1 }
-        val seq2 = resp.get { seq2 }
+        val resp = payload.pbDecode<SsoGetPeerSeqResp>()
+        val seq1 = resp.seq1
+        val seq2 = resp.seq2
         return max(seq1, seq2)
     }
 }
-

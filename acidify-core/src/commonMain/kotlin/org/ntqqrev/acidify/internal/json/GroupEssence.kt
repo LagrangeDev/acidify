@@ -1,4 +1,4 @@
-package org.ntqqrev.acidify.internal.packet.misc
+package org.ntqqrev.acidify.internal.json
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

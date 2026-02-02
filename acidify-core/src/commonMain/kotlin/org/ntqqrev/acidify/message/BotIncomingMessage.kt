@@ -1,7 +1,6 @@
 package org.ntqqrev.acidify.message
 
-import org.ntqqrev.acidify.internal.packet.message.CommonMessage
-import org.ntqqrev.acidify.internal.protobuf.PbObject
+import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import kotlin.js.JsExport
 
 /**
@@ -35,7 +34,7 @@ class BotIncomingMessage internal constructor(
     val clientSequence: Long,
     val random: Int,
     val messageUid: Long,
-    internal val raw: PbObject<CommonMessage>,
+    internal val raw: CommonMessage,
 ) {
     lateinit var segments: List<BotIncomingSegment>
         internal set

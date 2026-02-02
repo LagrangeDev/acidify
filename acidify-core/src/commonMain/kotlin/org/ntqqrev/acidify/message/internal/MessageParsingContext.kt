@@ -3,21 +3,18 @@ package org.ntqqrev.acidify.message.internal
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import org.ntqqrev.acidify.Bot
-import org.ntqqrev.acidify.internal.packet.message.CommonMessage
-import org.ntqqrev.acidify.internal.packet.message.Elem
+import org.ntqqrev.acidify.internal.json.GroupEssenceMsgItem
 import org.ntqqrev.acidify.internal.packet.message.PushMsgType
-import org.ntqqrev.acidify.internal.packet.message.extra.PrivateFileExtra
-import org.ntqqrev.acidify.internal.packet.misc.GroupEssenceMsgItem
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.PbOptional
-import org.ntqqrev.acidify.internal.protobuf.PbSchema
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.CommonMessage
+import org.ntqqrev.acidify.internal.proto.message.Elem
+import org.ntqqrev.acidify.internal.proto.message.extra.PrivateFileExtra
+import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.message.BotIncomingMessage.ExtraInfo
 
 internal class MessageParsingContext(
     val scene: MessageScene,
-    val elems: List<PbObject<Elem>>,
+    val elems: List<Elem>,
     val bot: Bot,
 ) {
     var currentIndex = 0
@@ -27,12 +24,9 @@ internal class MessageParsingContext(
 
     fun hasNext(): Boolean = currentIndex < elems.size
 
-    fun peek(): PbObject<Elem> = elems[currentIndex]
+    fun peek(): Elem = elems[currentIndex]
 
-    fun <T : PbSchema> tryPeekType(type: PbOptional<PbObject<T>>): PbObject<T>? = peek()[type]
-
-    inline fun <T : PbSchema> tryPeekType(typeProvider: Elem.() -> PbOptional<PbObject<T>>) =
-        tryPeekType(Elem.typeProvider())
+    inline fun <T> tryPeekType(typeProvider: Elem.() -> T?): T? = peek().typeProvider()
 
     fun skip(count: Int = 1) {
         if (currentIndex + count > elems.size) {
@@ -58,23 +52,22 @@ internal class MessageParsingContext(
             IncomingSegmentFactory.LightApp,
         )
 
-        internal fun Bot.parseMessage(raw: PbObject<CommonMessage>): BotIncomingMessage? {
-            val contentHead = raw.get { contentHead }
-            val pushMsgType = PushMsgType.from(contentHead.get { type }) ?: return null
+        internal fun Bot.parseMessage(raw: CommonMessage): BotIncomingMessage? {
+            val contentHead = raw.contentHead
+            val pushMsgType = PushMsgType.from(contentHead.type) ?: return null
             val draftMsg = buildDraftMessage(raw, pushMsgType) ?: return null
             val segments = if (pushMsgType != PushMsgType.FriendFileMessage) {
-                buildSegments(raw.get { messageBody }.get { richText }.get { elems }, draftMsg.scene) {
+                buildSegments(raw.messageBody.richText.elems, draftMsg.scene) {
                     draftMsg.extraInfo = it
                 }
             } else {
-                val notOnlineFile = PrivateFileExtra(raw.get { messageBody }.get { msgContent })
-                    .get { notOnlineFile }
+                val notOnlineFile = raw.messageBody.msgContent.pbDecode<PrivateFileExtra>().notOnlineFile
                 listOf(
                     BotIncomingSegment.File(
-                        fileId = notOnlineFile.get { fileUuid },
-                        fileName = notOnlineFile.get { fileName },
-                        fileSize = notOnlineFile.get { fileSize },
-                        fileHash = notOnlineFile.get { fileIdCrcMedia }
+                        fileId = notOnlineFile.fileUuid,
+                        fileName = notOnlineFile.fileName,
+                        fileSize = notOnlineFile.fileSize,
+                        fileHash = notOnlineFile.fileIdCrcMedia
                     )
                 )
             }
@@ -87,41 +80,41 @@ internal class MessageParsingContext(
             return draftMsg
         }
 
-        private fun Bot.buildDraftMessage(raw: PbObject<CommonMessage>, pushMsgType: PushMsgType): BotIncomingMessage? {
-            val routingHead = raw.get { routingHead }
-            val contentHead = raw.get { contentHead }
+        private fun Bot.buildDraftMessage(raw: CommonMessage, pushMsgType: PushMsgType): BotIncomingMessage? {
+            val routingHead = raw.routingHead
+            val contentHead = raw.contentHead
 
             return when (pushMsgType) {
                 PushMsgType.FriendMessage,
                 PushMsgType.FriendRecordMessage,
                 PushMsgType.FriendFileMessage -> {
-                    val isSelfSend = routingHead.get { fromUin } == this.uin
+                    val isSelfSend = routingHead.fromUin == this.uin
                     BotIncomingMessage(
                         scene = MessageScene.FRIEND,
-                        peerUin = if (isSelfSend) routingHead.get { toUin } else routingHead.get { fromUin },
-                        peerUid = if (isSelfSend) routingHead.get { toUid } else routingHead.get { fromUid },
-                        sequence = contentHead.get { clientSequence },
-                        timestamp = contentHead.get { time },
-                        senderUin = routingHead.get { fromUin },
-                        senderUid = routingHead.get { fromUid },
-                        clientSequence = contentHead.get { sequence }, // weird
-                        random = contentHead.get { random },
-                        messageUid = contentHead.get { msgUid },
+                        peerUin = if (isSelfSend) routingHead.toUin else routingHead.fromUin,
+                        peerUid = if (isSelfSend) routingHead.toUid else routingHead.fromUid,
+                        sequence = contentHead.clientSequence,
+                        timestamp = contentHead.time,
+                        senderUin = routingHead.fromUin,
+                        senderUid = routingHead.fromUid,
+                        clientSequence = contentHead.sequence, // weird
+                        random = contentHead.random,
+                        messageUid = contentHead.msgUid,
                         raw = raw,
                     )
                 }
 
                 PushMsgType.GroupMessage -> BotIncomingMessage(
                     scene = MessageScene.GROUP,
-                    peerUin = routingHead.get { group }.get { groupCode },
-                    peerUid = routingHead.get { toUid },
-                    sequence = contentHead.get { sequence },
-                    timestamp = contentHead.get { time },
-                    senderUin = routingHead.get { fromUin },
-                    senderUid = routingHead.get { fromUid },
-                    clientSequence = contentHead.get { clientSequence },
-                    random = contentHead.get { random },
-                    messageUid = contentHead.get { msgUid },
+                    peerUin = routingHead.group.groupCode,
+                    peerUid = routingHead.toUid,
+                    sequence = contentHead.sequence,
+                    timestamp = contentHead.time,
+                    senderUin = routingHead.fromUin,
+                    senderUid = routingHead.fromUid,
+                    clientSequence = contentHead.clientSequence,
+                    random = contentHead.random,
+                    messageUid = contentHead.msgUid,
                     raw = raw,
                 )
 
@@ -130,7 +123,7 @@ internal class MessageParsingContext(
         }
 
         internal fun Bot.buildSegments(
-            elems: List<PbObject<Elem>>,
+            elems: List<Elem>,
             scene: MessageScene,
             onExtraInfo: ((ExtraInfo) -> Unit)? = null
         ): List<BotIncomingSegment> {
@@ -140,9 +133,9 @@ internal class MessageParsingContext(
                 ctx.tryPeekType { this.extraInfo }?.let {
                     onExtraInfo?.invoke(
                         ExtraInfo(
-                            nick = it.get { nick },
-                            groupCard = it.get { groupCard },
-                            specialTitle = it.get { senderTitle },
+                            nick = it.nick,
+                            groupCard = it.groupCard,
+                            specialTitle = it.senderTitle,
                         )
                     )
                     ctx.consume()
@@ -164,20 +157,20 @@ internal class MessageParsingContext(
             return segments
         }
 
-        internal fun Bot.parseForwardedMessage(raw: PbObject<CommonMessage>): BotForwardedMessage? {
-            val routingHead = raw.get { routingHead }
-            val contentHead = raw.get { contentHead }
-            val senderName = routingHead.get { commonC2C }.get { name }.takeIf { it.isNotEmpty() }
-                ?: routingHead.get { group }.get { groupCard }.takeIf { it.isNotEmpty() }
+        internal fun Bot.parseForwardedMessage(raw: CommonMessage): BotForwardedMessage? {
+            val routingHead = raw.routingHead
+            val contentHead = raw.contentHead
+            val senderName = routingHead.commonC2C.name.takeIf { it.isNotEmpty() }
+                ?: routingHead.group.groupCard.takeIf { it.isNotEmpty() }
                 ?: "QQ用户"
-            val avatarUrl = contentHead.get { forwardExt }.get { avatar }
+            val avatarUrl = contentHead.forwardExt.avatar
             val message = BotForwardedMessage(
                 senderName = senderName,
                 avatarUrl = avatarUrl,
-                timestamp = contentHead.get { time }
+                timestamp = contentHead.time
             )
             val segments = buildSegments(
-                elems = raw.get { messageBody }.get { richText }.get { this.elems },
+                elems = raw.messageBody.richText.elems,
                 scene = MessageScene.FRIEND
             )
             if (segments.isEmpty()) {

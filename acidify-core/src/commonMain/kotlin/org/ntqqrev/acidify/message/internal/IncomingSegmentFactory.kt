@@ -3,17 +3,16 @@ package org.ntqqrev.acidify.message.internal
 import korlibs.io.compression.deflate.ZLib
 import korlibs.io.compression.uncompress
 import kotlinx.serialization.decodeFromString
-import org.ntqqrev.acidify.internal.packet.message.elem.SourceMsg
-import org.ntqqrev.acidify.internal.packet.message.extra.GroupFileExtra
-import org.ntqqrev.acidify.internal.packet.message.extra.QBigFaceExtra
-import org.ntqqrev.acidify.internal.packet.message.extra.QSmallFaceExtra
-import org.ntqqrev.acidify.internal.packet.message.media.MsgInfo
-import org.ntqqrev.acidify.internal.packet.message.misc.IncomingForwardBody
-import org.ntqqrev.acidify.internal.packet.message.misc.LightAppPayload
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.json.message.IncomingForwardBody
+import org.ntqqrev.acidify.internal.json.message.LightAppPayload
+import org.ntqqrev.acidify.internal.proto.message.elem.SourceMsg
+import org.ntqqrev.acidify.internal.proto.message.extra.GroupFileExtra
+import org.ntqqrev.acidify.internal.proto.message.extra.QBigFaceExtra
+import org.ntqqrev.acidify.internal.proto.message.extra.QSmallFaceExtra
+import org.ntqqrev.acidify.internal.proto.message.media.MsgInfo
 import org.ntqqrev.acidify.internal.util.BinaryReader
 import org.ntqqrev.acidify.internal.util.Prefix
+import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.internal.util.readUInt32BE
 import org.ntqqrev.acidify.message.BotIncomingSegment
 import org.ntqqrev.acidify.message.ImageSubType
@@ -27,11 +26,11 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Text : IncomingSegmentFactory<BotIncomingSegment.Text> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Text? {
             val text = ctx.tryPeekType { text }
-                ?.takeIf { it.get { attr6Buf }.isEmpty() }
+                ?.takeIf { it.attr6Buf.isEmpty() }
                 ?: return null
             ctx.consume()
             return BotIncomingSegment.Text(
-                text = text.get { textMsg }
+                text = text.textMsg
             )
         }
     }
@@ -39,13 +38,13 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Mention : IncomingSegmentFactory<BotIncomingSegment.Mention> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Mention? {
             val at = ctx.tryPeekType { text }
-                ?.takeIf { it.get { attr6Buf }.size >= 11 }
+                ?.takeIf { it.attr6Buf.size >= 11 }
                 ?: return null
             ctx.consume()
-            val attr6 = at.get { attr6Buf }
+            val attr6 = at.attr6Buf
             return BotIncomingSegment.Mention(
                 uin = attr6.readUInt32BE(7).takeIf { it > 0 },
-                name = at.get { textMsg }
+                name = at.textMsg
             )
         }
     }
@@ -54,25 +53,25 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Face? {
             ctx.tryPeekType { face }?.let { face ->
                 ctx.consume()
-                val detail = ctx.bot.faceDetailMap[face.get { index }.toString()]
+                val detail = ctx.bot.faceDetailMap[face.index.toString()]
                 return BotIncomingSegment.Face(
-                    faceId = face.get { index },
+                    faceId = face.index,
                     summary = "[${detail?.qDes?.removePrefix("/") ?: "表情"}]",
                     isLarge = false,
                 )
             }
 
             ctx.tryPeekType { commonElem }?.let { common ->
-                val serviceType = common.get { serviceType }
+                val serviceType = common.serviceType
                 if (serviceType == 33) {
                     ctx.consume()
-                    val extra = PbObject(QSmallFaceExtra, common.get { pbElem })
-                    val faceId = extra.get { faceId }
+                    val extra = common.pbElem.pbDecode<QSmallFaceExtra>()
+                    val faceId = extra.faceId
                     val detail = ctx.bot.faceDetailMap[faceId.toString()]
                     return BotIncomingSegment.Face(
                         faceId = faceId,
                         summary = "[${
-                            (detail?.qDes ?: extra.get { text }.takeIf { it.isNotEmpty() })
+                            (detail?.qDes ?: extra.text.takeIf { it.isNotEmpty() })
                                 ?.removePrefix("/")
                                 ?: "表情"
                         }]",
@@ -82,8 +81,8 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
 
                 if (serviceType == 37) {
                     ctx.consume()
-                    val extra = PbObject(QBigFaceExtra, common.get { pbElem })
-                    val faceId = extra.get { faceId }
+                    val extra = common.pbElem.pbDecode<QBigFaceExtra>()
+                    val faceId = extra.faceId
                     val detail = ctx.bot.faceDetailMap[faceId.toString()]
                     if (ctx.hasNext()) {
                         ctx.tryPeekType { text }?.let { ctx.skip() }
@@ -91,7 +90,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
                     return BotIncomingSegment.Face(
                         faceId = faceId,
                         summary = "[${
-                            (detail?.qDes ?: extra.get { preview }.takeIf { it.isNotEmpty() })
+                            (detail?.qDes ?: extra.preview.takeIf { it.isNotEmpty() })
                                 ?.removePrefix("/")
                                 ?: "超级表情"
                         }]",
@@ -127,12 +126,16 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
             }
             return BotIncomingSegment.Reply(
                 sequence = when (ctx.scene) {
-                    MessageScene.GROUP -> reply.get { origSeqs }.firstOrNull() ?: 0L
-                    else -> SourceMsg.PbReserve(reply.get { pbReserve }).get { friendSequence }
+                    MessageScene.GROUP -> reply.origSeqs.firstOrNull() ?: 0L
+                    else -> if (reply.pbReserve.isNotEmpty()) {
+                        reply.pbReserve.pbDecode<SourceMsg.PbReserve>().friendSequence
+                    } else {
+                        0L
+                    }
                 },
-                senderUin = reply.get { senderUin },
+                senderUin = reply.senderUin,
                 segments = ctx.bot.buildSegments(
-                    elems = reply.get { elems },
+                    elems = reply.elems,
                     scene = ctx.scene,
                 ),
             )
@@ -142,21 +145,22 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Image : IncomingSegmentFactory<BotIncomingSegment.Image> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Image? {
             val common = ctx.tryPeekType { commonElem } ?: return null
-            val businessType = common.get { businessType }
+            val businessType = common.businessType
             if (businessType != 10 && businessType != 20) return null
             ctx.consume()
-            val msgInfo = MsgInfo(common.get { pbElem })
-            val info = msgInfo.get { msgInfoBody }.firstOrNull()?.get { index }?.get { info } ?: return null
-            val picBiz = msgInfo.get { extBizInfo }.get { pic }
+            val msgInfo = common.pbElem.pbDecode<MsgInfo>()
+            val index = msgInfo.msgInfoBody.firstOrNull()?.index ?: return null
+            val info = index.info
+            val picBiz = msgInfo.extBizInfo.pic
             return BotIncomingSegment.Image(
-                fileId = msgInfo.get { msgInfoBody }.first().get { index }.get { fileUuid },
-                width = info.get { width },
-                height = info.get { height },
-                subType = when (picBiz.get { bizType }) {
+                fileId = index.fileUuid,
+                width = info.width,
+                height = info.height,
+                subType = when (picBiz.bizType) {
                     0 -> ImageSubType.NORMAL
                     else -> ImageSubType.STICKER
                 },
-                summary = picBiz.get { textSummary }.ifEmpty { "[图片]" },
+                summary = picBiz.textSummary.ifEmpty { "[图片]" },
             )
         }
     }
@@ -164,15 +168,15 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Record : IncomingSegmentFactory<BotIncomingSegment.Record> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Record? {
             val common = ctx.tryPeekType { commonElem } ?: return null
-            val businessType = common.get { businessType }
+            val businessType = common.businessType
             if (businessType != 12 && businessType != 22) return null
             ctx.consume()
-            val msgInfo = MsgInfo(common.get { pbElem })
-            val index = msgInfo.get { msgInfoBody }.firstOrNull()?.get { index } ?: return null
-            val info = index.get { info }
+            val msgInfo = common.pbElem.pbDecode<MsgInfo>()
+            val index = msgInfo.msgInfoBody.firstOrNull()?.index ?: return null
+            val info = index.info
             return BotIncomingSegment.Record(
-                fileId = index.get { fileUuid },
-                duration = info.get { time },
+                fileId = index.fileUuid,
+                duration = info.time,
             )
         }
     }
@@ -180,17 +184,17 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Video : IncomingSegmentFactory<BotIncomingSegment.Video> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Video? {
             val common = ctx.tryPeekType { commonElem } ?: return null
-            val businessType = common.get { businessType }
+            val businessType = common.businessType
             if (businessType != 11 && businessType != 21) return null
             ctx.consume()
-            val msgInfo = MsgInfo(common.get { pbElem })
-            val videoIndex = msgInfo.get { msgInfoBody }.firstOrNull()?.get { index } ?: return null
-            val videoInfo = videoIndex.get { info }
+            val msgInfo = common.pbElem.pbDecode<MsgInfo>()
+            val videoIndex = msgInfo.msgInfoBody.firstOrNull()?.index ?: return null
+            val videoInfo = videoIndex.info
             return BotIncomingSegment.Video(
-                fileId = videoIndex.get { fileUuid },
-                duration = videoInfo.get { time },
-                width = videoInfo.get { width },
-                height = videoInfo.get { height },
+                fileId = videoIndex.fileUuid,
+                duration = videoInfo.time,
+                width = videoInfo.width,
+                height = videoInfo.height,
             )
         }
     }
@@ -199,18 +203,18 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.File? {
             if (ctx.scene != MessageScene.GROUP) return null
             val trans = ctx.tryPeekType { transElemInfo } ?: return null
-            if (trans.get { elemType } != 24) return null
+            if (trans.elemType != 24) return null
             ctx.consume()
-            val payload = trans.get { elemValue }
+            val payload = trans.elemValue
             val reader = BinaryReader(payload)
             reader.readByte() // skip 1 byte (same as Skip(1))
             val data = reader.readPrefixedBytes(Prefix.UINT_16)
-            val extra = PbObject(GroupFileExtra, data)
-            val info = extra.get { inner }.get { info }
+            val extra = data.pbDecode<GroupFileExtra>()
+            val info = extra.inner.info
             return BotIncomingSegment.File(
-                fileId = info.get { fileId },
-                fileName = info.get { fileName },
-                fileSize = info.get { fileSize },
+                fileId = info.fileId,
+                fileName = info.fileName,
+                fileSize = info.fileSize,
             )
         }
     }
@@ -219,7 +223,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Forward? {
             val forward = ctx.tryPeekType { richMsg } ?: return null
             ctx.consume()
-            val bytesTemplate1 = forward.get { bytesTemplate1 }
+            val bytesTemplate1 = forward.bytesTemplate1
             val xml = ZLib.uncompress(
                 bytesTemplate1.sliceArray(1 until bytesTemplate1.size)
             ).decodeToString()
@@ -238,16 +242,16 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.MarketFace? {
             val market = ctx.tryPeekType { marketFace } ?: return null
             ctx.consume()
-            if (ctx.tryPeekType { text }?.get { textMsg } == market.get { summary }) {
+            if (ctx.tryPeekType { text }?.textMsg == market.summary) {
                 ctx.skip()
             }
-            val faceIdHex = market.get { faceId }.toHexString()
+            val faceIdHex = market.faceId.toHexString()
             return BotIncomingSegment.MarketFace(
                 url = "https://gxh.vip.qq.com/club/item/parcel/item/${faceIdHex.take(2)}/$faceIdHex/raw300.gif",
-                summary = market.get { summary },
+                summary = market.summary,
                 emojiId = faceIdHex,
-                emojiPackageId = market.get { tabId },
-                key = market.get { key },
+                emojiPackageId = market.tabId,
+                key = market.key,
             )
         }
     }
@@ -259,7 +263,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
             if (ctx.tryPeekType { text } != null) {
                 ctx.skip()
             }
-            val compressed = elem.get { bytesData }
+            val compressed = elem.bytesData
             val json = ZLib.uncompress(compressed.sliceArray(1 until compressed.size)).decodeToString()
             val appName = LightAppPayload.jsonModule.decodeFromString<LightAppPayload>(json).app
             return BotIncomingSegment.LightApp(

@@ -7,10 +7,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.event.*
-import org.ntqqrev.acidify.internal.packet.message.PushMsg
 import org.ntqqrev.acidify.internal.packet.message.PushMsgType
-import org.ntqqrev.acidify.internal.packet.message.extra.*
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.PushMsg
+import org.ntqqrev.acidify.internal.proto.message.extra.*
+import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.BotIncomingSegment
 import org.ntqqrev.acidify.message.MessageScene
 import org.ntqqrev.acidify.message.internal.MessageParsingContext.Companion.parseMessage
@@ -23,12 +23,12 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     @OptIn(ExperimentalTime::class)
     @Suppress("duplicatedCode")
     override suspend fun parse(bot: Bot, payload: ByteArray): List<AcidifyEvent> {
-        val commonMsg = PushMsg(payload).get { message }
-        val contentHead = commonMsg.get { contentHead }
-        val routingHead = commonMsg.get { routingHead }
-        val msgBody = commonMsg.get { messageBody }
-        val msgContent = msgBody.get { msgContent }
-        val pushMsgType = PushMsgType.from(contentHead.get { type })
+        val commonMsg = payload.pbDecode<PushMsg>().message
+        val contentHead = commonMsg.contentHead
+        val routingHead = commonMsg.routingHead
+        val msgBody = commonMsg.messageBody
+        val msgContent = msgBody.msgContent
+        val pushMsgType = PushMsgType.from(contentHead.type)
 
         when (pushMsgType) {
             PushMsgType.FriendMessage,
@@ -112,9 +112,9 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
 
         return when (pushMsgType) {
             PushMsgType.GroupJoinRequest -> {
-                val content = GroupJoinRequest(msgContent)
-                val groupUin = content.get { groupUin }
-                val memberUid = content.get { memberUid }
+                val content = msgContent.pbDecode<GroupJoinRequest>()
+                val groupUin = content.groupUin
+                val memberUid = content.memberUid
                 val memberUin = bot.getUinByUid(memberUid)
 
                 val recentNotifications =
@@ -144,13 +144,13 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             }
 
             PushMsgType.GroupInvitedJoinRequest -> {
-                val content = GroupInvitedJoinRequest(msgContent)
-                if (content.get { command } == 87) {
-                    val info = content.get { info } ?: return listOf()
-                    val inner = info.get { inner } ?: return listOf()
-                    val groupUin = inner.get { groupUin }
-                    val targetUid = inner.get { targetUid }
-                    val invitorUid = inner.get { invitorUid }
+                val content = msgContent.pbDecode<GroupInvitedJoinRequest>()
+                if (content.command == 87) {
+                    val info = content.info ?: return listOf()
+                    val inner = info.inner ?: return listOf()
+                    val groupUin = inner.groupUin
+                    val targetUid = inner.targetUid
+                    val invitorUid = inner.invitorUid
                     val targetUin = bot.getUinByUid(targetUid)
                     val invitorUin = bot.getUinByUid(invitorUid)
 
@@ -185,15 +185,15 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             }
 
             PushMsgType.GroupAdminChange -> {
-                val content = GroupAdminChange(msgContent)
-                val groupUin = content.get { groupUin }
+                val content = msgContent.pbDecode<GroupAdminChange>()
+                val groupUin = content.groupUin
                 val group = bot.getGroup(groupUin) ?: return listOf()
                 group.getMembers() // ensure members are loaded, thus owner info is available
-                val body = content.get { body } ?: return listOf()
-                val (targetUid, isSet) = if (body.get { set } != null) {
-                    body.get { set }!!.get { targetUid } to true
-                } else if (body.get { unset } != null) {
-                    body.get { unset }!!.get { targetUid } to false
+                val body = content.body ?: return listOf()
+                val (targetUid, isSet) = if (body.set != null) {
+                    body.set.targetUid to true
+                } else if (body.unset != null) {
+                    body.unset.targetUid to false
                 } else {
                     return listOf()
                 }
@@ -211,16 +211,16 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             }
 
             PushMsgType.GroupMemberIncrease -> {
-                val content = GroupMemberChange(msgContent)
-                val groupUin = content.get { groupUin }
-                val memberUid = content.get { memberUid }
+                val content = msgContent.pbDecode<GroupMemberChange>()
+                val groupUin = content.groupUin
+                val memberUid = content.memberUid
                 val memberUin = bot.getUinByUid(memberUid)
-                val operatorInfoBytes = content.get { operatorInfo } ?: return listOf()
+                val operatorInfoBytes = content.operatorInfo ?: return listOf()
                 val operatorUid = operatorInfoBytes.decodeToString()
                 val operatorUin = bot.getUinByUid(operatorUid)
 
-                when (GroupMemberChange.IncreaseType.from(content.get { type })) {
-                    GroupMemberChange.IncreaseType.APPROVE -> listOf(
+                when (content.type) {
+                    130 -> listOf(
                         GroupMemberIncreaseEvent(
                             groupUin = groupUin,
                             userUin = memberUin,
@@ -232,7 +232,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                         )
                     )
 
-                    GroupMemberChange.IncreaseType.INVITE -> listOf(
+                    131 -> listOf(
                         GroupMemberIncreaseEvent(
                             groupUin = groupUin,
                             userUin = memberUin,
@@ -249,13 +249,14 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             }
 
             PushMsgType.GroupMemberDecrease -> {
-                val content = GroupMemberChange(msgContent)
-                val groupUin = content.get { groupUin }
-                val memberUid = content.get { memberUid }
+                val content = msgContent.pbDecode<GroupMemberChange>()
+                val groupUin = content.groupUin
+                val memberUid = content.memberUid
                 val memberUin = bot.getUinByUid(memberUid)
-                val operatorUid = content.get { operatorInfo }?.let {
-                    GroupMemberChange.OperatorInfo(it).get { body }?.get { uid }
-                }
+                val operatorUid = content.operatorInfo
+                    ?.pbDecode<GroupMemberChange.OperatorInfo>()
+                    ?.body
+                    ?.uid
                 val operatorUin = operatorUid?.let { bot.getUinByUid(it) }
 
                 listOf(
@@ -270,16 +271,15 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             }
 
             PushMsgType.Event0x210 -> {
-                val subType = contentHead.get { subType }
-                when (subType) {
+                when (val subType = contentHead.subType) {
                     35 -> { // FriendRequest
-                        val content = FriendRequest(msgContent)
-                        val body = content.get { body } ?: return listOf()
-                        val fromUid = body.get { fromUid }
-                        val fromUin = routingHead.get { fromUin }
-                        val comment = body.get { message }
-                        val via = body.get { via } ?: FriendRequestExtractVia(msgContent)
-                            .get { this.body }?.get { via } ?: ""
+                        val content = msgContent.pbDecode<FriendRequest>()
+                        val body = content.body ?: return listOf()
+                        val fromUid = body.fromUid
+                        val fromUin = routingHead.fromUin
+                        val comment = body.message
+                        val via = body.via ?: msgContent.pbDecode<FriendRequestExtractVia>()
+                            .body?.via ?: ""
 
                         listOf(
                             FriendRequestEvent(
@@ -292,12 +292,12 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     290 -> { // FriendGrayTip (FriendNudge)
-                        val content = GeneralGrayTip(msgContent)
-                        if (content.get { bizType } == 12) {
-                            val templateParamsMap = content.get { templateParams }.associate {
-                                it.get { key } to it.get { value }
+                        val content = msgContent.pbDecode<GeneralGrayTip>()
+                        if (content.bizType == 12) {
+                            val templateParamsMap = content.templateParams.associate {
+                                it.key to it.value
                             }
-                            val fromUin = routingHead.get { fromUin }
+                            val fromUin = routingHead.fromUin
                             val uin1 = templateParamsMap["uin_str1"]?.toLongOrNull() ?: return listOf()
                             val uin2 = templateParamsMap["uin_str2"]?.toLongOrNull() ?: return listOf()
                             val action = templateParamsMap["action_str"]
@@ -322,12 +322,12 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     138, 139 -> { // FriendRecall, FriendSelfRecall
-                        val content = FriendRecall(msgContent)
-                        val body = content.get { body } ?: return listOf()
-                        val fromUid = body.get { fromUid }
-                        val toUid = body.get { toUid }
-                        val sequence = body.get { sequence }.toLong()
-                        val displaySuffix = body.get { tipInfo }?.get { tip } ?: ""
+                        val content = msgContent.pbDecode<FriendRecall>()
+                        val body = content.body ?: return listOf()
+                        val fromUid = body.fromUid
+                        val toUid = body.toUid
+                        val sequence = body.sequence.toLong()
+                        val displaySuffix = body.tipInfo?.tip ?: ""
                         val fromUin = bot.getUinByUid(fromUid)
                         val toUin = bot.getUinByUid(toUid)
 
@@ -346,13 +346,13 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     39 -> { // FriendDeleteOrPinChanged
-                        val content = FriendDeleteOrPinChanged(msgContent)
-                        val body = content.get { body }
-                        val pinChanged = body.get { pinChanged } ?: return listOf()
-                        val pinBody = pinChanged.get { this.body }
-                        val uid = pinBody.get { uid }
-                        val groupUin = pinBody.get { groupUin }
-                        val isPin = pinBody.get { info }.get { timestamp }.isNotEmpty()
+                        val content = msgContent.pbDecode<FriendDeleteOrPinChanged>()
+                        val body = content.body
+                        val pinChanged = body.pinChanged ?: return listOf()
+                        val pinBody = pinChanged.body
+                        val uid = pinBody.uid
+                        val groupUin = pinBody.groupUin
+                        val isPin = pinBody.info.timestamp.isNotEmpty()
                         val (scene, targetUin) = if (groupUin != null) {
                             MessageScene.GROUP to groupUin
                         } else {
@@ -374,17 +374,17 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             }
 
             PushMsgType.Event0x2DC -> {
-                val subType = contentHead.get { subType }
+                val subType = contentHead.subType
                 when (subType) {
                     12 -> { // GroupMute
-                        val content = GroupMute(msgContent)
-                        val groupUin = content.get { groupUin }
-                        val operatorUid = content.get { operatorUid }
+                        val content = msgContent.pbDecode<GroupMute>()
+                        val groupUin = content.groupUin
+                        val operatorUid = content.operatorUid
                         val operatorUin = bot.getUinByUid(operatorUid)
-                        val info = content.get { info } ?: return listOf()
-                        val state = info.get { state } ?: return listOf()
-                        val targetUid = state.get { targetUid }
-                        val duration = state.get { duration }
+                        val info = content.info ?: return listOf()
+                        val state = info.state ?: return listOf()
+                        val targetUid = state.targetUid
+                        val duration = state.duration
 
                         if (targetUid != null) {
                             val targetUin = bot.getUinByUid(targetUid)
@@ -417,16 +417,15 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     20 -> { // GroupGrayTip (may contain GroupNudge)
-                        val wrapper = GroupGeneral0x2DC.Body(
-                            GroupGeneral0x2DC(msgContent).body
-                        )
-                        val content = wrapper.get { generalGrayTip } ?: return listOf()
+                        val wrapper = GroupGeneral0x2DC(msgContent)
+                        val body = wrapper.body
+                        val content = body.generalGrayTip ?: return listOf()
 
-                        if (content.get { bizType } == 12) {
-                            val templateParamsMap = content.get { templateParams }.associate {
-                                it.get { key } to it.get { value }
+                        if (content.bizType == 12) {
+                            val templateParamsMap = content.templateParams.associate {
+                                it.key to it.value
                             }
-                            val groupUin = wrapper.get { groupUin }
+                            val groupUin = if (body.groupUin != 0L) body.groupUin else wrapper.groupUin
                             val uin1 = templateParamsMap["uin_str1"]?.toLongOrNull() ?: return listOf()
                             val uin2 = templateParamsMap["uin_str2"]?.toLongOrNull() ?: return listOf()
                             val action = templateParamsMap["action_str"]
@@ -452,14 +451,13 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     21 -> { // GroupEssenceMessageChange
-                        val wrapper = GroupGeneral0x2DC.Body(
-                            GroupGeneral0x2DC(msgContent).body
-                        )
-                        val content = wrapper.get { essenceMessageChange } ?: return listOf()
-                        val groupUin = content.get { groupUin }
-                        val msgSeq = content.get { msgSequence }.toLong()
-                        val operatorUin = content.get { operatorUin }
-                        val isSet = content.get { setFlag } == GroupEssenceMessageChange.SetFlag.ADD.value
+                        val wrapper = GroupGeneral0x2DC(msgContent)
+                        val body = wrapper.body
+                        val content = body.essenceMessageChange ?: return listOf()
+                        val groupUin = content.groupUin
+                        val msgSeq = content.msgSequence.toLong()
+                        val operatorUin = content.operatorUin
+                        val isSet = content.setFlag == 1
 
                         listOf(
                             GroupEssenceMessageChangeEvent(
@@ -472,22 +470,21 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     17 -> { // GroupRecall
-                        val wrapper = GroupGeneral0x2DC.Body(
-                            GroupGeneral0x2DC(msgContent).body
-                        )
-                        val content = wrapper.get { recall } ?: return listOf()
-                        val groupUin = wrapper.get { groupUin }
-                        val operatorUid = content.get { operatorUid }
+                        val wrapper = GroupGeneral0x2DC(msgContent)
+                        val body = wrapper.body
+                        val content = body.recall ?: return listOf()
+                        val groupUin = if (body.groupUin != 0L) body.groupUin else wrapper.groupUin
+                        val operatorUid = content.operatorUid
                         val operatorUin = bot.getUinByUid(operatorUid)
-                        val displaySuffix = content.get { tipInfo }?.get { tip } ?: ""
+                        val displaySuffix = content.tipInfo?.tip ?: ""
 
-                        content.get { recallMessages }.map { recall ->
-                            val authorUid = recall.get { authorUid }
+                        content.recallMessages.map { recall ->
+                            val authorUid = recall.authorUid
                             val authorUin = bot.getUinByUid(authorUid)
                             MessageRecallEvent(
                                 scene = MessageScene.GROUP,
                                 peerUin = groupUin,
-                                messageSeq = recall.get { sequence }.toLong(),
+                                messageSeq = recall.sequence.toLong(),
                                 senderUin = authorUin,
                                 senderUid = authorUid,
                                 operatorUin = operatorUin,
@@ -498,25 +495,24 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     }
 
                     16 -> { // SubType16 (may contain GroupReaction or GroupNameChange)
-                        val wrapper = GroupGeneral0x2DC.Body(
-                            GroupGeneral0x2DC(msgContent).body
-                        )
-                        val field13 = wrapper.get { field13 }
+                        val wrapper = GroupGeneral0x2DC(msgContent)
+                        val body = wrapper.body
+                        val field13 = body.field13
 
                         when (field13) {
                             35 -> { // GroupReaction
-                                val content = wrapper.get { reaction } ?: return listOf()
-                                val data = content.get { data } ?: return listOf()
-                                val dataMiddle = data.get { this.data } ?: return listOf()
-                                val target = dataMiddle.get { target } ?: return listOf()
-                                val dataInner = dataMiddle.get { this.data } ?: return listOf()
+                                val content = body.reaction ?: return listOf()
+                                val data = content.data ?: return listOf()
+                                val dataMiddle = data.data ?: return listOf()
+                                val target = dataMiddle.target ?: return listOf()
+                                val dataInner = dataMiddle.data ?: return listOf()
 
-                                val groupUin = wrapper.get { groupUin }
-                                val msgSeq = target.get { sequence }.toLong()
-                                val operatorUid = dataInner.get { operatorUid }
+                                val groupUin = if (body.groupUin != 0L) body.groupUin else wrapper.groupUin
+                                val msgSeq = target.sequence.toLong()
+                                val operatorUid = dataInner.operatorUid
                                 val operatorUin = bot.getUinByUid(operatorUid)
-                                val faceId = dataInner.get { code }
-                                val isAdd = dataInner.get { type } == 1
+                                val faceId = dataInner.code
+                                val isAdd = dataInner.type == 1
 
                                 listOf(
                                     GroupMessageReactionEvent(
@@ -531,11 +527,11 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                             }
 
                             12 -> { // GroupNameChange
-                                val eventParam = wrapper.get { eventParam } ?: return listOf()
-                                val content = GroupNameChange(eventParam)
-                                val groupUin = wrapper.get { groupUin }
-                                val newName = content.get { name }
-                                val operatorUid = wrapper.get { operatorUid } ?: return listOf()
+                                val eventParam = body.eventParam ?: return listOf()
+                                val content = eventParam.pbDecode<GroupNameChange>()
+                                val groupUin = if (body.groupUin != 0L) body.groupUin else wrapper.groupUin
+                                val newName = content.name
+                                val operatorUid = body.operatorUid ?: return listOf()
                                 val operatorUin = bot.getUinByUid(operatorUid)
 
                                 listOf(

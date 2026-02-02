@@ -8,9 +8,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.ntqqrev.acidify.exception.WebApiException
-import org.ntqqrev.acidify.internal.packet.misc.GroupAnnounceResponse
-import org.ntqqrev.acidify.internal.packet.misc.GroupAnnounceSendResponse
-import org.ntqqrev.acidify.internal.packet.misc.GroupEssenceResponse
+import org.ntqqrev.acidify.internal.json.GroupAnnounceResponse
+import org.ntqqrev.acidify.internal.json.GroupAnnounceSendResponse
+import org.ntqqrev.acidify.internal.json.GroupEssenceResponse
 import org.ntqqrev.acidify.internal.service.group.*
 import org.ntqqrev.acidify.internal.util.unescapeHttp
 import org.ntqqrev.acidify.message.BotEssenceMessageResult

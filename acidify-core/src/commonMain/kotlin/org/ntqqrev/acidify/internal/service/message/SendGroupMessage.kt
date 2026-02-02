@@ -1,17 +1,17 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.*
-import org.ntqqrev.acidify.internal.packet.message.action.PbSendMsgReq
-import org.ntqqrev.acidify.internal.packet.message.action.PbSendMsgResp
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.*
+import org.ntqqrev.acidify.internal.proto.message.action.PbSendMsgReq
+import org.ntqqrev.acidify.internal.proto.message.action.PbSendMsgResp
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SendGroupMessage : Service<SendGroupMessage.Req, SendGroupMessage.Resp>("MessageSvc.PbSendMsg") {
     class Req(
         val groupUin: Long,
-        val elems: List<PbObject<Elem>>,
+        val elems: List<Elem>,
         val clientSequence: Long,
         val random: Int,
     )
@@ -24,32 +24,28 @@ internal object SendGroupMessage : Service<SendGroupMessage.Req, SendGroupMessag
     )
 
     override fun build(client: LagrangeClient, payload: Req): ByteArray {
-        return PbSendMsgReq {
-            it[routingHead] = SendRoutingHead {
-                it[group] = SendRoutingHead.Grp {
-                    it[groupUin] = payload.groupUin
-                }
-            }
-            it[contentHead] = SendContentHead {
-                it[pkgNum] = 1
-            }
-            it[messageBody] = MessageBody {
-                it[richText] = RichText {
-                    it[elems] = payload.elems
-                }
-            }
-            it[clientSequence] = payload.clientSequence
-            it[random] = payload.random
-        }.toByteArray()
+        return PbSendMsgReq(
+            routingHead = SendRoutingHead(
+                group = SendRoutingHead.Grp(
+                    groupUin = payload.groupUin,
+                )
+            ),
+            contentHead = SendContentHead(pkgNum = 1),
+            messageBody = MessageBody(
+                richText = RichText(elems = payload.elems)
+            ),
+            clientSequence = payload.clientSequence,
+            random = payload.random,
+        ).pbEncode()
     }
 
     override fun parse(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = PbSendMsgResp(payload)
+        val resp = payload.pbDecode<PbSendMsgResp>()
         return Resp(
-            result = resp.get { result },
-            errMsg = resp.get { errMsg },
-            sendTime = resp.get { sendTime },
-            sequence = resp.get { sequence }
+            result = resp.result,
+            errMsg = resp.errMsg,
+            sendTime = resp.sendTime,
+            sequence = resp.sequence
         )
     }
 }

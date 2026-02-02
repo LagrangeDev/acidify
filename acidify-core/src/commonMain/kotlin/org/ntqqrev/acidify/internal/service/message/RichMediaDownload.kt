@@ -1,10 +1,10 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.media.*
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.message.MessageScene
 
 internal abstract class RichMediaDownload(
@@ -13,46 +13,40 @@ internal abstract class RichMediaDownload(
     val requestType: Int,
     val businessType: Int,
     val scene: MessageScene,
-) : OidbService<PbObject<IndexNode>, String>(oidbCommand, oidbService) {
-    override fun buildOidb(client: LagrangeClient, payload: PbObject<IndexNode>): ByteArray = NTV2RichMediaReq {
-        it[reqHead] = MultiMediaReqHead {
-            it[common] = CommonHead {
-                it[requestId] = 1
-                it[command] = oidbService
-            }
-            it[scene] = SceneInfo {
-                it[requestType] = this@RichMediaDownload.requestType
-                it[businessType] = this@RichMediaDownload.businessType
-                when (this@RichMediaDownload.scene) {
-                    MessageScene.FRIEND -> {
-                        it[sceneType] = 1
-                        it[c2C] = C2CUserInfo {
-                            it[targetUid] = client.sessionStore.uid
-                            it[accountType] = 2
-                        }
-                    }
-
-                    MessageScene.GROUP -> {
-                        it[sceneType] = 2
-                    }
-
-                    else -> {}
+) : OidbService<IndexNode, String>(oidbCommand, oidbService) {
+    override fun buildOidb(client: LagrangeClient, payload: IndexNode): ByteArray = NTV2RichMediaReq(
+        reqHead = MultiMediaReqHead(
+            common = CommonHead(
+                requestId = 1,
+                command = oidbService,
+            ),
+            scene = SceneInfo(
+                requestType = requestType,
+                businessType = businessType,
+                sceneType = when (scene) {
+                    MessageScene.FRIEND -> 1
+                    MessageScene.GROUP -> 2
+                    else -> 0
+                },
+                c2C = if (scene == MessageScene.FRIEND) {
+                    C2CUserInfo(
+                        targetUid = client.sessionStore.uid,
+                        accountType = 2,
+                    )
+                } else {
+                    C2CUserInfo()
                 }
-            }
-            it[this.client] = ClientMeta {
-                it[agentType] = 2
-            }
-        }
-        it[download] = DownloadReq {
-            it[node] = payload
-        }
-    }.toByteArray()
+            ),
+            client = ClientMeta(agentType = 2),
+        ),
+        download = DownloadReq(node = payload),
+    ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): String =
-        NTV2RichMediaResp(payload).let {
-            val download = it.get { download }
-            val downloadInfo = download.get { info }
-            "https://" + downloadInfo.get { domain } + downloadInfo.get { urlPath } + download.get { rKeyParam }
+        payload.pbDecode<NTV2RichMediaResp>().let {
+            val download = it.download
+            val downloadInfo = download.info
+            "https://" + downloadInfo.domain + downloadInfo.urlPath + download.rKeyParam
         }
 
     object GroupImage : RichMediaDownload(

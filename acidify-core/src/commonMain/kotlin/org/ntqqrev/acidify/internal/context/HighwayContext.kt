@@ -7,11 +7,11 @@ import io.ktor.http.*
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.media.*
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.system.FetchHighwayInfo
 import org.ntqqrev.acidify.internal.util.md5
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.internal.util.toIpString
 import org.ntqqrev.acidify.message.MessageScene
 
@@ -66,7 +66,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         image: ByteArray,
         imageMd5: ByteArray,
         imageSha1: ByteArray,
-        uploadResp: PbObject<UploadResp>,
+        uploadResp: UploadResp,
         messageScene: MessageScene,
     ) {
         val cmd = if (messageScene == MessageScene.FRIEND) 1003 else 1004
@@ -82,7 +82,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         record: ByteArray,
         recordMd5: ByteArray,
         recordSha1: ByteArray,
-        uploadResp: PbObject<UploadResp>,
+        uploadResp: UploadResp,
         messageScene: MessageScene,
     ) {
         upload(
@@ -97,7 +97,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         video: ByteArray,
         videoMd5: ByteArray,
         videoSha1: ByteArray,
-        uploadResp: PbObject<UploadResp>,
+        uploadResp: UploadResp,
         messageScene: MessageScene,
     ) {
         upload(
@@ -112,7 +112,7 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         thumbnail: ByteArray,
         thumbnailMd5: ByteArray,
         thumbnailSha1: ByteArray,
-        uploadResp: PbObject<UploadResp>,
+        uploadResp: UploadResp,
         messageScene: MessageScene,
     ) {
         upload(
@@ -124,41 +124,35 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
     }
 
     private fun buildExtendInfo(
-        uploadResp: PbObject<UploadResp>,
+        uploadResp: UploadResp,
         sha1: ByteArray,
         subFileInfoIdx: Int? = null
     ): ByteArray {
-        val msgInfoBodyList = uploadResp.get { msgInfo }.get { msgInfoBody }
-        val index = msgInfoBodyList[0].get { index }
+        val msgInfoBodyList: List<MsgInfoBody> = uploadResp.msgInfo.msgInfoBody
+        val index = msgInfoBodyList[0].index
+        val subFileInfo = subFileInfoIdx?.let { uploadResp.subFileInfos.getOrNull(it) }
+        val ipv4s = subFileInfo?.iPv4s ?: uploadResp.iPv4s
 
-        return NTV2RichMediaHighwayExt {
-            it[fileUuid] = index.get { fileUuid }
-            it[uKey] = if (subFileInfoIdx != null) {
-                uploadResp.get { subFileInfos }[subFileInfoIdx].get { uKey }
-            } else {
-                uploadResp.get { uKey }
-            }
-            it[network] = NTHighwayNetwork {
-                it[iPv4s] = (if (subFileInfoIdx != null) {
-                    uploadResp.get { subFileInfos }[subFileInfoIdx].get { iPv4s }
-                } else {
-                    uploadResp.get { iPv4s }
-                }).map { ipv4 ->
-                    NTHighwayIPv4 {
-                        it[domain] = NTHighwayDomain {
-                            it[isEnable] = true
-                            it[iP] = ipv4.get { outIP }.toIpString(reverseEndian = true)
-                        }
-                        it[port] = ipv4.get { outPort }
-                    }
+        return NTV2RichMediaHighwayExt(
+            fileUuid = index.fileUuid,
+            uKey = subFileInfo?.uKey ?: uploadResp.uKey,
+            network = NTHighwayNetwork(
+                iPv4s = ipv4s.map { ipv4 ->
+                    NTHighwayIPv4(
+                        domain = NTHighwayDomain(
+                            isEnable = true,
+                            iP = ipv4.outIP.toIpString(reverseEndian = true),
+                        ),
+                        port = ipv4.outPort,
+                    )
                 }
-            }
-            it[msgInfoBody] = msgInfoBodyList
-            it[blockSize] = MAX_BLOCK_SIZE
-            it[hash] = NTHighwayHash {
-                it[fileSha1] = listOf(sha1)
-            }
-        }.toByteArray()
+            ),
+            msgInfoBody = msgInfoBodyList,
+            blockSize = MAX_BLOCK_SIZE,
+            hash = NTHighwayHash(
+                fileSha1 = listOf(sha1)
+            ),
+        ).pbEncode()
     }
 
     suspend fun uploadAvatar(imageData: ByteArray) {
@@ -168,15 +162,13 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
 
     suspend fun uploadGroupAvatar(groupUin: Long, imageData: ByteArray) {
         val md5 = imageData.md5()
-        val extra = GroupAvatarExtra {
-            it[type] = 101
-            it[this.groupUin] = groupUin
-            it[field3] = GroupAvatarExtraField3 {
-                it[field1] = 1
-            }
-            it[field5] = 3
-            it[field6] = 1
-        }.toByteArray()
+        val extra = GroupAvatarExtra(
+            type = 101,
+            groupUin = groupUin,
+            field3 = GroupAvatarExtraField3(field1 = 1),
+            field5 = 3,
+            field6 = 1,
+        ).pbEncode()
         upload(3000, imageData, md5, extra)
     }
 
@@ -192,48 +184,48 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         uploadKey: ByteArray,
         uploadIpAndPorts: List<Pair<String, Int>>
     ) {
-        val ext = FileUploadExt {
-            it[unknown1] = 100
-            it[unknown2] = 1
-            it[unknown3] = 0
-            it[entry] = FileUploadEntry {
-                it[busiBuff] = ExcitingBusiInfo {
-                    it[senderUin] = client.sessionStore.uin
-                    it[this.receiverUin] = receiverUin
-                }
-                it[fileEntry] = ExcitingFileEntry {
-                    it[fileSize] = fileData.size.toLong()
-                    it[md5] = fileMd5
-                    it[checkKey] = fileSha1
-                    it[this.md510M] = md510M
-                    it[sha3] = fileTriSha1
-                    it[this.fileId] = fileId
-                    it[this.uploadKey] = uploadKey
-                }
-                it[clientInfo] = ExcitingClientInfo {
-                    it[clientType] = 3
-                    it[appId] = "100"
-                    it[terminalType] = 3
-                    it[clientVer] = "1.1.1"
-                    it[unknown] = 4
-                }
-                it[fileNameInfo] = ExcitingFileNameInfo {
-                    it[this.fileName] = fileName
-                }
-                it[host] = ExcitingHostConfig {
-                    it[hosts] = uploadIpAndPorts.map { (uploadIp, uploadPort) ->
-                        ExcitingHostInfo {
-                            it[url] = ExcitingUrlInfo {
-                                it[unknown] = 1
-                                it[host] = uploadIp
-                            }
-                            it[port] = uploadPort
-                        }
+        val ext = FileUploadExt(
+            unknown1 = 100,
+            unknown2 = 1,
+            unknown3 = 0,
+            entry = FileUploadEntry(
+                busiBuff = ExcitingBusiInfo(
+                    senderUin = client.sessionStore.uin,
+                    receiverUin = receiverUin,
+                ),
+                fileEntry = ExcitingFileEntry(
+                    fileSize = fileData.size.toLong(),
+                    md5 = fileMd5,
+                    checkKey = fileSha1,
+                    md510M = md510M,
+                    sha3 = fileTriSha1,
+                    fileId = fileId,
+                    uploadKey = uploadKey,
+                ),
+                clientInfo = ExcitingClientInfo(
+                    clientType = 3,
+                    appId = "100",
+                    terminalType = 3,
+                    clientVer = "1.1.1",
+                    unknown = 4,
+                ),
+                fileNameInfo = ExcitingFileNameInfo(
+                    fileName = fileName,
+                ),
+                host = ExcitingHostConfig(
+                    hosts = uploadIpAndPorts.map { (uploadIp, uploadPort) ->
+                        ExcitingHostInfo(
+                            url = ExcitingUrlInfo(
+                                unknown = 1,
+                                host = uploadIp,
+                            ),
+                            port = uploadPort,
+                        )
                     }
-                }
-            }
-            it[unknown200] = 1
-        }.toByteArray()
+                )
+            ),
+            unknown200 = 1,
+        ).pbEncode()
 
         upload(95, fileData, fileMd5, ext)
     }
@@ -253,46 +245,46 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         val md510M = fileData.copyOfRange(0, minOf(10 * 1024 * 1024, fileData.size)).md5()
 
         // 构建上传扩展信息
-        val ext = FileUploadExt {
-            it[unknown1] = 100
-            it[unknown2] = 1
-            it[entry] = FileUploadEntry {
-                it[busiBuff] = ExcitingBusiInfo {
-                    it[this.senderUin] = senderUin
-                    it[receiverUin] = groupUin
-                    it[groupCode] = groupUin
-                }
-                it[fileEntry] = ExcitingFileEntry {
-                    it[fileSize] = fileData.size.toLong()
-                    it[md5] = fileData.md5()
-                    it[this.checkKey] = fileKey
-                    it[this.md510M] = md510M
-                    it[this.fileId] = fileId
-                    it[uploadKey] = checkKey
-                }
-                it[clientInfo] = ExcitingClientInfo {
-                    it[clientType] = 3
-                    it[appId] = "100"
-                    it[terminalType] = 3
-                    it[clientVer] = "1.1.1"
-                    it[unknown] = 4
-                }
-                it[fileNameInfo] = ExcitingFileNameInfo {
-                    it[this.fileName] = fileName
-                }
-                it[host] = ExcitingHostConfig {
-                    it[hosts] = listOf(
-                        ExcitingHostInfo {
-                            it[url] = ExcitingUrlInfo {
-                                it[unknown] = 1
-                                it[host] = uploadIp
-                            }
-                            it[port] = uploadPort
-                        }
+        val ext = FileUploadExt(
+            unknown1 = 100,
+            unknown2 = 1,
+            entry = FileUploadEntry(
+                busiBuff = ExcitingBusiInfo(
+                    senderUin = senderUin,
+                    receiverUin = groupUin,
+                    groupCode = groupUin,
+                ),
+                fileEntry = ExcitingFileEntry(
+                    fileSize = fileData.size.toLong(),
+                    md5 = fileData.md5(),
+                    checkKey = fileKey,
+                    md510M = md510M,
+                    fileId = fileId,
+                    uploadKey = checkKey,
+                ),
+                clientInfo = ExcitingClientInfo(
+                    clientType = 3,
+                    appId = "100",
+                    terminalType = 3,
+                    clientVer = "1.1.1",
+                    unknown = 4,
+                ),
+                fileNameInfo = ExcitingFileNameInfo(
+                    fileName = fileName,
+                ),
+                host = ExcitingHostConfig(
+                    hosts = listOf(
+                        ExcitingHostInfo(
+                            url = ExcitingUrlInfo(
+                                unknown = 1,
+                                host = uploadIp,
+                            ),
+                            port = uploadPort,
+                        )
                     )
-                }
-            }
-        }.toByteArray()
+                )
+            )
+        ).pbEncode()
 
         val md5 = fileData.md5()
         upload(71, fileData, md5, ext)
@@ -342,8 +334,8 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
             }
             val (responseHead, _) = unpackFrame(response.readRawBytes())
 
-            val headData = RespDataHighwayHead(responseHead)
-            val errorCode = headData.get { errorCode }
+            val headData = responseHead.pbDecode<RespDataHighwayHead>()
+            val errorCode = headData.errorCode
 
             if (errorCode != 0) {
                 throw Exception("[Highway] HTTP Upload failed with code $errorCode")
@@ -351,35 +343,35 @@ internal class HighwayContext(client: LagrangeClient) : AbstractContext(client) 
         }
 
         private fun buildPicUpHead(offset: Int, bodyLength: Int, bodyMd5: ByteArray): ByteArray {
-            return ReqDataHighwayHead {
-                it[msgBaseHead] = DataHighwayHead {
-                    it[version] = 1
-                    it[uin] = client.sessionStore.uin.toString()
-                    it[command] = "PicUp.DataUp"
-                    it[seq] = 0
-                    it[retryTimes] = 0
-                    it[appId] = 1600001604
-                    it[dataFlag] = 16
-                    it[commandId] = cmd
-                }
-                it[msgSegHead] = SegHead {
-                    it[serviceId] = 0
-                    it[filesize] = data.size.toLong()
-                    it[dataOffset] = offset.toLong()
-                    it[dataLength] = bodyLength
-                    it[serviceTicket] = sigSession
-                    it[md5] = bodyMd5
-                    it[fileMd5] = this@HttpSession.md5
-                    it[cacheAddr] = 0
-                    it[cachePort] = 0
-                }
-                it[bytesReqExtendInfo] = extendInfo
-                it[timestamp] = 0L
-                it[msgLoginSigHead] = LoginSigHead {
-                    it[uint32LoginSigType] = 8
-                    it[appId] = 1600001604
-                }
-            }.toByteArray()
+            return ReqDataHighwayHead(
+                msgBaseHead = DataHighwayHead(
+                    version = 1,
+                    uin = client.sessionStore.uin.toString(),
+                    command = "PicUp.DataUp",
+                    seq = 0,
+                    retryTimes = 0,
+                    appId = 1600001604,
+                    dataFlag = 16,
+                    commandId = cmd,
+                ),
+                msgSegHead = SegHead(
+                    serviceId = 0,
+                    filesize = data.size.toLong(),
+                    dataOffset = offset.toLong(),
+                    dataLength = bodyLength,
+                    serviceTicket = sigSession,
+                    md5 = bodyMd5,
+                    fileMd5 = this@HttpSession.md5,
+                    cacheAddr = 0,
+                    cachePort = 0,
+                ),
+                bytesReqExtendInfo = extendInfo,
+                timestamp = 0L,
+                msgLoginSigHead = LoginSigHead(
+                    uint32LoginSigType = 8,
+                    appId = 1600001604,
+                ),
+            ).pbEncode()
         }
 
         private fun packFrame(head: ByteArray, body: ByteArray): ByteArray {

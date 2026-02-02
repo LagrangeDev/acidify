@@ -1,10 +1,10 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.media.*
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.message.MessageScene
 import kotlin.random.Random
 
@@ -15,7 +15,7 @@ internal abstract class RichMediaUpload<T>(
     val requestType: Int,
     val businessType: Int,
     val scene: MessageScene,
-) : OidbService<T, PbObject<UploadResp>>(oidbCommand, oidbService, true) {
+) : OidbService<T, UploadResp>(oidbCommand, oidbService, true) {
     class ImageUploadRequest(
         val imageData: ByteArray,
         val imageMd5: String,
@@ -54,122 +54,119 @@ internal abstract class RichMediaUpload<T>(
 
     protected fun buildBaseUploadReq(
         client: LagrangeClient,
-        uploadInfoList: List<PbObject<UploadInfo>>,
+        uploadInfoList: List<UploadInfo>,
         compatQMsgSceneType: Int,
-        extBizInfo: PbObject<ExtBizInfo>,
+        extBizInfo: ExtBizInfo,
         groupUin: Long? = null
-    ): ByteArray = NTV2RichMediaReq {
-        it[reqHead] = MultiMediaReqHead {
-            it[common] = CommonHead {
-                it[requestId] = this@RichMediaUpload.requestId
-                it[command] = oidbService
-            }
-            it[scene] = SceneInfo {
-                it[requestType] = this@RichMediaUpload.requestType
-                it[businessType] = this@RichMediaUpload.businessType
-                when (this@RichMediaUpload.scene) {
-                    MessageScene.FRIEND -> {
-                        it[sceneType] = 1
-                        it[c2C] = C2CUserInfo {
-                            it[accountType] = 2
-                            it[targetUid] = client.sessionStore.uid
-                        }
-                    }
-
-                    MessageScene.GROUP -> {
-                        it[sceneType] = 2
-                        it[group] = GroupInfo {
-                            it[this.groupUin] = groupUin!!
-                        }
-                    }
-
-                    else -> {}
+    ): ByteArray = NTV2RichMediaReq(
+        reqHead = MultiMediaReqHead(
+            common = CommonHead(
+                requestId = requestId,
+                command = oidbService,
+            ),
+            scene = SceneInfo(
+                requestType = requestType,
+                businessType = businessType,
+                sceneType = when (scene) {
+                    MessageScene.FRIEND -> 1
+                    MessageScene.GROUP -> 2
+                    else -> 0
+                },
+                c2C = if (scene == MessageScene.FRIEND) {
+                    C2CUserInfo(
+                        accountType = 2,
+                        targetUid = client.sessionStore.uid,
+                    )
+                } else {
+                    C2CUserInfo()
+                },
+                group = if (scene == MessageScene.GROUP) {
+                    GroupInfo(groupUin = groupUin ?: 0L)
+                } else {
+                    GroupInfo()
                 }
-            }
-            it[this.client] = ClientMeta {
-                it[agentType] = 2
-            }
-        }
-        it[upload] = UploadReq {
-            it[uploadInfo] = uploadInfoList
-            it[tryFastUploadCompleted] = true
-            it[srvSendMsg] = false
-            it[clientRandomId] = Random.nextLong()
-            it[this.compatQMsgSceneType] = compatQMsgSceneType
-            it[this.extBizInfo] = extBizInfo
-            it[noNeedCompatMsg] = false
-        }
-    }.toByteArray()
+            ),
+            client = ClientMeta(agentType = 2),
+        ),
+        upload = UploadReq(
+            uploadInfo = uploadInfoList,
+            tryFastUploadCompleted = true,
+            srvSendMsg = false,
+            clientRandomId = Random.nextLong(),
+            compatQMsgSceneType = compatQMsgSceneType,
+            extBizInfo = extBizInfo,
+            noNeedCompatMsg = false,
+        ),
+    ).pbEncode()
 
-    protected fun buildImageUploadInfo(payload: ImageUploadRequest): PbObject<UploadInfo> =
-        UploadInfo {
-            it[fileInfo] = FileInfo {
-                it[fileSize] = payload.imageData.size
-                it[fileHash] = payload.imageMd5
-                it[fileSha1] = payload.imageSha1
-                it[fileName] = payload.imageMd5.uppercase() + payload.imageExt
-                it[type] = FileType {
-                    it[type] = 1
-                    it[picFormat] = payload.picFormat
-                    it[videoFormat] = 0
-                    it[voiceFormat] = 0
-                }
-                it[width] = payload.width
-                it[height] = payload.height
-                it[time] = 0
-                it[original] = 1
-            }
-            it[subFileType] = 0
-        }
+    protected fun buildImageUploadInfo(payload: ImageUploadRequest): UploadInfo =
+        UploadInfo(
+            fileInfo = FileInfo(
+                fileSize = payload.imageData.size,
+                fileHash = payload.imageMd5,
+                fileSha1 = payload.imageSha1,
+                fileName = payload.imageMd5.uppercase() + payload.imageExt,
+                type = FileType(
+                    type = 1,
+                    picFormat = payload.picFormat,
+                    videoFormat = 0,
+                    voiceFormat = 0,
+                ),
+                width = payload.width,
+                height = payload.height,
+                time = 0,
+                original = 1,
+            ),
+            subFileType = 0,
+        )
 
-    protected fun buildImageExtBizInfo(scene: MessageScene, subType: Int, textSummary: String): PbObject<ExtBizInfo> =
-        ExtBizInfo {
-            it[pic] = PicExtBizInfo {
-                it[bizType] = subType
-                it[when (scene) {
-                    MessageScene.FRIEND -> bytesPbReserveC2C
-                    MessageScene.GROUP -> bytesPbReserveTroop
-                    else -> bytesPbReserveTroop
-                }] = PicExtBizInfo.PbReserve {
-                    it[this.subType] = subType
-                }
-                it[this.textSummary] = textSummary.ifEmpty { if (subType == 1) "[动画表情]" else "[图片]" }
-            }
-        }
+    protected fun buildImageExtBizInfo(scene: MessageScene, subType: Int, textSummary: String): ExtBizInfo =
+        ExtBizInfo(
+            pic = PicExtBizInfo(
+                bizType = subType,
+                textSummary = textSummary.ifEmpty { if (subType == 1) "[动画表情]" else "[图片]" },
+                bytesPbReserveC2C = if (scene == MessageScene.FRIEND) {
+                    PicExtBizInfo.PbReserve(subType = subType)
+                } else {
+                    PicExtBizInfo.PbReserve()
+                },
+                bytesPbReserveTroop = if (scene == MessageScene.GROUP) {
+                    PicExtBizInfo.PbReserve(subType = subType)
+                } else {
+                    PicExtBizInfo.PbReserve()
+                },
+            )
+        )
 
-    protected fun buildRecordUploadInfo(payload: RecordUploadRequest): PbObject<UploadInfo> =
-        UploadInfo {
-            it[fileInfo] = FileInfo {
-                it[fileSize] = payload.audioData.size
-                it[fileHash] = payload.audioMd5
-                it[fileSha1] = payload.audioSha1
-                it[fileName] = payload.audioMd5 + ".amr"
-                it[type] = FileType {
-                    it[type] = 3
-                    it[picFormat] = 0
-                    it[videoFormat] = 0
-                    it[voiceFormat] = 1
-                }
-                it[width] = 0
-                it[height] = 0
-                it[time] = payload.audioDuration
-                it[original] = 0
-            }
-            it[subFileType] = 0
-        }
+    protected fun buildRecordUploadInfo(payload: RecordUploadRequest): UploadInfo =
+        UploadInfo(
+            fileInfo = FileInfo(
+                fileSize = payload.audioData.size,
+                fileHash = payload.audioMd5,
+                fileSha1 = payload.audioSha1,
+                fileName = payload.audioMd5 + ".amr",
+                type = FileType(
+                    type = 3,
+                    picFormat = 0,
+                    videoFormat = 0,
+                    voiceFormat = 1,
+                ),
+                width = 0,
+                height = 0,
+                time = payload.audioDuration,
+                original = 0,
+            ),
+            subFileType = 0,
+        )
 
-    protected fun buildPrivateRecordExtBizInfo(): PbObject<ExtBizInfo> =
-        ExtBizInfo {
-            it[pic] = PicExtBizInfo {
-                it[textSummary] = ""
-            }
-            it[video] = VideoExtBizInfo {
-                it[bytesPbReserve] = ByteArray(0)
-            }
-            it[ptt] = PttExtBizInfo {
-                it[bytesReserve] = byteArrayOf(0x08, 0x00, 0x38, 0x00)
-                it[bytesPbReserve] = ByteArray(0)
-                it[bytesGeneralFlags] = byteArrayOf(
+    protected fun buildPrivateRecordExtBizInfo(): ExtBizInfo =
+        ExtBizInfo(
+            pic = PicExtBizInfo(textSummary = ""),
+            video = VideoExtBizInfo(bytesPbReserve = ByteArray(0)),
+            ptt = PttExtBizInfo(
+                bytesReserve = byteArrayOf(0x08, 0x00, 0x38, 0x00),
+                bytesPbReserve = ByteArray(0),
+                bytesGeneralFlags = byteArrayOf(
                     0x9a.toByte(),
                     0x01,
                     0x0b,
@@ -185,81 +182,87 @@ internal abstract class RichMediaUpload<T>(
                     0x00,
                     0x00
                 )
-            }
-        }
+            )
+        )
 
-    protected fun buildGroupRecordExtBizInfo(): PbObject<ExtBizInfo> =
-        ExtBizInfo {
-            it[pic] = PicExtBizInfo {
-                it[textSummary] = ""
-            }
-            it[video] = VideoExtBizInfo {
-                it[bytesPbReserve] = ByteArray(0)
-            }
-            it[ptt] = PttExtBizInfo {
-                it[bytesReserve] = ByteArray(0)
-                it[bytesPbReserve] = byteArrayOf(0x08, 0x00, 0x38, 0x00)
-                it[bytesGeneralFlags] =
-                    byteArrayOf(0x9a.toByte(), 0x01, 0x07, 0xaa.toByte(), 0x03, 0x04, 0x08, 0x08, 0x12, 0x00)
-            }
-        }
+    protected fun buildGroupRecordExtBizInfo(): ExtBizInfo =
+        ExtBizInfo(
+            pic = PicExtBizInfo(textSummary = ""),
+            video = VideoExtBizInfo(bytesPbReserve = ByteArray(0)),
+            ptt = PttExtBizInfo(
+                bytesReserve = ByteArray(0),
+                bytesPbReserve = byteArrayOf(0x08, 0x00, 0x38, 0x00),
+                bytesGeneralFlags = byteArrayOf(
+                    0x9a.toByte(),
+                    0x01,
+                    0x07,
+                    0xaa.toByte(),
+                    0x03,
+                    0x04,
+                    0x08,
+                    0x08,
+                    0x12,
+                    0x00
+                )
+            )
+        )
 
-    protected fun buildVideoUploadInfoList(payload: VideoUploadRequest): List<PbObject<UploadInfo>> = listOf(
-        UploadInfo {
-            it[fileInfo] = FileInfo {
-                it[fileSize] = payload.videoData.size
-                it[fileHash] = payload.videoMd5
-                it[fileSha1] = payload.videoSha1
-                it[fileName] = "video.mp4"
-                it[type] = FileType {
-                    it[type] = 2
-                    it[picFormat] = 0
-                    it[videoFormat] = 0
-                    it[voiceFormat] = 0
-                }
-                it[width] = payload.videoWidth
-                it[height] = payload.videoHeight
-                it[time] = payload.videoDuration
-                it[original] = 0
-            }
-            it[subFileType] = 0
-        },
-        UploadInfo {
-            it[fileInfo] = FileInfo {
-                it[fileSize] = payload.thumbnailData.size
-                it[fileHash] = payload.thumbnailMd5
-                it[fileSha1] = payload.thumbnailSha1
-                it[fileName] = "video." + payload.thumbnailExt
-                it[type] = FileType {
-                    it[type] = 1
-                    it[picFormat] = payload.thumbnailPicFormat
-                    it[videoFormat] = 0
-                    it[voiceFormat] = 0
-                }
-                it[width] = payload.videoWidth
-                it[height] = payload.videoHeight
-                it[time] = 0
-                it[original] = 0
-            }
-            it[subFileType] = 100
-        }
+    protected fun buildVideoUploadInfoList(payload: VideoUploadRequest): List<UploadInfo> = listOf(
+        UploadInfo(
+            fileInfo = FileInfo(
+                fileSize = payload.videoData.size,
+                fileHash = payload.videoMd5,
+                fileSha1 = payload.videoSha1,
+                fileName = "video.mp4",
+                type = FileType(
+                    type = 2,
+                    picFormat = 0,
+                    videoFormat = 0,
+                    voiceFormat = 0,
+                ),
+                width = payload.videoWidth,
+                height = payload.videoHeight,
+                time = payload.videoDuration,
+                original = 0,
+            ),
+            subFileType = 0,
+        ),
+        UploadInfo(
+            fileInfo = FileInfo(
+                fileSize = payload.thumbnailData.size,
+                fileHash = payload.thumbnailMd5,
+                fileSha1 = payload.thumbnailSha1,
+                fileName = "video." + payload.thumbnailExt,
+                type = FileType(
+                    type = 1,
+                    picFormat = payload.thumbnailPicFormat,
+                    videoFormat = 0,
+                    voiceFormat = 0,
+                ),
+                width = payload.videoWidth,
+                height = payload.videoHeight,
+                time = 0,
+                original = 0,
+            ),
+            subFileType = 100,
+        )
     )
 
-    protected fun buildVideoExtBizInfo(): PbObject<ExtBizInfo> =
-        ExtBizInfo {
-            it[pic] = PicExtBizInfo {
-                it[bizType] = 0
-                it[textSummary] = ""
-            }
-            it[video] = VideoExtBizInfo {
-                it[bytesPbReserve] = byteArrayOf(0x80.toByte(), 0x01, 0x00)
-            }
-            it[ptt] = PttExtBizInfo {
-                it[bytesReserve] = ByteArray(0)
-                it[bytesPbReserve] = ByteArray(0)
-                it[bytesGeneralFlags] = ByteArray(0)
-            }
-        }
+    protected fun buildVideoExtBizInfo(): ExtBizInfo =
+        ExtBizInfo(
+            pic = PicExtBizInfo(
+                bizType = 0,
+                textSummary = "",
+            ),
+            video = VideoExtBizInfo(
+                bytesPbReserve = byteArrayOf(0x80.toByte(), 0x01, 0x00)
+            ),
+            ptt = PttExtBizInfo(
+                bytesReserve = ByteArray(0),
+                bytesPbReserve = ByteArray(0),
+                bytesGeneralFlags = ByteArray(0),
+            )
+        )
 
     object PrivateImage : RichMediaUpload<ImageUploadRequest>(
         oidbCommand = 0x11c5,
@@ -275,8 +278,8 @@ internal abstract class RichMediaUpload<T>(
             return buildBaseUploadReq(client, uploadInfoList, 1, extBizInfo)
         }
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): PbObject<UploadResp> =
-            NTV2RichMediaResp(payload).get { upload }
+        override fun parseOidb(client: LagrangeClient, payload: ByteArray): UploadResp =
+            payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
     object GroupImage : RichMediaUpload<ImageUploadRequest>(
@@ -293,8 +296,8 @@ internal abstract class RichMediaUpload<T>(
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo, payload.groupUin)
         }
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): PbObject<UploadResp> =
-            NTV2RichMediaResp(payload).get { upload }
+        override fun parseOidb(client: LagrangeClient, payload: ByteArray): UploadResp =
+            payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
     object PrivateRecord : RichMediaUpload<RecordUploadRequest>(
@@ -311,8 +314,8 @@ internal abstract class RichMediaUpload<T>(
             return buildBaseUploadReq(client, uploadInfoList, 1, extBizInfo)
         }
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): PbObject<UploadResp> =
-            NTV2RichMediaResp(payload).get { upload }
+        override fun parseOidb(client: LagrangeClient, payload: ByteArray): UploadResp =
+            payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
     object GroupRecord : RichMediaUpload<RecordUploadRequest>(
@@ -329,8 +332,8 @@ internal abstract class RichMediaUpload<T>(
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo, payload.groupUin)
         }
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): PbObject<UploadResp> =
-            NTV2RichMediaResp(payload).get { upload }
+        override fun parseOidb(client: LagrangeClient, payload: ByteArray): UploadResp =
+            payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
     object PrivateVideo : RichMediaUpload<VideoUploadRequest>(
@@ -347,8 +350,8 @@ internal abstract class RichMediaUpload<T>(
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo)
         }
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): PbObject<UploadResp> =
-            NTV2RichMediaResp(payload).get { upload }
+        override fun parseOidb(client: LagrangeClient, payload: ByteArray): UploadResp =
+            payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
     object GroupVideo : RichMediaUpload<VideoUploadRequest>(
@@ -365,7 +368,7 @@ internal abstract class RichMediaUpload<T>(
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo, payload.groupUin)
         }
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): PbObject<UploadResp> =
-            NTV2RichMediaResp(payload).get { upload }
+        override fun parseOidb(client: LagrangeClient, payload: ByteArray): UploadResp =
+            payload.pbDecode<NTV2RichMediaResp>().upload
     }
 }

@@ -3,11 +3,11 @@ package org.ntqqrev.acidify.internal.service.message
 import korlibs.io.compression.compress
 import korlibs.io.compression.deflate.GZIP
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.CommonMessage
-import org.ntqqrev.acidify.internal.packet.message.action.*
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.CommonMessage
+import org.ntqqrev.acidify.internal.proto.message.action.*
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.message.MessageScene
 
 internal object SendLongMsg :
@@ -16,61 +16,56 @@ internal object SendLongMsg :
         val scene: MessageScene,
         val peerUin: Long,
         val peerUid: String,
-        val messages: List<PbObject<CommonMessage>>,
-        val nestedForwardTrace: Map<String, List<PbObject<CommonMessage>>>
+        val messages: List<CommonMessage>,
+        val nestedForwardTrace: Map<String, List<CommonMessage>>
     )
 
     override fun build(client: LagrangeClient, payload: Req): ByteArray {
-        val content = PbMultiMsgTransmit {
-            it[items] = buildList {
-                this.add(PbMultiMsgItem {
-                    it[fileName] = "MultiMsg"
-                    it[buffer] = PbMultiMsgNew {
-                        it[msg] = payload.messages
-                    }
-                })
-                this.addAll(payload.nestedForwardTrace.map { (key, value) ->
-                    PbMultiMsgItem {
-                        it[fileName] = key
-                        it[buffer] = PbMultiMsgNew {
-                            it[msg] = value
-                        }
-                    }
+        val content = PbMultiMsgTransmit(
+            items = buildList {
+                add(
+                    PbMultiMsgItem(
+                        fileName = "MultiMsg",
+                        buffer = PbMultiMsgNew(msg = payload.messages),
+                    )
+                )
+                addAll(payload.nestedForwardTrace.map { (key, value) ->
+                    PbMultiMsgItem(
+                        fileName = key,
+                        buffer = PbMultiMsgNew(msg = value),
+                    )
                 })
             }
-        }
+        )
 
-        val compressedContent = GZIP.compress(content.toByteArray())
+        val compressedContent = GZIP.compress(content.pbEncode())
 
-        val longMsg = LongMsgInterfaceReq {
-            it[sendReq] = LongMsgSendReq {
-                it[msgType] = if (payload.scene == MessageScene.FRIEND) 1 else 3
-                it[peerInfo] = LongMsgPeerInfo {
-                    it[peerUid] = payload.peerUid
-                }
-                it[groupUin] = if (payload.scene == MessageScene.GROUP) payload.peerUin else 0L
-                it[this.payload] = compressedContent
-            }
-            it[attr] = LongMsgAttr {
-                it[subCmd] = 4
-                it[clientType] = 1
-                it[platform] = when (client.appInfo.os) {
+        val longMsg = LongMsgInterfaceReq(
+            sendReq = LongMsgSendReq(
+                msgType = if (payload.scene == MessageScene.FRIEND) 1 else 3,
+                peerInfo = LongMsgPeerInfo(peerUid = payload.peerUid),
+                groupUin = if (payload.scene == MessageScene.GROUP) payload.peerUin else 0L,
+                payload = compressedContent,
+            ),
+            attr = LongMsgAttr(
+                subCmd = 4,
+                clientType = 1,
+                platform = when (client.appInfo.os) {
                     "Windows" -> 3
                     "Linux" -> 6
                     "Mac" -> 7
                     else -> 0
-                }
-                it[proxyType] = 0
-            }
-        }
+                },
+                proxyType = 0,
+            ),
+        )
 
-        return longMsg.toByteArray()
+        return longMsg.pbEncode()
     }
 
     override fun parse(client: LagrangeClient, payload: ByteArray): String {
-        val rsp = PbObject(LongMsgInterfaceResp, payload)
-        return rsp.get { sendResp }?.get { this.resId }
+        val rsp = payload.pbDecode<LongMsgInterfaceResp>()
+        return rsp.sendResp?.resId
             ?: throw IllegalStateException("No resId in LongMsgInterfaceResp")
     }
 }
-

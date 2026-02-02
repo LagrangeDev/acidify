@@ -1,15 +1,15 @@
 package org.ntqqrev.acidify.internal.service.message
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.CommonMessage
-import org.ntqqrev.acidify.internal.packet.message.action.SsoGetGroupMsgReq
-import org.ntqqrev.acidify.internal.packet.message.action.SsoGetGroupMsgResp
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.CommonMessage
+import org.ntqqrev.acidify.internal.proto.message.action.SsoGetGroupMsgReq
+import org.ntqqrev.acidify.internal.proto.message.action.SsoGetGroupMsgResp
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object FetchGroupMessages :
-    Service<FetchGroupMessages.Req, List<PbObject<CommonMessage>>>("trpc.msg.register_proxy.RegisterProxy.SsoGetGroupMsg") {
+    Service<FetchGroupMessages.Req, List<CommonMessage>>("trpc.msg.register_proxy.RegisterProxy.SsoGetGroupMsg") {
     class Req(
         val groupUin: Long,
         val startSequence: Long,
@@ -18,26 +18,25 @@ internal object FetchGroupMessages :
     )
 
     override fun build(client: LagrangeClient, payload: Req): ByteArray {
-        return SsoGetGroupMsgReq {
-            it[groupInfo] = SsoGetGroupMsgReq.GroupInfo {
-                it[groupUin] = payload.groupUin
-                it[startSequence] = payload.startSequence
-                it[endSequence] = payload.endSequence
-            }
-            it[filter] = payload.filter
-        }.toByteArray()
+        return SsoGetGroupMsgReq(
+            groupInfo = SsoGetGroupMsgReq.GroupInfo(
+                groupUin = payload.groupUin,
+                startSequence = payload.startSequence,
+                endSequence = payload.endSequence,
+            ),
+            filter = payload.filter,
+        ).pbEncode()
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): List<PbObject<CommonMessage>> {
-        val resp = SsoGetGroupMsgResp(payload)
-        val retcode = resp.get { retcode }
-        val errorMsg = resp.get { errorMsg }
+    override fun parse(client: LagrangeClient, payload: ByteArray): List<CommonMessage> {
+        val resp = payload.pbDecode<SsoGetGroupMsgResp>()
+        val retcode = resp.retcode
+        val errorMsg = resp.errorMsg
 
         if (retcode != 0) {
             throw Exception("Failed to get group messages: $errorMsg (retcode=$retcode)")
         }
 
-        return resp.get { body }.get { messages }
+        return resp.body.messages
     }
 }
-

@@ -16,17 +16,18 @@ import org.ntqqrev.acidify.getFriendHistoryMessages
 import org.ntqqrev.acidify.getGroupHistoryMessages
 import org.ntqqrev.acidify.getUidByUin
 import org.ntqqrev.acidify.internal.crypto.hash.MD5
-import org.ntqqrev.acidify.internal.packet.message.*
-import org.ntqqrev.acidify.internal.packet.message.elem.*
-import org.ntqqrev.acidify.internal.packet.message.extra.QBigFaceExtra
-import org.ntqqrev.acidify.internal.packet.message.extra.QSmallFaceExtra
-import org.ntqqrev.acidify.internal.packet.message.extra.SourceMsgResvAttr
-import org.ntqqrev.acidify.internal.packet.message.extra.TextResvAttr
-import org.ntqqrev.acidify.internal.packet.message.misc.OutgoingForwardPayload
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.json.message.OutgoingForwardPayload
+import org.ntqqrev.acidify.internal.packet.message.PushMsgType
+import org.ntqqrev.acidify.internal.proto.message.*
+import org.ntqqrev.acidify.internal.proto.message.elem.*
+import org.ntqqrev.acidify.internal.proto.message.extra.QBigFaceExtra
+import org.ntqqrev.acidify.internal.proto.message.extra.QSmallFaceExtra
+import org.ntqqrev.acidify.internal.proto.message.extra.SourceMsgResvAttr
+import org.ntqqrev.acidify.internal.proto.message.extra.TextResvAttr
 import org.ntqqrev.acidify.internal.service.message.RichMediaUpload
 import org.ntqqrev.acidify.internal.service.message.SendLongMsg
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.internal.util.sha1
 import org.ntqqrev.acidify.message.*
 import kotlin.math.max
@@ -39,40 +40,34 @@ internal class MessageBuildingContext(
     val scene: MessageScene,
     val peerUin: Long,
     val peerUid: String,
-    private val nestedForwardTrace: MutableMap<String, List<PbObject<CommonMessage>>>? = null
+    private val nestedForwardTrace: MutableMap<String, List<CommonMessage>>? = null
 ) : BotOutgoingMessageBuilder {
     private val logger = bot.createLogger(this)
-    private val elemsList = mutableListOf<Deferred<List<PbObject<Elem>>>>()
+    private val elemsList = mutableListOf<Deferred<List<Elem>>>()
 
-    private fun addAsync(elem: suspend () -> PbObject<Elem>) {
+    private fun addAsync(elem: suspend () -> Elem) {
         elemsList.add(bot.async { listOf(elem()) })
     }
 
-    private fun addMultipleAsync(elems: suspend () -> List<PbObject<Elem>>) {
+    private fun addMultipleAsync(elems: suspend () -> List<Elem>) {
         elemsList.add(bot.async { elems() })
     }
 
     override fun text(text: String) = addAsync {
-        Elem {
-            it[this.text] = Text {
-                it[textMsg] = text
-            }
-        }
+        Elem(text = Text(textMsg = text))
     }
 
     override fun mention(uin: Long?, name: String) = addAsync {
-        Elem {
-            it[text] = Text {
-                it[textMsg] = "@$name"
-                it[pbReserve] = TextResvAttr {
-                    it[atType] = if (uin == null) 1 else 2  // 1 for @all, 2 for @specific
-                    if (uin != null) {
-                        it[atMemberUin] = uin
-                        it[atMemberUid] = bot.getUidByUin(uin)
-                    }
-                }.toByteArray()
-            }
-        }
+        Elem(
+            text = Text(
+                textMsg = "@$name",
+                pbReserve = TextResvAttr(
+                    atType = if (uin == null) 1 else 2,
+                    atMemberUin = uin ?: 0L,
+                    atMemberUid = if (uin != null) bot.getUidByUin(uin) else "",
+                ).pbEncode()
+            )
+        )
     }
 
     override fun face(faceId: Int, isLarge: Boolean) = addAsync {
@@ -80,43 +75,39 @@ internal class MessageBuildingContext(
             ?: throw NoSuchElementException("要发送的表情 ID 不存在: $faceId")
 
         if (isLarge) {
-            Elem {
-                it[commonElem] = CommonElem {
-                    it[serviceType] = 37
-                    it[pbElem] = QBigFaceExtra {
-                        it[aniStickerPackId] = faceDetail.aniStickerPackId.toString()
-                        it[aniStickerId] = faceDetail.aniStickerId.toString()
-                        it[this.faceId] = faceId
-                        it[field4] = 1
-                        it[aniStickerType] = faceDetail.aniStickerType
-                        it[field6] = ""
-                        it[preview] = faceDetail.qDes
-                        it[field9] = 1
-                    }.toByteArray()
-                    it[businessType] = faceDetail.aniStickerType
-                }
-            }
+            Elem(
+                commonElem = CommonElem(
+                    serviceType = 37,
+                    pbElem = QBigFaceExtra(
+                        aniStickerPackId = faceDetail.aniStickerPackId.toString(),
+                        aniStickerId = faceDetail.aniStickerId.toString(),
+                        faceId = faceId,
+                        field4 = 1,
+                        aniStickerType = faceDetail.aniStickerType,
+                        field6 = "",
+                        preview = faceDetail.qDes,
+                        field9 = 1,
+                    ).pbEncode(),
+                    businessType = faceDetail.aniStickerType,
+                )
+            )
         }
 
         if (faceId >= 260) {
-            Elem {
-                it[commonElem] = CommonElem {
-                    it[serviceType] = 33
-                    it[pbElem] = QSmallFaceExtra {
-                        it[this.faceId] = faceId
-                        it[text] = faceDetail.qDes
-                        it[compatText] = faceDetail.qDes
-                    }.toByteArray()
-                    it[businessType] = faceDetail.aniStickerType
-                }
-            }
+            Elem(
+                commonElem = CommonElem(
+                    serviceType = 33,
+                    pbElem = QSmallFaceExtra(
+                        faceId = faceId,
+                        text = faceDetail.qDes,
+                        compatText = faceDetail.qDes,
+                    ).pbEncode(),
+                    businessType = faceDetail.aniStickerType,
+                )
+            )
         }
 
-        Elem {
-            it[face] = Face {
-                it[index] = faceId
-            }
-        }
+        Elem(face = Face(index = faceId))
     }
 
     override fun reply(sequence: Long) = addMultipleAsync {
@@ -131,43 +122,39 @@ internal class MessageBuildingContext(
             return@addMultipleAsync emptyList()
         }
 
-        val srcMsgElem = Elem {
-            it[srcMsg] = SourceMsg {
-                it[origSeqs] = listOf(
+        val srcMsgElem = Elem(
+            srcMsg = SourceMsg(
+                origSeqs = listOf(
                     if (scene == MessageScene.FRIEND) replied.clientSequence
                     else replied.sequence
-                )
-                it[senderUin] = replied.senderUin
-                it[time] = replied.timestamp
-                it[flag] = 0
-                it[elems] = replied.raw.get { messageBody }.get { richText }.get { elems }
-                it[pbReserve] = SourceMsgResvAttr {
-                    it[oriMsgType] = 2
-                    it[sourceMsgId] = replied.messageUid
-                    it[senderUid] = replied.senderUid
-                }.toByteArray()
-            }
-        }
+                ),
+                senderUin = replied.senderUin,
+                time = replied.timestamp,
+                flag = 0,
+                elems = replied.raw.messageBody.richText.elems,
+                pbReserve = SourceMsgResvAttr(
+                    oriMsgType = 2,
+                    sourceMsgId = replied.messageUid,
+                    senderUid = replied.senderUid,
+                ).pbEncode(),
+            )
+        )
 
         // 群消息需要额外添加 @ 提及（客户端会根据 uid 显示昵称）
         if (scene == MessageScene.GROUP) {
             listOf(
                 srcMsgElem,
-                Elem {
-                    it[text] = Text {
-                        it[textMsg] = "@${replied.senderUin}" // 显示 uin，客户端可能会替换为昵称
-                        it[pbReserve] = TextResvAttr {
-                            it[atType] = 2
-                            it[atMemberUin] = replied.senderUin
-                            it[atMemberUid] = replied.senderUid
-                        }.toByteArray()
-                    }
-                },
-                Elem {
-                    it[text] = Text {
-                        it[textMsg] = " "
-                    }
-                }
+                Elem(
+                    text = Text(
+                        textMsg = "@${replied.senderUin}",
+                        pbReserve = TextResvAttr(
+                            atType = 2,
+                            atMemberUin = replied.senderUin,
+                            atMemberUid = replied.senderUid,
+                        ).pbEncode()
+                    )
+                ),
+                Elem(text = Text(textMsg = " "))
             )
         } else {
             listOf(srcMsgElem)
@@ -226,7 +213,7 @@ internal class MessageBuildingContext(
             else -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        uploadResp.get { uKey }.takeIf { it.isNotEmpty() }?.let {
+        uploadResp.uKey.takeIf { it.isNotEmpty() }?.let {
             bot.client.highwayContext.uploadImage(
                 image = raw,
                 imageMd5 = imageMd5Bytes,
@@ -236,7 +223,7 @@ internal class MessageBuildingContext(
             )
         } ?: logger.d { "uKey 为空，服务器可能已存在该图片，跳过上传" }
 
-        val msgInfo = uploadResp.get { msgInfo }
+        val msgInfo = uploadResp.msgInfo
         val businessType = when (scene) {
             MessageScene.FRIEND -> 10
             MessageScene.GROUP -> 20
@@ -244,20 +231,24 @@ internal class MessageBuildingContext(
         }
 
         listOf(
-            Elem { e ->
-                when (scene) {
-                    MessageScene.FRIEND -> e[notOnlineImage] = NotOnlineImage(uploadResp.get { compatQMsg })
-                    MessageScene.GROUP -> e[customFace] = CustomFace(uploadResp.get { compatQMsg })
-                    MessageScene.TEMP -> {}
-                }
+            when (scene) {
+                MessageScene.FRIEND -> Elem(
+                    notOnlineImage = uploadResp.compatQMsg.pbDecode<NotOnlineImage>()
+                )
+
+                MessageScene.GROUP -> Elem(
+                    customFace = uploadResp.compatQMsg.pbDecode<CustomFace>()
+                )
+
+                MessageScene.TEMP -> Elem()
             },
-            Elem {
-                it[commonElem] = CommonElem {
-                    it[serviceType] = 48
-                    it[pbElem] = msgInfo.toByteArray()
-                    it[this.businessType] = businessType
-                }
-            }
+            Elem(
+                commonElem = CommonElem(
+                    serviceType = 48,
+                    pbElem = msgInfo.pbEncode(),
+                    businessType = businessType,
+                )
+            )
         )
     }
 
@@ -296,7 +287,7 @@ internal class MessageBuildingContext(
             else -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        uploadResp.get { uKey }.takeIf { it.isNotEmpty() }?.let {
+        uploadResp.uKey.takeIf { it.isNotEmpty() }?.let {
             bot.client.highwayContext.uploadRecord(
                 record = rawSilk,
                 recordMd5 = recordMd5Bytes,
@@ -306,20 +297,20 @@ internal class MessageBuildingContext(
             )
         } ?: logger.d { "uKey 为空，服务器可能已存在该语音，跳过上传" }
 
-        val msgInfo = uploadResp.get { msgInfo }
+        val msgInfo = uploadResp.msgInfo
         val businessType = when (scene) {
             MessageScene.FRIEND -> 12
             MessageScene.GROUP -> 22
             MessageScene.TEMP -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        Elem {
-            it[commonElem] = CommonElem {
-                it[serviceType] = 48
-                it[pbElem] = msgInfo.toByteArray()
-                it[this.businessType] = businessType
-            }
-        }
+        Elem(
+            commonElem = CommonElem(
+                serviceType = 48,
+                pbElem = msgInfo.pbEncode(),
+                businessType = businessType,
+            )
+        )
     }
 
     override fun video(
@@ -383,7 +374,7 @@ internal class MessageBuildingContext(
             else -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        uploadResp.get { uKey }.takeIf { it.isNotEmpty() }?.let {
+        uploadResp.uKey.takeIf { it.isNotEmpty() }?.let {
             bot.client.highwayContext.uploadVideo(
                 video = raw,
                 videoMd5 = videoMd5Bytes,
@@ -393,7 +384,7 @@ internal class MessageBuildingContext(
             )
         } ?: logger.d { "uKey 为空，服务器可能已存在该视频，跳过上传" }
 
-        uploadResp.get { subFileInfos }[0].get { uKey }.takeIf { it.isNotEmpty() }?.let {
+        uploadResp.subFileInfos.firstOrNull()?.uKey?.takeIf { it.isNotEmpty() }?.let {
             bot.client.highwayContext.uploadVideoThumbnail(
                 thumbnail = thumb,
                 thumbnailMd5 = thumbMd5Bytes,
@@ -403,20 +394,20 @@ internal class MessageBuildingContext(
             )
         } ?: logger.d { "视频缩略图 uKey 为空，服务器可能已存在该缩略图，跳过上传" }
 
-        val msgInfo = uploadResp.get { msgInfo }
+        val msgInfo = uploadResp.msgInfo
         val businessType = when (scene) {
             MessageScene.FRIEND -> 11
             MessageScene.GROUP -> 21
             MessageScene.TEMP -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        Elem {
-            it[commonElem] = CommonElem {
-                it[serviceType] = 48
-                it[pbElem] = msgInfo.toByteArray()
-                it[this.businessType] = businessType
-            }
-        }
+        Elem(
+            commonElem = CommonElem(
+                serviceType = 48,
+                pbElem = msgInfo.pbEncode(),
+                businessType = businessType,
+            )
+        )
     }
 
     override fun forward(block: suspend BotForwardBlockBuilder.() -> Unit) = addAsync {
@@ -481,20 +472,20 @@ internal class MessageBuildingContext(
         buffer.writeByte(0x01)
         buffer.write(ZLib.compress(str.encodeToByteArray()))
 
-        Elem {
-            it[lightAppElem] = LightAppElem {
-                it[bytesData] = buffer.readByteArray()
-            }
-        }
+        Elem(
+            lightAppElem = LightAppElem(
+                bytesData = buffer.readByteArray()
+            )
+        )
     }
 
-    suspend fun build(): List<PbObject<Elem>> = elemsList.awaitAll().flatten()
+    suspend fun build(): List<Elem> = elemsList.awaitAll().flatten()
 
     internal class Forward(
         val ctx: MessageBuildingContext
     ) : BotForwardBlockBuilder {
         private val commonMsgList = mutableListOf<Deferred<FakeMessage>>()
-        val nestedForwardTrace = mutableMapOf<String, List<PbObject<CommonMessage>>>()
+        val nestedForwardTrace = mutableMapOf<String, List<CommonMessage>>()
 
         private fun addAsync(elem: suspend () -> FakeMessage) {
             commonMsgList.add(ctx.bot.async { elem() })
@@ -517,50 +508,50 @@ internal class MessageBuildingContext(
             subBuilder.block()
             val subElems = subCtx.build()
             val preview = subBuilder.preview
+            val fakeSequence = Random.nextInt(1000000, 9999999).toLong()
             FakeMessage(
                 senderUin = senderUin,
                 senderName = senderName,
                 preview = preview,
-                commonMsg = CommonMessage {
-                    it[routingHead] = RoutingHead {
-                        it[fromUin] = senderUin
-                        it[toUid] = ctx.bot.uid
-                        when (ctx.scene) {
-                            MessageScene.FRIEND -> it[commonC2C] = RoutingHead.CommonC2C {
-                                it[name] = senderName
-                            }
-
-                            MessageScene.GROUP -> it[group] = RoutingHead.CommonGroup {
-                                it[groupCode] = ctx.peerUin
-                                it[groupCard] = senderName
-                                it[groupCardType] = 2
-                            }
-
-                            else -> {}
+                commonMsg = CommonMessage(
+                    routingHead = RoutingHead(
+                        fromUin = senderUin,
+                        toUid = ctx.bot.uid,
+                        commonC2C = if (ctx.scene == MessageScene.FRIEND) {
+                            RoutingHead.CommonC2C(name = senderName)
+                        } else {
+                            RoutingHead.CommonC2C()
+                        },
+                        group = if (ctx.scene == MessageScene.GROUP) {
+                            RoutingHead.CommonGroup(
+                                groupCode = ctx.peerUin,
+                                groupCard = senderName,
+                                groupCardType = 2,
+                            )
+                        } else {
+                            RoutingHead.CommonGroup()
                         }
-                    }
-                    it[contentHead] = ContentHead {
-                        it[type] = when (ctx.scene) {
+                    ),
+                    contentHead = ContentHead(
+                        type = when (ctx.scene) {
                             MessageScene.FRIEND -> PushMsgType.FriendMessage.value
                             MessageScene.GROUP -> PushMsgType.GroupMessage.value
                             MessageScene.TEMP -> PushMsgType.TempMessage.value
-                        }
-                        it[random] = Random.nextInt()
-                        it[sequence] = Random.nextInt(1000000, 9999999).toLong()
-                        it[time] = Clock.System.now().epochSeconds
-                        it[clientSequence] = it[sequence]
-                        it[msgUid] = Random.nextLong(1000000000000, 9999999999999)
-                        it[forwardExt] = ContentHead.Forward {
-                            it[field3] = 2
-                            it[avatar] = "https://q.qlogo.cn/headimg_dl?dst_uin=$senderUin&spec=640&img_type=jpg"
-                        }
-                    }
-                    it[messageBody] = MessageBody {
-                        it[richText] = RichText {
-                            it[elems] = subElems
-                        }
-                    }
-                }
+                        },
+                        random = Random.nextInt(),
+                        sequence = fakeSequence,
+                        time = Clock.System.now().epochSeconds,
+                        clientSequence = fakeSequence,
+                        msgUid = Random.nextLong(1000000000000, 9999999999999),
+                        forwardExt = ContentHead.Forward(
+                            field3 = 2,
+                            avatar = "https://q.qlogo.cn/headimg_dl?dst_uin=$senderUin&spec=640&img_type=jpg"
+                        ),
+                    ),
+                    messageBody = MessageBody(
+                        richText = RichText(elems = subElems)
+                    ),
+                )
             )
         }
 
@@ -570,7 +561,7 @@ internal class MessageBuildingContext(
             val senderUin: Long,
             val senderName: String,
             val preview: String,
-            val commonMsg: PbObject<CommonMessage>
+            val commonMsg: CommonMessage
         )
 
         internal class SubBuilder(val parent: MessageBuildingContext) : BotOutgoingMessageBuilder {
