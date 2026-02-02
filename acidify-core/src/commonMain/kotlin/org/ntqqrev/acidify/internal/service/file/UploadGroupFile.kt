@@ -1,10 +1,11 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Req
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Resp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D6Req
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D6Resp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object UploadGroupFile : OidbService<UploadGroupFile.Req, UploadGroupFile.Resp>(0x6d6, 0, true) {
     class Req(
@@ -26,39 +27,38 @@ internal object UploadGroupFile : OidbService<UploadGroupFile.Req, UploadGroupFi
         val uploadPort: Int
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray {
-        return Oidb0x6D6Req {
-            it[uploadFile] = Oidb0x6D6Req.UploadFile {
-                it[groupUin] = payload.groupUin
-                it[appId] = 7
-                it[busId] = 102
-                it[entrance] = 6
-                it[parentFolderId] = payload.parentFolderId
-                it[fileName] = payload.fileName
-                it[localPath] = "/${payload.fileName}"
-                it[fileSize] = payload.fileSize
-                it[sha] = payload.fileSha1
-                it[sha3] = payload.fileTriSha1
-                it[md5] = payload.fileMd5
-            }
-        }.toByteArray()
-    }
+    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+        Oidb0x6D6Req(
+            uploadFile = Oidb0x6D6Req.UploadFile(
+                groupUin = payload.groupUin,
+                appId = 7,
+                busId = 102,
+                entrance = 6,
+                parentFolderId = payload.parentFolderId,
+                fileName = payload.fileName,
+                localPath = "/${payload.fileName}",
+                fileSize = payload.fileSize,
+                sha = payload.fileSha1,
+                sha3 = payload.fileTriSha1,
+                md5 = payload.fileMd5,
+            )
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = Oidb0x6D6Resp(payload).get { uploadFile }
-        val retCode = resp.get { retCode }
+        val resp = payload.pbDecode<Oidb0x6D6Resp>().uploadFile
+        val retCode = resp.retCode
         if (retCode != 0) {
-            val retMsg = resp.get { retMsg }
-            throw Exception("上传群文件失败: $retCode $retMsg")
+            val retMsg = resp.retMsg
+            throw Exception("$retCode $retMsg")
         }
 
         return Resp(
-            fileExist = resp.get { fileExist },
-            fileId = resp.get { fileId },
-            fileKey = resp.get { fileKey },
-            checkKey = resp.get { checkKey },
-            uploadIp = resp.get { uploadIp },
-            uploadPort = resp.get { uploadPort }
+            fileExist = resp.fileExist,
+            fileId = resp.fileId,
+            fileKey = resp.fileKey,
+            checkKey = resp.checkKey,
+            uploadIp = resp.uploadIp,
+            uploadPort = resp.uploadPort
         )
     }
 }

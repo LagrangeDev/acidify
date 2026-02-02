@@ -1,10 +1,11 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Req
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D6Resp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D6Req
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D6Resp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object GetGroupFileDownloadUrl : OidbService<GetGroupFileDownloadUrl.Req, String>(0x6d6, 2, true) {
     class Req(
@@ -13,19 +14,19 @@ internal object GetGroupFileDownloadUrl : OidbService<GetGroupFileDownloadUrl.Re
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        Oidb0x6D6Req {
-            it[downloadFile] = Oidb0x6D6Req.DownloadFile {
-                it[groupUin] = payload.groupUin
-                it[appId] = 7
-                it[busId] = 102
-                it[fileId] = payload.fileId
-            }
-        }.toByteArray()
+        Oidb0x6D6Req(
+            downloadFile = Oidb0x6D6Req.DownloadFile(
+                groupUin = payload.groupUin,
+                appId = 7,
+                busId = 102,
+                fileId = payload.fileId,
+            )
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): String {
-        val resp = Oidb0x6D6Resp(payload).get { downloadFile }
-        val dns = resp.get { downloadDns }
-        val url = resp.get { downloadUrl }.toHexString()
+        val resp = payload.pbDecode<Oidb0x6D6Resp>().downloadFile
+        val dns = resp.downloadDns
+        val url = resp.downloadUrl.toHexString()
         return "https://$dns/ftn_handler/$url/?fname="
     }
 }

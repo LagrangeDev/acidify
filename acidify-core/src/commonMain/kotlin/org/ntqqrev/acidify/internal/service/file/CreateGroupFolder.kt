@@ -1,10 +1,11 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Req
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Resp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Req
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Resp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object CreateGroupFolder : OidbService<CreateGroupFolder.Req, CreateGroupFolder.Resp>(0x6d7, 0, true) {
     class Req(
@@ -17,21 +18,21 @@ internal object CreateGroupFolder : OidbService<CreateGroupFolder.Req, CreateGro
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        Oidb0x6D7Req {
-            it[createFolder] = Oidb0x6D7Req.CreateFolder {
-                it[groupUin] = payload.groupUin
-                it[rootDirectory] = "/"
-                it[folderName] = payload.folderName
-            }
-        }.toByteArray()
+        Oidb0x6D7Req(
+            createFolder = Oidb0x6D7Req.CreateFolder(
+                groupUin = payload.groupUin,
+                rootDirectory = "/",
+                folderName = payload.folderName,
+            )
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = Oidb0x6D7Resp(payload).get { createFolder }
-        val retCode = resp.get { retCode }
+        val resp = payload.pbDecode<Oidb0x6D7Resp>().createFolder
+        val retCode = resp.retCode
         if (retCode != 0) {
-            val retMsg = resp.get { retMsg }
-            throw Exception("创建群文件夹失败: $retCode $retMsg")
+            val retMsg = resp.retMsg
+            throw Exception("$retCode $retMsg")
         }
-        return Resp(folderId = resp.get { folderId })
+        return Resp(folderId = resp.folderId)
     }
 }

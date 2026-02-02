@@ -1,12 +1,13 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.*
-import org.ntqqrev.acidify.internal.packet.message.action.PbSendMsgReq
-import org.ntqqrev.acidify.internal.packet.message.action.PbSendMsgResp
-import org.ntqqrev.acidify.internal.packet.message.extra.PrivateFileExtra
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.*
+import org.ntqqrev.acidify.internal.proto.message.action.PbSendMsgReq
+import org.ntqqrev.acidify.internal.proto.message.action.PbSendMsgResp
+import org.ntqqrev.acidify.internal.proto.message.extra.PrivateFileExtra
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -32,42 +33,42 @@ internal object BroadcastPrivateFile :
 
     @OptIn(ExperimentalTime::class)
     override fun build(client: LagrangeClient, payload: Req): ByteArray =
-        PbSendMsgReq {
-            it[routingHead] = SendRoutingHead {
-                it[trans211] = Trans211 {
-                    it[toUin] = payload.friendUin
-                    it[ccCmd] = 4
-                    it[uid] = payload.friendUid
-                }
-            }
-            it[contentHead] = SendContentHead {
-                it[pkgNum] = 1
-            }
-            it[messageBody] = MessageBody {
-                it[msgContent] = PrivateFileExtra {
-                    it[notOnlineFile] = NotOnlineFile {
-                        it[fileUuid] = payload.fileId
-                        it[fileMd5] = payload.fileMd510M
-                        it[fileName] = payload.fileName
-                        it[fileSize] = payload.fileSize
-                        it[subCmd] = 1
-                        it[dangerLevel] = 0
-                        it[expireTime] = Clock.System.now().epochSeconds + 86400 * 7
-                        it[fileIdCrcMedia] = payload.crcMedia
-                    }
-                }.toByteArray()
-            }
-            it[clientSequence] = Random.nextLong()
-            it[random] = Random.nextInt()
-        }.toByteArray()
+        PbSendMsgReq(
+            routingHead = SendRoutingHead(
+                trans211 = Trans211(
+                    toUin = payload.friendUin,
+                    ccCmd = 4,
+                    uid = payload.friendUid,
+                )
+            ),
+            contentHead = SendContentHead(
+                pkgNum = 1,
+            ),
+            messageBody = MessageBody(
+                msgContent = PrivateFileExtra(
+                    notOnlineFile = NotOnlineFile(
+                        fileUuid = payload.fileId,
+                        fileMd5 = payload.fileMd510M,
+                        fileName = payload.fileName,
+                        fileSize = payload.fileSize,
+                        subCmd = 1,
+                        dangerLevel = 0,
+                        expireTime = Clock.System.now().epochSeconds + 86400 * 7,
+                        fileIdCrcMedia = payload.crcMedia,
+                    )
+                ).pbEncode()
+            ),
+            clientSequence = Random.nextLong(),
+            random = Random.nextInt(),
+        ).pbEncode()
 
     override fun parse(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = PbSendMsgResp(payload)
+        val resp = payload.pbDecode<PbSendMsgResp>()
         return Resp(
-            result = resp.get { result },
-            errMsg = resp.get { errMsg },
-            sendTime = resp.get { sendTime },
-            sequence = resp.get { clientSequence }
+            result = resp.result,
+            errMsg = resp.errMsg,
+            sendTime = resp.sendTime,
+            sequence = resp.clientSequence
         )
     }
 }

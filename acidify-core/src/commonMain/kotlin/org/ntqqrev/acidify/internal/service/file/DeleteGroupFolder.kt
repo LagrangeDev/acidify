@@ -1,10 +1,11 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Req
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Resp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Req
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Resp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object DeleteGroupFolder : OidbService<DeleteGroupFolder.Req, Unit>(0x6d7, 1, true) {
     class Req(
@@ -13,19 +14,19 @@ internal object DeleteGroupFolder : OidbService<DeleteGroupFolder.Req, Unit>(0x6
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        Oidb0x6D7Req {
-            it[deleteFolder] = Oidb0x6D7Req.DeleteFolder {
-                it[groupUin] = payload.groupUin
-                it[folderId] = payload.folderId
-            }
-        }.toByteArray()
+        Oidb0x6D7Req(
+            deleteFolder = Oidb0x6D7Req.DeleteFolder(
+                groupUin = payload.groupUin,
+                folderId = payload.folderId,
+            )
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray) {
-        val resp = Oidb0x6D7Resp(payload).get { deleteFolder }
-        val retCode = resp.get { retCode }
+        val resp = payload.pbDecode<Oidb0x6D7Resp>().deleteFolder
+        val retCode = resp.retCode
         if (retCode != 0) {
-            val retMsg = resp.get { retMsg }
-            throw Exception("删除群文件夹失败: $retCode $retMsg")
+            val retMsg = resp.retMsg
+            throw Exception("$retCode $retMsg")
         }
     }
 }

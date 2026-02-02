@@ -1,11 +1,12 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.GroupFileListReq
-import org.ntqqrev.acidify.internal.packet.oidb.GroupFileListReqBody
-import org.ntqqrev.acidify.internal.packet.oidb.GroupFileListResp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.GroupFileListReq
+import org.ntqqrev.acidify.internal.proto.oidb.GroupFileListReqBody
+import org.ntqqrev.acidify.internal.proto.oidb.GroupFileListResp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.struct.BotGroupFileEntry
 import org.ntqqrev.acidify.struct.BotGroupFolderEntry
 
@@ -24,61 +25,63 @@ internal object GetGroupFileList : OidbService<GetGroupFileList.Req, GetGroupFil
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        GroupFileListReq {
-            it[listReq] = GroupFileListReqBody {
-                it[groupUin] = payload.groupUin
-                it[appId] = 7
-                it[targetDirectory] = payload.targetDirectory
-                it[fileCount] = payload.batchSize
-                it[sortBy] = 1
-                it[startIndex] = payload.startIndex
-                it[field17] = 2
-                it[field18] = 0
-            }
-        }.toByteArray()
+        GroupFileListReq(
+            listReq = GroupFileListReqBody(
+                groupUin = payload.groupUin,
+                appId = 7,
+                targetDirectory = payload.targetDirectory,
+                fileCount = payload.batchSize,
+                sortBy = 1,
+                startIndex = payload.startIndex,
+                field17 = 2,
+                field18 = 0,
+            )
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = GroupFileListResp(payload).get { listResp }
-        val retCode = resp.get { retCode }
+        val resp = payload.pbDecode<GroupFileListResp>().listResp
+        val retCode = resp.retCode
 
         if (retCode != 0) {
-            throw Exception("获取群文件列表失败: $retCode")
+            throw Exception(retCode.toString())
         }
 
-        val items = resp.get { items }
+        val items = resp.items
         val files = mutableListOf<BotGroupFileEntry>()
         val folders = mutableListOf<BotGroupFolderEntry>()
 
         items.forEach { item ->
-            when (item.get { type }) {
+            when (item.type) {
                 1 -> {
-                    val fileInfo = item.get { this.fileInfo }
+                    val fileInfo = item.fileInfo
                     files.add(
                         BotGroupFileEntry(
-                        fileId = fileInfo.get { this.fileId },
-                        fileName = fileInfo.get { this.fileName },
-                        parentFolderId = fileInfo.get { parentDirectory },
-                        fileSize = fileInfo.get { fileSize },
-                        expireTime = fileInfo.get { expireTime },
-                        modifiedTime = fileInfo.get { modifiedTime },
-                        uploaderUin = fileInfo.get { uploaderUin },
-                        uploadedTime = fileInfo.get { uploadedTime },
-                        downloadedTimes = fileInfo.get { downloadedTimes }
-                    ))
+                            fileId = fileInfo.fileId,
+                            fileName = fileInfo.fileName,
+                            parentFolderId = fileInfo.parentDirectory,
+                            fileSize = fileInfo.fileSize,
+                            expireTime = fileInfo.expireTime,
+                            modifiedTime = fileInfo.modifiedTime,
+                            uploaderUin = fileInfo.uploaderUin,
+                            uploadedTime = fileInfo.uploadedTime,
+                            downloadedTimes = fileInfo.downloadedTimes
+                        )
+                    )
                 }
 
                 2 -> {
-                    val folderInfo = item.get { this.folderInfo }
+                    val folderInfo = item.folderInfo
                     folders.add(
                         BotGroupFolderEntry(
-                        folderId = folderInfo.get { this.folderId },
-                        parentFolderId = folderInfo.get { parentDirectoryId },
-                        folderName = folderInfo.get { this.folderName },
-                        createTime = folderInfo.get { this.createTime },
-                        modifiedTime = folderInfo.get { this.modifiedTime },
-                        creatorUin = folderInfo.get { creatorUin },
-                        totalFileCount = folderInfo.get { totalFileCount }
-                    ))
+                            folderId = folderInfo.folderId,
+                            parentFolderId = folderInfo.parentDirectoryId,
+                            folderName = folderInfo.folderName,
+                            createTime = folderInfo.createTime,
+                            modifiedTime = folderInfo.modifiedTime,
+                            creatorUin = folderInfo.creatorUin,
+                            totalFileCount = folderInfo.totalFileCount
+                        )
+                    )
                 }
             }
         }
@@ -86,7 +89,7 @@ internal object GetGroupFileList : OidbService<GetGroupFileList.Req, GetGroupFil
         return Resp(
             files = files,
             folders = folders,
-            isEnd = resp.get { isEnd }
+            isEnd = resp.isEnd
         )
     }
 }

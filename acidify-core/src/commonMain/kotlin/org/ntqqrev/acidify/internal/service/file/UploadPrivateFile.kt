@@ -1,10 +1,11 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0xE37Req
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0xE37Resp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0xE37Req
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0xE37Resp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.internal.util.toIpString
 
 internal object UploadPrivateFile : OidbService<UploadPrivateFile.Req, UploadPrivateFile.Resp>(0xe37, 1700) {
@@ -28,40 +29,40 @@ internal object UploadPrivateFile : OidbService<UploadPrivateFile.Req, UploadPri
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        Oidb0xE37Req {
-            it[subCommand] = 1700
-            it[seq] = 0
-            it[uploadBody] = Oidb0xE37Req.UploadBody {
-                it[senderUid] = payload.senderUid
-                it[receiverUid] = payload.receiverUid
-                it[fileSize] = payload.fileSize
-                it[fileName] = payload.fileName
-                it[md510MCheckSum] = payload.md510M
-                it[sha1CheckSum] = payload.fileSha1
-                it[localPath] = "/"
-                it[md5CheckSum] = payload.fileMd5
-                it[sha3CheckSum] = payload.fileTriSha1
-            }
-            it[field101] = 3
-            it[field102] = 1
-            it[field200] = 1
-        }.toByteArray()
+        Oidb0xE37Req(
+            subCommand = 1700,
+            seq = 0,
+            uploadBody = Oidb0xE37Req.UploadBody(
+                senderUid = payload.senderUid,
+                receiverUid = payload.receiverUid,
+                fileSize = payload.fileSize,
+                fileName = payload.fileName,
+                md510MCheckSum = payload.md510M,
+                sha1CheckSum = payload.fileSha1,
+                localPath = "/",
+                md5CheckSum = payload.fileMd5,
+                sha3CheckSum = payload.fileTriSha1,
+            ),
+            field101 = 3,
+            field102 = 1,
+            field200 = 1,
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = Oidb0xE37Resp(payload).get { uploadBody }
-        val retCode = resp.get { retCode }
+        val resp = payload.pbDecode<Oidb0xE37Resp>().uploadBody
+        val retCode = resp.retCode
         if (retCode != 0) {
-            val retMsg = resp.get { retMsg }
-            throw Exception("上传私聊文件失败: $retCode $retMsg")
+            val retMsg = resp.retMsg
+            throw Exception("$retCode $retMsg")
         }
         return Resp(
-            fileExist = resp.get { boolFileExist },
-            fileId = resp.get { uuid },
-            uploadKey = resp.get { mediaPlatformUploadKey },
-            ipAndPorts = resp.get { rtpMediaPlatformUploadAddress }.map {
-                it.get { inIP }.toIpString(reverseEndian = true) to it.get { inPort }
+            fileExist = resp.boolFileExist,
+            fileId = resp.uuid,
+            uploadKey = resp.mediaPlatformUploadKey,
+            ipAndPorts = resp.rtpMediaPlatformUploadAddress.map {
+                it.inIP.toIpString(reverseEndian = true) to it.inPort
             },
-            fileCrcMedia = resp.get { fileIdCrc }
+            fileCrcMedia = resp.fileIdCrc
         )
     }
 }

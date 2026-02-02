@@ -1,10 +1,11 @@
 package org.ntqqrev.acidify.internal.service.file
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Req
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x6D7Resp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Req
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Resp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object RenameGroupFolder : OidbService<RenameGroupFolder.Req, Unit>(0x6d7, 2, true) {
     class Req(
@@ -14,20 +15,20 @@ internal object RenameGroupFolder : OidbService<RenameGroupFolder.Req, Unit>(0x6
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        Oidb0x6D7Req {
-            it[renameFolder] = Oidb0x6D7Req.RenameFolder {
-                it[groupUin] = payload.groupUin
-                it[folderId] = payload.folderId
-                it[newFolderName] = payload.newFolderName
-            }
-        }.toByteArray()
+        Oidb0x6D7Req(
+            renameFolder = Oidb0x6D7Req.RenameFolder(
+                groupUin = payload.groupUin,
+                folderId = payload.folderId,
+                newFolderName = payload.newFolderName,
+            )
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray) {
-        val resp = Oidb0x6D7Resp(payload).get { renameFolder }
-        val retCode = resp.get { retCode }
+        val resp = payload.pbDecode<Oidb0x6D7Resp>().renameFolder
+        val retCode = resp.retCode
         if (retCode != 0) {
-            val retMsg = resp.get { retMsg }
-            throw Exception("重命名群文件夹失败: $retCode $retMsg")
+            val retMsg = resp.retMsg
+            throw Exception("$retCode $retMsg")
         }
     }
 }
