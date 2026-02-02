@@ -32,6 +32,7 @@ kotlin {
         commonMain.dependencies {
             implementation(kotlin("reflect"))
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.io)
             implementation(libs.bundles.ktor.client)
@@ -45,6 +46,7 @@ kotlin {
             implementation(kotlin("test"))
         }
         all {
+            languageSettings.optIn("kotlinx.serialization.ExperimentalSerializationApi")
             languageSettings.optIn("kotlin.js.ExperimentalJsExport")
             languageSettings.optIn("kotlin.js.ExperimentalJsStatic")
         }
