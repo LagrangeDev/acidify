@@ -17,7 +17,6 @@ import org.ntqqrev.acidify.getGroupHistoryMessages
 import org.ntqqrev.acidify.getUidByUin
 import org.ntqqrev.acidify.internal.crypto.hash.MD5
 import org.ntqqrev.acidify.internal.json.message.OutgoingForwardPayload
-import org.ntqqrev.acidify.internal.packet.message.PushMsgType
 import org.ntqqrev.acidify.internal.proto.message.*
 import org.ntqqrev.acidify.internal.proto.message.elem.*
 import org.ntqqrev.acidify.internal.proto.message.extra.QBigFaceExtra

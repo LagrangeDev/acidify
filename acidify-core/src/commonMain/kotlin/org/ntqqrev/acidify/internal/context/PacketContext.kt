@@ -16,10 +16,8 @@ import org.ntqqrev.acidify.common.SignResult
 import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
-import org.ntqqrev.acidify.internal.packet.system.SsoReservedFields
-import org.ntqqrev.acidify.internal.packet.system.SsoSecureInfo
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.system.SsoReservedFields
+import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.system.BotOnline
 import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.internal.util.*
@@ -209,11 +207,11 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
             client.signProvider.sign(command, sequence, payload)
         } else null
 
-        return SsoReservedFields {
-            it[trace] = generateTrace()
-            it[uid] = client.sessionStore.uid
-            it[secureInfo] = result?.toSsoSecureInfo()
-        }.toByteArray()
+        return SsoReservedFields(
+            trace = generateTrace(),
+            uid = client.sessionStore.uid,
+            secureInfo = result?.toSsoSecureInfo(),
+        ).pbEncode()
     }
 
     private fun parseSso(packet: ByteArray): SsoResponse {
@@ -258,13 +256,7 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
         }
     }
 
-    private fun SignResult.toSsoSecureInfo(): PbObject<SsoSecureInfo> {
-        return SsoSecureInfo {
-            it[sign] = this@toSsoSecureInfo.sign
-            it[token] = this@toSsoSecureInfo.token
-            it[extra] = this@toSsoSecureInfo.extra
-        }
-    }
+    private fun SignResult.toSsoSecureInfo(): SsoSecureInfo = SsoSecureInfo(sign, token, extra)
 
     private suspend fun cleanupPendingRequests(error: Throwable) {
         val pendingCount = mapQueryMutex.withLock { pending.size }

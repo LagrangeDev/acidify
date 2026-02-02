@@ -4,9 +4,9 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.internal.json.GroupEssenceMsgItem
-import org.ntqqrev.acidify.internal.packet.message.PushMsgType
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import org.ntqqrev.acidify.internal.proto.message.Elem
+import org.ntqqrev.acidify.internal.proto.message.PushMsgType
 import org.ntqqrev.acidify.internal.proto.message.extra.PrivateFileExtra
 import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.*

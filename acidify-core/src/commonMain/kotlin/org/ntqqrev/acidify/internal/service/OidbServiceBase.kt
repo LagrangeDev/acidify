@@ -2,8 +2,9 @@ package org.ntqqrev.acidify.internal.service
 
 import org.ntqqrev.acidify.exception.OidbException
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal abstract class OidbService<T, R>(
     val oidbCommand: Int,
@@ -13,20 +14,20 @@ internal abstract class OidbService<T, R>(
     abstract fun buildOidb(client: LagrangeClient, payload: T): ByteArray
     abstract fun parseOidb(client: LagrangeClient, payload: ByteArray): R
 
-    override fun build(client: LagrangeClient, payload: T): ByteArray = Oidb {
-        it[command] = oidbCommand
-        it[service] = oidbService
-        it[body] = buildOidb(client, payload)
-        it[reserved] = isReserved
-    }.toByteArray()
+    override fun build(client: LagrangeClient, payload: T): ByteArray = Oidb(
+        command = oidbCommand,
+        service = oidbService,
+        body = buildOidb(client, payload),
+        reserved = isReserved
+    ).pbEncode()
 
     override fun parse(client: LagrangeClient, payload: ByteArray): R {
-        val response = Oidb(payload)
-        val oidbResult = response.get { result }
+        val response = payload.pbDecode<Oidb>()
+        val oidbResult = response.result
         if (oidbResult != 0) {
-            throw OidbException(oidbCommand, oidbService, oidbResult, response.get { message })
+            throw OidbException(oidbCommand, oidbService, oidbResult, response.message)
         }
-        return parseOidb(client, response.get { body })
+        return parseOidb(client, response.body)
     }
 }
 

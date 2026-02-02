@@ -7,8 +7,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.event.*
-import org.ntqqrev.acidify.internal.packet.message.PushMsgType
 import org.ntqqrev.acidify.internal.proto.message.PushMsg
+import org.ntqqrev.acidify.internal.proto.message.PushMsgType
 import org.ntqqrev.acidify.internal.proto.message.extra.*
 import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.BotIncomingSegment

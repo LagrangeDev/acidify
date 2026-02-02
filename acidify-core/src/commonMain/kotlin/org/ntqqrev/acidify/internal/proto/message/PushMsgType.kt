@@ -1,4 +1,4 @@
-package org.ntqqrev.acidify.internal.packet.message
+package org.ntqqrev.acidify.internal.proto.message
 
 internal enum class PushMsgType(val value: Int) {
     FriendMessage(166),
