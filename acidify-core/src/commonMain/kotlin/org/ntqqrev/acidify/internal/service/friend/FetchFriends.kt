@@ -1,12 +1,13 @@
-package org.ntqqrev.acidify.internal.service.friend
+﻿package org.ntqqrev.acidify.internal.service.friend
 
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
-import org.ntqqrev.acidify.internal.packet.oidb.FetchFriendsCookie
-import org.ntqqrev.acidify.internal.packet.oidb.IncPull
-import org.ntqqrev.acidify.internal.packet.oidb.IncPullResp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.FetchFriendsCookie
+import org.ntqqrev.acidify.internal.proto.oidb.IncPull
+import org.ntqqrev.acidify.internal.proto.oidb.IncPullResp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.struct.BotFriendData
 import org.ntqqrev.acidify.struct.UserInfoGender
 
@@ -17,17 +18,15 @@ internal object FetchFriends : OidbService<FetchFriends.Req, FetchFriends.Resp>(
         val friendDataList: List<BotFriendData>,
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = IncPull {
-        it[reqCount] = 300
-        it[cookie] = FetchFriendsCookie {
-            it[nextUin] = payload.nextUin
-        }
-        it[flag] = 1
-        it[requestBiz] = listOf(
-            IncPull.Biz {
-                it[bizType] = 1
-                it[bizData] = IncPull.Biz.Busi {
-                    it[extBusi] = listOf(
+    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = IncPull(
+        reqCount = 300,
+        cookie = FetchFriendsCookie(nextUin = payload.nextUin),
+        flag = 1,
+        requestBiz = listOf(
+            IncPull.Biz(
+                bizType = 1,
+                bizData = IncPull.Biz.Busi(
+                    extBusi = listOf(
                         UserInfoKey.BIO,
                         UserInfoKey.REMARK,
                         UserInfoKey.NICKNAME,
@@ -35,31 +34,31 @@ internal object FetchFriends : OidbService<FetchFriends.Req, FetchFriends.Resp>(
                         UserInfoKey.AGE,
                         UserInfoKey.GENDER
                     ).map { key -> key.number }
-                }
-            },
-            IncPull.Biz {
-                it[bizType] = 4
-                it[bizData] = IncPull.Biz.Busi {
-                    it[extBusi] = listOf(100, 101, 102)
-                }
-            }
+                )
+            ),
+            IncPull.Biz(
+                bizType = 4,
+                bizData = IncPull.Biz.Busi(
+                    extBusi = listOf(100, 101, 102)
+                )
+            )
         )
-    }.toByteArray()
+    ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = IncPullResp(payload)
-        val categories = resp.get { category }.associate { it.get { categoryId } to it.get { categoryName } }
+        val resp = payload.pbDecode<IncPullResp>()
+        val categories = resp.category.associate { it.categoryId to it.categoryName }
         return Resp(
-            nextUin = resp.get { cookie }?.get { nextUin },
-            friendDataList = resp.get { friendList }.map { friend ->
-                val subBiz = friend.get { subBizMap }
-                    .find { it.get { key } == 1 }!!
-                    .get { value }
-                val numMap = subBiz.get { numDataMap }.associate { it.get { key } to it.get { value } }
-                val strMap = subBiz.get { dataMap }.associate { it.get { key } to it.get { value } }
+            nextUin = resp.cookie?.nextUin,
+            friendDataList = resp.friendList.map { friend ->
+                val subBiz = friend.subBizMap
+                    .find { it.key == 1 }!!
+                    .value
+                val numMap = subBiz.numDataMap.associate { it.key to it.value }
+                val strMap = subBiz.dataMap.associate { it.key to it.value }
                 BotFriendData(
-                    uin = friend.get { uin },
-                    uid = friend.get { uid },
+                    uin = friend.uin,
+                    uid = friend.uid,
                     nickname = strMap[UserInfoKey.NICKNAME.number] ?: "",
                     remark = strMap[UserInfoKey.REMARK.number] ?: "",
                     bio = strMap[UserInfoKey.BIO.number] ?: "",
@@ -67,8 +66,8 @@ internal object FetchFriends : OidbService<FetchFriends.Req, FetchFriends.Resp>(
                     age = numMap[UserInfoKey.AGE.number] ?: 0,
                     gender = numMap[UserInfoKey.GENDER.number]?.let { UserInfoGender.from(it) }
                         ?: UserInfoGender.UNKNOWN,
-                    categoryId = friend.get { categoryId },
-                    categoryName = categories[friend.get { categoryId }] ?: ""
+                    categoryId = friend.categoryId,
+                    categoryName = categories[friend.categoryId] ?: ""
                 )
             },
         )

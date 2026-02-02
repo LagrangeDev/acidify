@@ -2,9 +2,8 @@ package org.ntqqrev.acidify.struct
 
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.getUinByUid
-import org.ntqqrev.acidify.internal.packet.oidb.FilteredFriendRequestItem
-import org.ntqqrev.acidify.internal.packet.oidb.FriendRequestItem
-import org.ntqqrev.acidify.internal.protobuf.PbObject
+import org.ntqqrev.acidify.internal.proto.oidb.FilteredFriendRequestItem
+import org.ntqqrev.acidify.internal.proto.oidb.FriendRequestItem
 import kotlin.js.JsExport
 
 /**
@@ -34,35 +33,35 @@ class BotFriendRequest internal constructor(
 ) {
     companion object {
         internal suspend fun Bot.parseFriendRequest(
-            raw: PbObject<FriendRequestItem>
+            raw: FriendRequestItem
         ) = BotFriendRequest(
-            time = raw.get { timestamp },
-            initiatorUin = getUinByUid(raw.get { sourceUid }),
-            initiatorUid = raw.get { sourceUid },
-            targetUserUin = getUinByUid(raw.get { targetUid }),
-            targetUserUid = raw.get { targetUid },
-            state = when (raw.get { state }) {
+            time = raw.timestamp,
+            initiatorUin = getUinByUid(raw.sourceUid),
+            initiatorUid = raw.sourceUid,
+            targetUserUin = getUinByUid(raw.targetUid),
+            targetUserUid = raw.targetUid,
+            state = when (raw.state) {
                 1 -> RequestState.PENDING
                 3 -> RequestState.ACCEPTED
                 7 -> RequestState.REJECTED
                 else -> RequestState.DEFAULT
             },
-            comment = raw.get { comment },
-            via = raw.get { source },
+            comment = raw.comment,
+            via = raw.source,
             isFiltered = false
         )
 
         internal suspend fun Bot.parseFilteredFriendRequest(
-            raw: PbObject<FilteredFriendRequestItem>
+            raw: FilteredFriendRequestItem
         ) = BotFriendRequest(
-            time = raw.get { timestamp },
-            initiatorUin = getUinByUid(raw.get { sourceUid }),
-            initiatorUid = raw.get { sourceUid },
+            time = raw.timestamp,
+            initiatorUin = getUinByUid(raw.sourceUid),
+            initiatorUid = raw.sourceUid,
             targetUserUin = uin,
             targetUserUid = uid,
             state = RequestState.PENDING,
-            comment = raw.get { comment },
-            via = raw.get { source },
+            comment = raw.comment,
+            via = raw.source,
             isFiltered = true
         )
     }

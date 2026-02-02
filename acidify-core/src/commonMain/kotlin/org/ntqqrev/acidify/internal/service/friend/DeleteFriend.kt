@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.friend
+﻿package org.ntqqrev.acidify.internal.service.friend
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.DeleteFriendReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.DeleteFriendReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object DeleteFriend : NoOutputOidbService<DeleteFriend.Req>(0x126b, 0) {
     class Req(
@@ -11,19 +11,19 @@ internal object DeleteFriend : NoOutputOidbService<DeleteFriend.Req>(0x126b, 0) 
         val block: Boolean,
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = DeleteFriendReq {
-        it[body] = DeleteFriendReq.Body {
-            it[targetUid] = payload.friendUid
-            it[field2] = DeleteFriendReq.Body.Field2 {
-                it[field1] = 130
-                it[field2] = 109
-                it[field3] = DeleteFriendReq.Body.Field2.Field3 {
-                    it[field1] = 8
-                    it[field2] = 8
-                    it[field3] = 50
-                }
-            }
-            it[block] = payload.block
-        }
-    }.toByteArray()
+    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = DeleteFriendReq(
+        body = DeleteFriendReq.Body(
+            targetUid = payload.friendUid,
+            field2 = DeleteFriendReq.Body.Field2(
+                field1 = 130,
+                field2 = 109,
+                field3 = DeleteFriendReq.Body.Field2.Field3(
+                    field1 = 8,
+                    field2 = 8,
+                    field3 = 50,
+                )
+            ),
+            block = payload.block,
+        )
+    ).pbEncode()
 }

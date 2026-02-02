@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.friend
+﻿package org.ntqqrev.acidify.internal.service.friend
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.ProfileLikeReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.ProfileLikeReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SendProfileLike : NoOutputOidbService<SendProfileLike.Req>(0x7e5, 104) {
     class Req(
@@ -12,9 +12,9 @@ internal object SendProfileLike : NoOutputOidbService<SendProfileLike.Req>(0x7e5
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        ProfileLikeReq {
-            it[targetUid] = payload.targetUid
-            it[field2] = 71
-            it[field3] = payload.count
-        }.toByteArray()
+        ProfileLikeReq(
+            targetUid = payload.targetUid,
+            field2 = 71,
+            field3 = payload.count,
+        ).pbEncode()
 }
