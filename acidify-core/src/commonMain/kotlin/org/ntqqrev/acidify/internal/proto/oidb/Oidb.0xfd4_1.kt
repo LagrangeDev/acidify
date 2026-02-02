@@ -54,21 +54,9 @@ internal class IncPullResp(
 
         @Serializable
         internal class SubBiz(
-            @ProtoNumber(1) val numDataMap: List<NumDataEntry> = emptyList(),
-            @ProtoNumber(2) val dataMap: List<DataEntry> = emptyList(),
-        ) {
-            @Serializable
-            internal class NumDataEntry(
-                @ProtoNumber(1) val key: Int = 0,
-                @ProtoNumber(2) val value: Int = 0,
-            )
-
-            @Serializable
-            internal class DataEntry(
-                @ProtoNumber(1) val key: Int = 0,
-                @ProtoNumber(2) val value: String = "",
-            )
-        }
+            @ProtoNumber(1) val numberProps: Map<Int, Int> = emptyMap(),
+            @ProtoNumber(2) val stringProps: Map<Int, String> = emptyMap(),
+        )
     }
 
     @Serializable

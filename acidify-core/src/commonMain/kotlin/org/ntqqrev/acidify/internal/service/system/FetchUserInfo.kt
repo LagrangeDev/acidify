@@ -30,22 +30,20 @@ internal object FetchUserInfo {
     private fun parseUserInfo(payload: ByteArray): BotUserInfo {
         val body = payload.pbDecode<FetchUserInfoResp>().body
         val properties = body.properties
-        val numMap = properties.numberProps.associate { it.key to it.value }
-        val strMap = properties.stringProps.associate { it.key to it.value }
         return BotUserInfo(
             uin = body.uin,
-            nickname = strMap[UserInfoKey.NICKNAME.number] ?: "",
-            bio = strMap[UserInfoKey.BIO.number] ?: "",
-            gender = numMap[UserInfoKey.GENDER.number]?.let { UserInfoGender.from(it) }
+            nickname = properties.stringProps[UserInfoKey.NICKNAME.number] ?: "",
+            bio = properties.stringProps[UserInfoKey.BIO.number] ?: "",
+            gender = properties.numberProps[UserInfoKey.GENDER.number]?.let { UserInfoGender.from(it) }
                 ?: UserInfoGender.UNKNOWN,
-            remark = strMap[UserInfoKey.REMARK.number] ?: "",
-            level = numMap[UserInfoKey.LEVEL.number] ?: 0,
-            country = strMap[UserInfoKey.COUNTRY.number] ?: "",
-            city = strMap[UserInfoKey.CITY.number] ?: "",
-            school = strMap[UserInfoKey.SCHOOL.number] ?: "",
-            registerTime = numMap[UserInfoKey.REGISTER_TIME.number]?.toLong() ?: 0L,
-            age = numMap[UserInfoKey.AGE.number] ?: 0,
-            qid = strMap[UserInfoKey.QID.number] ?: "",
+            remark = properties.stringProps[UserInfoKey.REMARK.number] ?: "",
+            level = properties.numberProps[UserInfoKey.LEVEL.number] ?: 0,
+            country = properties.stringProps[UserInfoKey.COUNTRY.number] ?: "",
+            city = properties.stringProps[UserInfoKey.CITY.number] ?: "",
+            school = properties.stringProps[UserInfoKey.SCHOOL.number] ?: "",
+            registerTime = properties.numberProps[UserInfoKey.REGISTER_TIME.number]?.toLong() ?: 0L,
+            age = properties.numberProps[UserInfoKey.AGE.number] ?: 0,
+            qid = properties.stringProps[UserInfoKey.QID.number] ?: "",
         )
     }
 

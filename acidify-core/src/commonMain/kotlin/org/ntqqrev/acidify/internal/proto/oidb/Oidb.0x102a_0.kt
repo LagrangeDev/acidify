@@ -10,11 +10,5 @@ internal class FetchPsKeyReq(
 
 @Serializable
 internal class FetchPsKeyResp(
-    @ProtoNumber(1) val psKeyEntries: List<PsKeyEntry> = emptyList(),
-) {
-    @Serializable
-    internal class PsKeyEntry(
-        @ProtoNumber(1) val domain: String = "",
-        @ProtoNumber(2) val key: String = "",
-    )
-}
+    @ProtoNumber(1) val psKeyEntries: Map<String, String> = emptyMap(),
+)

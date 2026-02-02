@@ -54,17 +54,15 @@ internal object FetchFriends : OidbService<FetchFriends.Req, FetchFriends.Resp>(
                 val subBiz = friend.subBizMap
                     .find { it.key == 1 }!!
                     .value
-                val numMap = subBiz.numDataMap.associate { it.key to it.value }
-                val strMap = subBiz.dataMap.associate { it.key to it.value }
                 BotFriendData(
                     uin = friend.uin,
                     uid = friend.uid,
-                    nickname = strMap[UserInfoKey.NICKNAME.number] ?: "",
-                    remark = strMap[UserInfoKey.REMARK.number] ?: "",
-                    bio = strMap[UserInfoKey.BIO.number] ?: "",
-                    qid = strMap[UserInfoKey.QID.number] ?: "",
-                    age = numMap[UserInfoKey.AGE.number] ?: 0,
-                    gender = numMap[UserInfoKey.GENDER.number]?.let { UserInfoGender.from(it) }
+                    nickname = subBiz.stringProps[UserInfoKey.NICKNAME.number] ?: "",
+                    remark = subBiz.stringProps[UserInfoKey.REMARK.number] ?: "",
+                    bio = subBiz.stringProps[UserInfoKey.BIO.number] ?: "",
+                    qid = subBiz.stringProps[UserInfoKey.QID.number] ?: "",
+                    age = subBiz.numberProps[UserInfoKey.AGE.number] ?: 0,
+                    gender = subBiz.numberProps[UserInfoKey.GENDER.number]?.let { UserInfoGender.from(it) }
                         ?: UserInfoGender.UNKNOWN,
                     categoryId = friend.categoryId,
                     categoryName = categories[friend.categoryId] ?: ""

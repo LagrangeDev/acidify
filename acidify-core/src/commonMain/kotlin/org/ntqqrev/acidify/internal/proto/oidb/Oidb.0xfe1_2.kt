@@ -31,20 +31,8 @@ internal class FetchUserInfoResp(
     ) {
         @Serializable
         internal class Properties(
-            @ProtoNumber(1) val numberProps: List<NumberProp> = emptyList(),
-            @ProtoNumber(2) val stringProps: List<StringProp> = emptyList(),
-        ) {
-            @Serializable
-            internal class NumberProp(
-                @ProtoNumber(1) val key: Int = 0,
-                @ProtoNumber(2) val value: Int = 0,
-            )
-
-            @Serializable
-            internal class StringProp(
-                @ProtoNumber(1) val key: Int = 0,
-                @ProtoNumber(2) val value: String = "",
-            )
-        }
+            @ProtoNumber(1) val numberProps: Map<Int, Int> = emptyMap(),
+            @ProtoNumber(2) val stringProps: Map<Int, String> = emptyMap(),
+        )
     }
 }

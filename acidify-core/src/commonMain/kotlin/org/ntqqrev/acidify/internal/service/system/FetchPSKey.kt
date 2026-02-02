@@ -12,7 +12,5 @@ internal object FetchPSKey : OidbService<List<String>, Map<String, String>>(0x10
         FetchPsKeyReq(domains = payload).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Map<String, String> =
-        payload.pbDecode<FetchPsKeyResp>()
-            .psKeyEntries
-            .associate { it.domain to it.key }
+        payload.pbDecode<FetchPsKeyResp>().psKeyEntries
 }

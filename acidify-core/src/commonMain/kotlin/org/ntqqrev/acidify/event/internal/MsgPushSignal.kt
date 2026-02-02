@@ -294,16 +294,13 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                     290 -> { // FriendGrayTip (FriendNudge)
                         val content = msgContent.pbDecode<GeneralGrayTip>()
                         if (content.bizType == 12) {
-                            val templateParamsMap = content.templateParams.associate {
-                                it.key to it.value
-                            }
                             val fromUin = routingHead.fromUin
-                            val uin1 = templateParamsMap["uin_str1"]?.toLongOrNull() ?: return listOf()
-                            val uin2 = templateParamsMap["uin_str2"]?.toLongOrNull() ?: return listOf()
-                            val action = templateParamsMap["action_str"]
-                                ?: templateParamsMap["alt_str1"] ?: ""
-                            val actionImgUrl = templateParamsMap["action_img_url"] ?: ""
-                            val suffix = templateParamsMap["suffix_str"] ?: ""
+                            val uin1 = content.templateParams["uin_str1"]?.toLongOrNull() ?: return listOf()
+                            val uin2 = content.templateParams["uin_str2"]?.toLongOrNull() ?: return listOf()
+                            val action = content.templateParams["action_str"]
+                                ?: content.templateParams["alt_str1"] ?: ""
+                            val actionImgUrl = content.templateParams["action_img_url"] ?: ""
+                            val suffix = content.templateParams["suffix_str"] ?: ""
 
                             listOf(
                                 FriendNudgeEvent(
@@ -422,16 +419,13 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
                         val content = body.generalGrayTip ?: return listOf()
 
                         if (content.bizType == 12) {
-                            val templateParamsMap = content.templateParams.associate {
-                                it.key to it.value
-                            }
                             val groupUin = if (body.groupUin != 0L) body.groupUin else wrapper.groupUin
-                            val uin1 = templateParamsMap["uin_str1"]?.toLongOrNull() ?: return listOf()
-                            val uin2 = templateParamsMap["uin_str2"]?.toLongOrNull() ?: return listOf()
-                            val action = templateParamsMap["action_str"]
-                                ?: templateParamsMap["alt_str1"] ?: ""
-                            val actionImgUrl = templateParamsMap["action_img_url"] ?: ""
-                            val suffix = templateParamsMap["suffix_str"] ?: ""
+                            val uin1 = content.templateParams["uin_str1"]?.toLongOrNull() ?: return listOf()
+                            val uin2 = content.templateParams["uin_str2"]?.toLongOrNull() ?: return listOf()
+                            val action = content.templateParams["action_str"]
+                                ?: content.templateParams["alt_str1"] ?: ""
+                            val actionImgUrl = content.templateParams["action_img_url"] ?: ""
+                            val suffix = content.templateParams["suffix_str"] ?: ""
 
                             listOf(
                                 GroupNudgeEvent(
