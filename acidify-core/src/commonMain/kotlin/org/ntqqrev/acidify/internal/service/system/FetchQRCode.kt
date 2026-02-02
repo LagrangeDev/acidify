@@ -2,17 +2,14 @@ package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.login.TlvQRCode
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
 import org.ntqqrev.acidify.internal.service.NoInputService
-import org.ntqqrev.acidify.internal.util.Prefix
-import org.ntqqrev.acidify.internal.util.readTlv
-import org.ntqqrev.acidify.internal.util.reader
-import org.ntqqrev.acidify.internal.util.writeBytes
+import org.ntqqrev.acidify.internal.tlv.buildTlvQRCode
+import org.ntqqrev.acidify.internal.util.*
 
 internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_emp") {
     override fun build(client: LagrangeClient, payload: Unit): ByteArray {
-        val tlvPack = TlvQRCode(client).apply {
+        val tlvPack = client.buildTlvQRCode {
             tlv16()
             tlv1b()
             tlv1d()
@@ -28,7 +25,7 @@ internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_
             writeBytes(ByteArray(0))
             writeByte(0)
             writeBytes(ByteArray(0), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
-            writeBytes(tlvPack.build())
+            writeBytes(tlvPack)
         }
         return client.loginContext.buildCode2DPacket(packet.readByteArray(), 0x31u)
     }
@@ -41,10 +38,10 @@ internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_
         val sig = reader.readPrefixedBytes(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
         val tlv = reader.readTlv()
         client.sessionStore.qrSig = sig
-        val respD1Body = TlvQRCode.BodyD1Response(tlv.getValue(0xD1u))
+        val respD1Body = tlv[0xD1u]!!.pbDecode<TlvQRCodeBodyD1Resp>()
         return Result(
-            qrCodeUrl = respD1Body.get { qrCodeUrl },
-            qrCodePng = tlv.getValue(0x17u)
+            qrCodeUrl = respD1Body.qrCodeUrl,
+            qrCodePng = tlv[0x17u]!!
         )
     }
 

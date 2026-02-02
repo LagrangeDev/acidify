@@ -7,17 +7,14 @@ import kotlinx.io.writeUShort
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
-import org.ntqqrev.acidify.internal.packet.login.Tlv
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.service.NoInputService
-import org.ntqqrev.acidify.internal.util.Prefix
-import org.ntqqrev.acidify.internal.util.parseTlv
-import org.ntqqrev.acidify.internal.util.readTlv
-import org.ntqqrev.acidify.internal.util.reader
+import org.ntqqrev.acidify.internal.tlv.buildTlv
+import org.ntqqrev.acidify.internal.util.*
 
 internal object WtLogin : NoInputService<Boolean>("wtlogin.login") {
     override fun build(client: LagrangeClient, payload: Unit): ByteArray {
-        val tlvPack = Tlv(client).apply {
+        val tlvPack = client.buildTlv {
             tlv106A2()
             tlv144()
             tlv116()
@@ -36,7 +33,7 @@ internal object WtLogin : NoInputService<Boolean>("wtlogin.login") {
         }
         val packet = Buffer().apply {
             writeUShort(9u) // internal command
-            writeFully(tlvPack.build())
+            writeFully(tlvPack)
         }
         return client.loginContext.buildWtLogin(packet.readByteArray(), 2064u)
     }
@@ -57,10 +54,7 @@ internal object WtLogin : NoInputService<Boolean>("wtlogin.login") {
             val tlvPack = array.parseTlv()
             client.sessionStore.apply {
                 d2Key = tlvPack[0x305u]!!
-                uid = Tlv.Body543(tlvPack[0x543u]!!)
-                    .get { layer1 }
-                    .get { layer2 }
-                    .get { uid }
+                uid = tlvPack[0x543u]!!.pbDecode<TlvBody543>().layer1.layer2.uid
                 a2 = tlvPack[0x10Au]!!
                 d2 = tlvPack[0x143u]!!
                 encryptedA1 = tlvPack[0x106u]!!
