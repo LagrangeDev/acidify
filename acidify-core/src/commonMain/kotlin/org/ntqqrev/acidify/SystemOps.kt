@@ -9,7 +9,7 @@ import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
 import org.ntqqrev.acidify.event.QRCodeStateQueryEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
 import org.ntqqrev.acidify.exception.BotOnlineException
-import org.ntqqrev.acidify.internal.packet.misc.UserInfoKey
+import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.service.friend.FetchFriends
 import org.ntqqrev.acidify.internal.service.group.FetchGroupMembers
 import org.ntqqrev.acidify.internal.service.group.FetchGroups

@@ -1,12 +1,11 @@
 package org.ntqqrev.acidify.internal.util
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.system.DeviceInfo
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.system.DeviceInfo
 
-internal fun LagrangeClient.generateDeviceInfo() = DeviceInfo {
-    it[devName] = sessionStore.deviceName
-    it[devType] = appInfo.kernel
-    it[osVer] = "Windows 10.0.19042"
-    it[vendorOsName] = appInfo.vendorOs
-}
+internal fun LagrangeClient.generateDeviceInfo() = DeviceInfo(
+    devName = sessionStore.deviceName,
+    devType = appInfo.kernel,
+    osVer = "Windows 10.0.19042",
+    vendorOsName = appInfo.vendorOs,
+)

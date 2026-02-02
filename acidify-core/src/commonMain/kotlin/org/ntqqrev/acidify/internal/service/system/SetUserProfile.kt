@@ -1,10 +1,10 @@
-package org.ntqqrev.acidify.internal.service.system
+﻿package org.ntqqrev.acidify.internal.service.system
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.misc.UserInfoKey
-import org.ntqqrev.acidify.internal.packet.oidb.SetUserProfileReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
+import org.ntqqrev.acidify.internal.proto.oidb.SetUserProfileReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SetUserProfile : NoOutputOidbService<SetUserProfile.Req>(0x112a, 2) {
     class Req(
@@ -12,19 +12,19 @@ internal object SetUserProfile : NoOutputOidbService<SetUserProfile.Req>(0x112a,
         val numberProps: Map<UserInfoKey, Int> = mapOf(),
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req) = SetUserProfileReq {
-        it[uin] = client.sessionStore.uin
-        it[stringProps] = payload.stringProps.map { (key, value) ->
-            SetUserProfileReq.StringProp {
-                it[this.key] = key.number
-                it[this.value] = value
-            }
-        }
-        it[numberProps] = payload.numberProps.map { (key, value) ->
-            SetUserProfileReq.NumberProp {
-                it[this.key] = key.number
-                it[this.value] = value
-            }
-        }
-    }.toByteArray()
+    override fun buildOidb(client: LagrangeClient, payload: Req) = SetUserProfileReq(
+        uin = client.sessionStore.uin,
+        stringProps = payload.stringProps.map { (key, value) ->
+            SetUserProfileReq.StringProp(
+                key = key.number,
+                value = value,
+            )
+        },
+        numberProps = payload.numberProps.map { (key, value) ->
+            SetUserProfileReq.NumberProp(
+                key = key.number,
+                value = value,
+            )
+        },
+    ).pbEncode()
 }

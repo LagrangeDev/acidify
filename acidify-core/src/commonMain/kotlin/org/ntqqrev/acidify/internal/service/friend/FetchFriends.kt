@@ -1,7 +1,7 @@
 package org.ntqqrev.acidify.internal.service.friend
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.misc.UserInfoKey
+import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.packet.oidb.FetchFriendsCookie
 import org.ntqqrev.acidify.internal.packet.oidb.IncPull
 import org.ntqqrev.acidify.internal.packet.oidb.IncPullResp

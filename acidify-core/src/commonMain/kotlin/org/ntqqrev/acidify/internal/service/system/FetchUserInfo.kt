@@ -1,13 +1,14 @@
-package org.ntqqrev.acidify.internal.service.system
+﻿package org.ntqqrev.acidify.internal.service.system
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.misc.UserInfoKey
-import org.ntqqrev.acidify.internal.packet.oidb.FetchUserInfoByUidReq
-import org.ntqqrev.acidify.internal.packet.oidb.FetchUserInfoByUinReq
-import org.ntqqrev.acidify.internal.packet.oidb.FetchUserInfoReqKey
-import org.ntqqrev.acidify.internal.packet.oidb.FetchUserInfoResp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
+import org.ntqqrev.acidify.internal.proto.oidb.FetchUserInfoByUidReq
+import org.ntqqrev.acidify.internal.proto.oidb.FetchUserInfoByUinReq
+import org.ntqqrev.acidify.internal.proto.oidb.FetchUserInfoReqKey
+import org.ntqqrev.acidify.internal.proto.oidb.FetchUserInfoResp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.struct.BotUserInfo
 import org.ntqqrev.acidify.struct.UserInfoGender
 
@@ -24,15 +25,15 @@ internal object FetchUserInfo {
         UserInfoKey.REGISTER_TIME,
         UserInfoKey.AGE,
         UserInfoKey.QID,
-    ).map { enumKey -> FetchUserInfoReqKey { it[key] = enumKey.number } }
+    ).map { enumKey -> FetchUserInfoReqKey(key = enumKey.number) }
 
     private fun parseUserInfo(payload: ByteArray): BotUserInfo {
-        val body = FetchUserInfoResp(payload).get { body }
-        val properties = body.get { properties }
-        val numMap = properties.get { numberProps }.associate { it.get { key } to it.get { value } }
-        val strMap = properties.get { stringProps }.associate { it.get { key } to it.get { value } }
+        val body = payload.pbDecode<FetchUserInfoResp>().body
+        val properties = body.properties
+        val numMap = properties.numberProps.associate { it.key to it.value }
+        val strMap = properties.stringProps.associate { it.key to it.value }
         return BotUserInfo(
-            uin = body.get { uin },
+            uin = body.uin,
             nickname = strMap[UserInfoKey.NICKNAME.number] ?: "",
             bio = strMap[UserInfoKey.BIO.number] ?: "",
             gender = numMap[UserInfoKey.GENDER.number]?.let { UserInfoGender.from(it) }
@@ -49,20 +50,20 @@ internal object FetchUserInfo {
     }
 
     internal object ByUin : OidbService<Long, BotUserInfo>(0xfe1, 2, true) {
-        override fun buildOidb(client: LagrangeClient, payload: Long): ByteArray = FetchUserInfoByUinReq {
-            it[uin] = payload
-            it[keys] = fetchKeys
-        }.toByteArray()
+        override fun buildOidb(client: LagrangeClient, payload: Long): ByteArray = FetchUserInfoByUinReq(
+            uin = payload,
+            keys = fetchKeys,
+        ).pbEncode()
 
         override fun parseOidb(client: LagrangeClient, payload: ByteArray): BotUserInfo =
             parseUserInfo(payload)
     }
 
     internal object ByUid : OidbService<String, BotUserInfo>(0xfe1, 2) {
-        override fun buildOidb(client: LagrangeClient, payload: String): ByteArray = FetchUserInfoByUidReq {
-            it[uid] = payload
-            it[keys] = fetchKeys
-        }.toByteArray()
+        override fun buildOidb(client: LagrangeClient, payload: String): ByteArray = FetchUserInfoByUidReq(
+            uid = payload,
+            keys = fetchKeys,
+        ).pbEncode()
 
         override fun parseOidb(client: LagrangeClient, payload: ByteArray): BotUserInfo =
             parseUserInfo(payload)

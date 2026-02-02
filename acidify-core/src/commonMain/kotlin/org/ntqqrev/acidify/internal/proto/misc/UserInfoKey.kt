@@ -1,4 +1,4 @@
-package org.ntqqrev.acidify.internal.packet.misc
+package org.ntqqrev.acidify.internal.proto.misc
 
 internal enum class UserInfoKey(val number: Int) {
     AVATAR(101),

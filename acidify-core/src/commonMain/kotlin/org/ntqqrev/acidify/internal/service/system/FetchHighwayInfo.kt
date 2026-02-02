@@ -1,10 +1,11 @@
-package org.ntqqrev.acidify.internal.service.system
+﻿package org.ntqqrev.acidify.internal.service.system
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.message.media.FetchHighwayInfoReq
-import org.ntqqrev.acidify.internal.packet.message.media.FetchHighwayInfoResp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.message.media.FetchHighwayInfoReq
+import org.ntqqrev.acidify.internal.proto.message.media.FetchHighwayInfoResp
 import org.ntqqrev.acidify.internal.service.NoInputService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.internal.util.toIpString
 
 internal object FetchHighwayInfo : NoInputService<FetchHighwayInfo.Resp>("HttpConn.0x6ff_501") {
@@ -13,33 +14,33 @@ internal object FetchHighwayInfo : NoInputService<FetchHighwayInfo.Resp>("HttpCo
         val servers: Map<Int, List<Pair<String, Int>>>
     )
 
-    override fun build(client: LagrangeClient, payload: Unit): ByteArray = FetchHighwayInfoReq {
-        it[reqBody] = FetchHighwayInfoReq.Body {
-            it[uin] = client.sessionStore.uin
-            it[idcId] = 0
-            it[appid] = 16
-            it[loginSigType] = 1
-            it[loginSigTicket] = client.sessionStore.tgtgt
-            it[requestFlag] = 3
-            it[serviceTypes] = listOf(1, 5, 10, 21)
-            it[bid] = 2
-            it[field9] = 9
-            it[field10] = 8
-            it[field11] = 0
-            it[version] = "1.0.1"
-        }
-    }.toByteArray()
+    override fun build(client: LagrangeClient, payload: Unit): ByteArray = FetchHighwayInfoReq(
+        reqBody = FetchHighwayInfoReq.Body(
+            uin = client.sessionStore.uin,
+            idcId = 0,
+            appid = 16,
+            loginSigType = 1,
+            loginSigTicket = client.sessionStore.tgtgt,
+            requestFlag = 3,
+            serviceTypes = listOf(1, 5, 10, 21),
+            bid = 2,
+            field9 = 9,
+            field10 = 8,
+            field11 = 0,
+            version = "1.0.1",
+        )
+    ).pbEncode()
 
     override fun parse(client: LagrangeClient, payload: ByteArray): Resp {
-        val rsp = FetchHighwayInfoResp(payload).get { rspBody }
-        val sigSession = rsp.get { sigSession }
+        val rsp = payload.pbDecode<FetchHighwayInfoResp>().respBody
+        val sigSession = rsp.sigSession
         val servers = mutableMapOf<Int, List<Pair<String, Int>>>()
 
-        rsp.get { addrs }.forEach { srvAddresses ->
-            val serviceType = srvAddresses.get { serviceType }
-            servers[serviceType] = srvAddresses.get { addrs }.map { ipAddr ->
-                val ip = ipAddr.get { ip }
-                val port = ipAddr.get { port }
+        rsp.addrs.forEach { srvAddresses ->
+            val serviceType = srvAddresses.serviceType
+            servers[serviceType] = srvAddresses.addrs.map { ipAddr ->
+                val ip = ipAddr.ip
+                val port = ipAddr.port
                 val ipString = ip.toIpString()
                 ipString to port
             }

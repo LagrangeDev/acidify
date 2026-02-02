@@ -1,11 +1,11 @@
-package org.ntqqrev.acidify.internal.service.system
+﻿package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.SetGroupPinReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.SetGroupPinReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 import kotlin.time.Clock
 
 internal object SetGroupPin : NoOutputOidbService<SetGroupPin.Req>(0x5d6, 1) {
@@ -14,19 +14,19 @@ internal object SetGroupPin : NoOutputOidbService<SetGroupPin.Req>(0x5d6, 1) {
         val isPinned: Boolean
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = SetGroupPinReq {
-        it[field1] = 0
-        it[field3] = 11
-        it[info] = SetGroupPinReq.Info {
-            it[groupUin] = payload.groupUin
-            it[field400] = SetGroupPinReq.Info.Field400 {
-                it[field1] = 13569
-                if (payload.isPinned) {
-                    it[timestamp] = Buffer().apply {
-                        writeInt(Clock.System.now().epochSeconds.toInt())
-                    }.readByteArray()
+    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = SetGroupPinReq(
+        field1 = 0,
+        field3 = 11,
+        info = SetGroupPinReq.Info(
+            groupUin = payload.groupUin,
+            field400 = SetGroupPinReq.Info.Field400(
+                field1 = 13569,
+                timestamp = if (payload.isPinned) {
+                    Buffer().apply { writeInt(Clock.System.now().epochSeconds.toInt()) }.readByteArray()
+                } else {
+                    byteArrayOf()
                 }
-            }
-        }
-    }.toByteArray()
+            ),
+        ),
+    ).pbEncode()
 }
