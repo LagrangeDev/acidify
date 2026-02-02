@@ -1,10 +1,11 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupMembersReq
-import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupMembersResp
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupMembersReq
+import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupMembersResp
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.struct.BotGroupMemberData
 import org.ntqqrev.acidify.struct.GroupMemberRole
 
@@ -19,40 +20,40 @@ internal object FetchGroupMembers : OidbService<FetchGroupMembers.Req, FetchGrou
         val memberDataList: List<BotGroupMemberData>,
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = FetchGroupMembersReq {
-        it[groupUin] = payload.groupUin
-        it[field2] = 5
-        it[field3] = 2
-        it[body] = FetchGroupMembersReq.Body {
-            it[memberName] = true
-            it[memberCard] = true
-            it[level] = true
-            it[specialTitle] = true
-            it[joinTimestamp] = true
-            it[lastMsgTimestamp] = true
-            it[shutUpTimestamp] = true
-            it[permission] = true
-        }
-        it[cookie] = payload.cookie
-    }.toByteArray()
+    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = FetchGroupMembersReq(
+        groupUin = payload.groupUin,
+        field2 = 5,
+        field3 = 2,
+        body = FetchGroupMembersReq.Body(
+            memberName = true,
+            memberCard = true,
+            level = true,
+            specialTitle = true,
+            joinTimestamp = true,
+            lastMsgTimestamp = true,
+            shutUpTimestamp = true,
+            permission = true,
+        ),
+        cookie = payload.cookie,
+    ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = FetchGroupMembersResp(payload)
+        val resp = payload.pbDecode<FetchGroupMembersResp>()
         return Resp(
-            cookie = resp.get { cookie },
-            memberDataList = resp.get { members }.map {
-                val identity = it.get { id }
+            cookie = resp.cookie,
+            memberDataList = resp.members.map {
+                val identity = it.id
                 BotGroupMemberData(
-                    uin = identity.get { uin },
-                    uid = identity.get { uid },
-                    nickname = it.get { memberName },
-                    card = it.get { memberCard }.get { memberCard } ?: "",
-                    specialTitle = it.get { specialTitle } ?: "",
-                    level = it.get { level }.get { level },
-                    joinedAt = it.get { joinTimestamp },
-                    lastSpokeAt = it.get { lastMsgTimestamp },
-                    mutedUntil = it.get { shutUpTimestamp },
-                    role = GroupMemberRole.from(it.get { permission })
+                    uin = identity.uin,
+                    uid = identity.uid,
+                    nickname = it.memberName,
+                    card = it.memberCard.memberCard ?: "",
+                    specialTitle = it.specialTitle ?: "",
+                    level = it.level.level,
+                    joinedAt = it.joinTimestamp,
+                    lastSpokeAt = it.lastMsgTimestamp,
+                    mutedUntil = it.shutUpTimestamp,
+                    role = GroupMemberRole.from(it.permission)
                 )
             }
         )

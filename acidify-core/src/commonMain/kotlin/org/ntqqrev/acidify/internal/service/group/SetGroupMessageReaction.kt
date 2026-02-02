@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.SetGroupMessageReactionReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.SetGroupMessageReactionReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal abstract class SetGroupMessageReaction(isAdd: Boolean) :
     NoOutputOidbService<SetGroupMessageReaction.Req>(0x9082, if (isAdd) 1 else 2) {
@@ -15,15 +15,14 @@ internal abstract class SetGroupMessageReaction(isAdd: Boolean) :
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        SetGroupMessageReactionReq {
-            it[groupCode] = payload.groupUin
-            it[sequence] = payload.sequence
-            it[code] = payload.code
-            it[type] = payload.type
-        }.toByteArray()
+        SetGroupMessageReactionReq(
+            groupCode = payload.groupUin,
+            sequence = payload.sequence,
+            code = payload.code,
+            type = payload.type,
+        ).pbEncode()
 
     object Add : SetGroupMessageReaction(true)
 
     object Remove : SetGroupMessageReaction(false)
 }
-

@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.SetMemberMuteReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.SetMemberMuteReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SetMemberMute : NoOutputOidbService<SetMemberMute.Req>(0x1253, 1) {
     class Req(
@@ -13,13 +13,12 @@ internal object SetMemberMute : NoOutputOidbService<SetMemberMute.Req>(0x1253, 1
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        SetMemberMuteReq {
-            it[groupCode] = payload.groupUin
-            it[type] = 1
-            it[body] = SetMemberMuteReq.Body {
-                it[targetUid] = payload.memberUid
-                it[duration] = payload.duration
-            }
-        }.toByteArray()
+        SetMemberMuteReq(
+            groupCode = payload.groupUin,
+            type = 1,
+            body = SetMemberMuteReq.Body(
+                targetUid = payload.memberUid,
+                duration = payload.duration,
+            )
+        ).pbEncode()
 }
-

@@ -2,8 +2,7 @@ package org.ntqqrev.acidify.struct
 
 import org.ntqqrev.acidify.Bot
 import org.ntqqrev.acidify.getUinByUid
-import org.ntqqrev.acidify.internal.packet.oidb.GroupNotification
-import org.ntqqrev.acidify.internal.protobuf.PbObject
+import org.ntqqrev.acidify.internal.proto.oidb.GroupNotification
 import kotlin.js.JsExport
 
 /**
@@ -113,23 +112,23 @@ sealed class BotGroupNotification {
 
     companion object {
         internal suspend fun Bot.parseNotification(
-            raw: PbObject<GroupNotification>,
+            raw: GroupNotification,
             isFiltered: Boolean
         ): BotGroupNotification? {
-            val sequence = raw.get { sequence }
-            val notifyType = raw.get { notifyType }
-            val requestState = RequestState.from(raw.get { requestState })
-            val group = raw.get { group }
-            val groupUin = group.get { groupUin }
-            val user1 = raw.get { user1 }
-            val user1Uid = user1.get { uid }
-            val comment = raw.get { comment }
+            val sequence = raw.sequence
+            val notifyType = raw.notifyType
+            val requestState = RequestState.from(raw.requestState)
+            val group = raw.group
+            val groupUin = group.groupUin
+            val user1 = raw.user1
+            val user1Uid = user1.uid
+            val comment = raw.comment
 
             return when (notifyType) {
                 1 -> {
                     val user1Uin = getUinByUid(user1Uid)
-                    val user2 = raw.get { user2 }
-                    val operatorUid = user2?.get { uid }
+                    val user2 = raw.user2
+                    val operatorUid = user2?.uid
                     val operatorUin = operatorUid?.let { getUinByUid(it) }
                     JoinRequest(
                         groupUin = groupUin,
@@ -146,8 +145,8 @@ sealed class BotGroupNotification {
 
                 3, 16 -> {
                     val user1Uin = getUinByUid(user1Uid)
-                    val user2 = raw.get { user2 } ?: return null
-                    val user2Uid = user2.get { uid }
+                    val user2 = raw.user2 ?: return null
+                    val user2Uid = user2.uid
                     val user2Uin = getUinByUid(user2Uid)
                     AdminChange(
                         groupUin = groupUin,
@@ -162,8 +161,8 @@ sealed class BotGroupNotification {
 
                 6 -> {
                     val user1Uin = getUinByUid(user1Uid)
-                    val operator = raw.get { user2 } ?: raw.get { user3 } ?: return null
-                    val operatorUid = operator.get { uid }
+                    val operator = raw.user2 ?: raw.user3 ?: return null
+                    val operatorUid = operator.uid
                     val operatorUin = getUinByUid(operatorUid)
                     Kick(
                         groupUin = groupUin,
@@ -187,11 +186,11 @@ sealed class BotGroupNotification {
 
                 22 -> {
                     val user1Uin = getUinByUid(user1Uid)
-                    val user2 = raw.get { user2 } ?: return null
-                    val user2Uid = user2.get { uid }
+                    val user2 = raw.user2 ?: return null
+                    val user2Uid = user2.uid
                     val user2Uin = getUinByUid(user2Uid)
-                    val user3 = raw.get { user3 }
-                    val operatorUid = user3?.get { uid }
+                    val user3 = raw.user3
+                    val operatorUid = user3?.uid
                     val operatorUin = operatorUid?.let { getUinByUid(it) }
                     InvitedJoinRequest(
                         groupUin = groupUin,

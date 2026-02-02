@@ -1,12 +1,12 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupNotificationsReq
-import org.ntqqrev.acidify.internal.packet.oidb.FetchGroupNotificationsResp
-import org.ntqqrev.acidify.internal.packet.oidb.GroupNotification
-import org.ntqqrev.acidify.internal.protobuf.PbObject
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupNotificationsReq
+import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupNotificationsResp
+import org.ntqqrev.acidify.internal.proto.oidb.GroupNotification
 import org.ntqqrev.acidify.internal.service.OidbService
+import org.ntqqrev.acidify.internal.util.pbDecode
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal abstract class FetchGroupNotifications(val isFiltered: Boolean) :
     OidbService<FetchGroupNotifications.Req, FetchGroupNotifications.Resp>(
@@ -20,20 +20,20 @@ internal abstract class FetchGroupNotifications(val isFiltered: Boolean) :
 
     class Resp(
         val nextSequence: Long,
-        val notifications: List<PbObject<GroupNotification>>
+        val notifications: List<GroupNotification>
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        FetchGroupNotificationsReq {
-            it[startSeq] = payload.startSequence
-            it[count] = payload.count
-        }.toByteArray()
+        FetchGroupNotificationsReq(
+            startSeq = payload.startSequence,
+            count = payload.count,
+        ).pbEncode()
 
     override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
-        val resp = FetchGroupNotificationsResp(payload)
+        val resp = payload.pbDecode<FetchGroupNotificationsResp>()
         return Resp(
-            nextSequence = resp.get { nextStartSeq },
-            notifications = resp.get { notifications }
+            nextSequence = resp.nextStartSeq,
+            notifications = resp.notifications
         )
     }
 

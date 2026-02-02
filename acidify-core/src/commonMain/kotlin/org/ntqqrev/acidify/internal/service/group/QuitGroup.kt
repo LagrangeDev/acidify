@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.QuitGroupReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.QuitGroupReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object QuitGroup : NoOutputOidbService<QuitGroup.Req>(0x1097, 1) {
     class Req(
@@ -11,8 +11,7 @@ internal object QuitGroup : NoOutputOidbService<QuitGroup.Req>(0x1097, 1) {
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        QuitGroupReq {
-            it[groupCode] = payload.groupUin
-        }.toByteArray()
+        QuitGroupReq(
+            groupCode = payload.groupUin,
+        ).pbEncode()
 }
-

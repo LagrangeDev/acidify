@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.Oidb0x8FCReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x8FCReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SetMemberCard : NoOutputOidbService<SetMemberCard.Req>(0x8fc, 3) {
     class Req(
@@ -13,14 +13,13 @@ internal object SetMemberCard : NoOutputOidbService<SetMemberCard.Req>(0x8fc, 3)
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        Oidb0x8FCReq {
-            it[groupCode] = payload.groupUin
-            it[memLevelInfo] = listOf(
-                Oidb0x8FCReq.MemberInfo {
-                    it[uid] = payload.memberUid
-                    it[memberCardName] = payload.card.encodeToByteArray()
-                }
+        Oidb0x8FCReq(
+            groupCode = payload.groupUin,
+            memLevelInfo = listOf(
+                Oidb0x8FCReq.MemberInfo(
+                    uid = payload.memberUid,
+                    memberCardName = payload.card.encodeToByteArray(),
+                )
             )
-        }.toByteArray()
+        ).pbEncode()
 }
-

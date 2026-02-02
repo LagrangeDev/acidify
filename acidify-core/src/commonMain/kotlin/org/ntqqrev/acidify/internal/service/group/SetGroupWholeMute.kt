@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.SetGroupWholeMuteReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.SetGroupWholeMuteReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SetGroupWholeMute : NoOutputOidbService<SetGroupWholeMute.Req>(0x89a, 0) {
     class Req(
@@ -12,11 +12,10 @@ internal object SetGroupWholeMute : NoOutputOidbService<SetGroupWholeMute.Req>(0
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        SetGroupWholeMuteReq {
-            it[groupCode] = payload.groupUin
-            it[state] = SetGroupWholeMuteReq.State {
-                it[isMute] = if (payload.isMute) -1 else 0
-            }
-        }.toByteArray()
+        SetGroupWholeMuteReq(
+            groupCode = payload.groupUin,
+            state = SetGroupWholeMuteReq.State(
+                isMute = if (payload.isMute) -1 else 0
+            )
+        ).pbEncode()
 }
-

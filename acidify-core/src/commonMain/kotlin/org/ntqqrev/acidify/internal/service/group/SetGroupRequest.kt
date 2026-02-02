@@ -1,10 +1,10 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.SetGroupRequestBody
-import org.ntqqrev.acidify.internal.packet.oidb.SetGroupRequestReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.SetGroupRequestBody
+import org.ntqqrev.acidify.internal.proto.oidb.SetGroupRequestReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal abstract class SetGroupRequest(isFiltered: Boolean) :
     NoOutputOidbService<SetGroupRequest.Req>(0x10c8, if (!isFiltered) 1 else 2) {
@@ -18,15 +18,15 @@ internal abstract class SetGroupRequest(isFiltered: Boolean) :
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        SetGroupRequestReq {
-            it[accept] = payload.accept
-            it[body] = SetGroupRequestBody {
-                it[sequence] = payload.sequence
-                it[eventType] = payload.eventType
-                it[groupUin] = payload.groupUin
-                it[message] = payload.reason
-            }
-        }.toByteArray()
+        SetGroupRequestReq(
+            accept = payload.accept,
+            body = SetGroupRequestBody(
+                sequence = payload.sequence,
+                eventType = payload.eventType,
+                groupUin = payload.groupUin,
+                message = payload.reason,
+            )
+        ).pbEncode()
 
     object Normal : SetGroupRequest(false)
 

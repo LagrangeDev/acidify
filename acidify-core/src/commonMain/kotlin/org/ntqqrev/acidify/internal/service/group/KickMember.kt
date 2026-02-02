@@ -1,9 +1,9 @@
-package org.ntqqrev.acidify.internal.service.group
+﻿package org.ntqqrev.acidify.internal.service.group
 
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.oidb.KickMemberReq
-import org.ntqqrev.acidify.internal.protobuf.invoke
+import org.ntqqrev.acidify.internal.proto.oidb.KickMemberReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
+import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object KickMember : NoOutputOidbService<KickMember.Req>(0x8a0, 1) {
     class Req(
@@ -14,12 +14,11 @@ internal object KickMember : NoOutputOidbService<KickMember.Req>(0x8a0, 1) {
     )
 
     override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
-        KickMemberReq {
-            it[groupCode] = payload.groupUin
-            it[kickFlag] = 0
-            it[targetUid] = payload.memberUid
-            it[rejectAddRequest] = payload.rejectAddRequest
-            it[reason] = payload.reason
-        }.toByteArray()
+        KickMemberReq(
+            groupCode = payload.groupUin,
+            kickFlag = 0,
+            targetUid = payload.memberUid,
+            rejectAddRequest = payload.rejectAddRequest,
+            reason = payload.reason,
+        ).pbEncode()
 }
-
