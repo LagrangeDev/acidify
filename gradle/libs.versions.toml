@@ -16,7 +16,7 @@ korlibs = "6.0.0"
 qr-matrix = "0.1.0"
 xmlutil = "1.0.0-rc2"
 mordant = "3.0.2"
-logback = "1.5.26"
+logback = "1.5.27"
 jna = "5.18.1"
 
 build-konfig = "0.17.1"
