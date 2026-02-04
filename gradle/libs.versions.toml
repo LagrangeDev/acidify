@@ -59,7 +59,6 @@ qr-matrix = { module = "org.ntqqrev:qr-matrix", version.ref = "qr-matrix" }
 xmlutil-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "xmlutil" }
 xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "xmlutil" }
 quickjs-kt = { module = "io.github.dokar3:quickjs-kt", version.ref = "quickjs" }
-quickjs-kt-converter-ktxserialization = { module = "io.github.dokar3:quickjs-kt-converter-ktxserialization", version.ref = "quickjs" }
 mordant = { module = "com.github.ajalt.mordant:mordant", version.ref = "mordant" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
@@ -81,10 +80,6 @@ ktor-server = [
 xmlutil = [
     "xmlutil-core",
     "xmlutil-serialization"
-]
-quickjs = [
-    "quickjs-kt",
-    "quickjs-kt-converter-ktxserialization"
 ]
 
 [plugins]

@@ -23,7 +23,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.milky.types)
             implementation(libs.qr.matrix)
-            implementation(libs.bundles.quickjs)
+            implementation(libs.quickjs.kt)
             implementation(libs.mordant)
         }
         jvmMain.dependencies {
