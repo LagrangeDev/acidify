@@ -1,0 +1,13 @@
+{
+  "name": "@acidify/yogurt-script-example",
+  "private": true,
+  "type": "module",
+  "description": "A simple yogurt script",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "@acidify/yogurt-script-api": "workspace:*",
+    "tsdown": "^0.20.3"
+  }
+}

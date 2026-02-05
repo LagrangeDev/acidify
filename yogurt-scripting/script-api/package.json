@@ -1,0 +1,26 @@
+{
+  "name": "@acidify/yogurt-script-api",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Yogurt Scripting API",
+  "scripts": {
+    "prepare": "node scripts/generate-api.js"
+  },
+  "files": [
+    "index.d.ts",
+    "api.d.ts"
+  ],
+  "main": "./index.d.ts",
+  "typings": "./index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LagrangeDev/acidify.git"
+  },
+  "homepage": "https://acidify.ntqqrev.org/",
+  "author": "LagrangeDev",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@saltify/milky-types": "^1.1.0",
+    "zod": "^4.3.6"
+  }
+}
