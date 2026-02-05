@@ -6,7 +6,7 @@ console.log(
 );
 
 // Call Milky API from JS environment
-console.log(await yogurt.api.get_login_info());
+console.log("Login info:", JSON.stringify(await yogurt.api.get_login_info()));
 
 // Listen for message receive events
 yogurt.event.on("message_receive", (event) => {
