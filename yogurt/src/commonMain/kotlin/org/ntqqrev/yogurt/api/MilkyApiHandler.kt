@@ -1,8 +1,5 @@
 package org.ntqqrev.yogurt.api
 
-import io.ktor.server.routing.*
-import org.ntqqrev.milky.ApiEndpoint
-
 class MilkyApiHandler<T : Any, R : Any>(
     val path: String,
     val callHandler: suspend MilkyApiContext.(payload: T) -> R,
