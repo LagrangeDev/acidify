@@ -97,7 +97,7 @@ internal fun BinaryReader.readTlv(): Map<UShort, ByteArray> {
 
 internal fun ByteArray.parseTlv() = this.reader().readTlv()
 
-internal fun Sink.barrier(prefix: Prefix, addition: Int = 0, target: ((Sink).() -> Unit)) {
+internal inline fun Sink.barrier(prefix: Prefix, addition: Int = 0, target: ((Sink).() -> Unit)) {
     val written = Buffer()
     target(written)
 
