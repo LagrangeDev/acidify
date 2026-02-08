@@ -16,12 +16,12 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":acidify-core"))
-            implementation(project(":yogurt-media-codec"))
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
             implementation(libs.bundles.ktor.server)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.milky.types)
+            implementation(libs.acidify.codec)
             implementation(libs.qr.matrix)
             implementation(libs.quickjs.kt)
             implementation(libs.mordant)

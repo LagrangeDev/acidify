@@ -134,7 +134,7 @@
     },
     {
       "title": "事件发布通道",
-      "purpose": "说明 WebSocket、SSE、Webhook 等事件输出如何订阅 bot.eventFlow 并执行鉴权与推送。",
+      "purpose": "说明 WebSocket、SSE、Webhook 等事件输出如何订阅 Event 并执行鉴权与推送。",
       "page_notes": [
         {
           "content": "使用简体中文生成文档。对于本页面的每个小标题，在其前面生成一个简单的数字序号，如 `1.`, `1.1`, `1.2` 等，方便 DeepWiki 生成页面锚点"
@@ -143,23 +143,14 @@
       "parent": "Yogurt 模块"
     },
     {
-      "title": "辅助模块",
-      "purpose": "列出并解释 yogurt-media-codec、yogurt-jvm 等辅助模块在生态中的职责。",
-      "page_notes": [
-        {
-          "content": "使用简体中文生成文档。对于本页面的每个小标题，在其前面生成一个简单的数字序号，如 `1.`, `1.1`, `1.2` 等，方便 DeepWiki 生成页面锚点"
-        }
-      ]
-    },
-    {
-      "title": "yogurt-media-codec",
-      "purpose": "说明其绑定 LagrangeCodec、区分 JVM 与 Native 加载方式，并要求特定运行时库目录结构。",
+      "title": "自定义 JavaScript 脚本",
+      "purpose": "说明 Yogurt 如何创建 JS 引擎环境、注入全局对象与函数，并执行用户脚本以扩展程序功能。",
       "page_notes": [
         {
           "content": "使用简体中文生成文档。对于本页面的每个小标题，在其前面生成一个简单的数字序号，如 `1.`, `1.1`, `1.2` 等，方便 DeepWiki 生成页面锚点"
         }
       ],
-      "parent": "辅助模块"
+      "parent": "Yogurt 模块"
     },
     {
       "title": "yogurt-jvm 与运行包装",
@@ -169,7 +160,7 @@
           "content": "使用简体中文生成文档。对于本页面的每个小标题，在其前面生成一个简单的数字序号，如 `1.`, `1.1`, `1.2` 等，方便 DeepWiki 生成页面锚点"
         }
       ],
-      "parent": "辅助模块"
+      "parent": "Yogurt 模块"
     }
   ]
 }

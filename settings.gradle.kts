@@ -20,7 +20,6 @@ include(
     ":acidify-core",
     ":yogurt",
     ":yogurt-jvm",
-    ":yogurt-media-codec",
 )
 
 rootProject.name = "acidify"

@@ -5,6 +5,7 @@ import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.codec.*
 import org.ntqqrev.acidify.getDownloadUrl
 import org.ntqqrev.acidify.getFriend
 import org.ntqqrev.acidify.getGroup
@@ -15,7 +16,6 @@ import org.ntqqrev.milky.IncomingMessage
 import org.ntqqrev.milky.IncomingSegment
 import org.ntqqrev.milky.OutgoingSegment
 import org.ntqqrev.yogurt.YogurtApp
-import org.ntqqrev.yogurt.codec.*
 import org.ntqqrev.yogurt.util.resolveUri
 
 suspend fun Application.transformMessage(msg: BotIncomingMessage): IncomingMessage? {
@@ -317,7 +317,7 @@ suspend fun Application.transformEssenceSegment(segment: BotEssenceSegment): Inc
             } catch (e: Exception) {
                 logger.w(e) { "解析精华消息图像信息失败，使用缺省值" }
                 ImageInfo(
-                    format = org.ntqqrev.yogurt.codec.ImageFormat.PNG,
+                    format = org.ntqqrev.acidify.codec.ImageFormat.PNG,
                     width = 300,
                     height = 300
                 )
@@ -370,11 +370,11 @@ fun String.toMessageScene() = when (this) {
     else -> throw IllegalArgumentException("Unknown message scene: $this")
 }
 
-fun org.ntqqrev.yogurt.codec.ImageFormat.toAcidifyFormat() = when (this) {
-    org.ntqqrev.yogurt.codec.ImageFormat.PNG -> ImageFormat.PNG
-    org.ntqqrev.yogurt.codec.ImageFormat.GIF -> ImageFormat.GIF
-    org.ntqqrev.yogurt.codec.ImageFormat.JPEG -> ImageFormat.JPEG
-    org.ntqqrev.yogurt.codec.ImageFormat.BMP -> ImageFormat.BMP
-    org.ntqqrev.yogurt.codec.ImageFormat.WEBP -> ImageFormat.WEBP
-    org.ntqqrev.yogurt.codec.ImageFormat.TIFF -> ImageFormat.TIFF
+fun org.ntqqrev.acidify.codec.ImageFormat.toAcidifyFormat() = when (this) {
+    org.ntqqrev.acidify.codec.ImageFormat.PNG -> ImageFormat.PNG
+    org.ntqqrev.acidify.codec.ImageFormat.GIF -> ImageFormat.GIF
+    org.ntqqrev.acidify.codec.ImageFormat.JPEG -> ImageFormat.JPEG
+    org.ntqqrev.acidify.codec.ImageFormat.BMP -> ImageFormat.BMP
+    org.ntqqrev.acidify.codec.ImageFormat.WEBP -> ImageFormat.WEBP
+    org.ntqqrev.acidify.codec.ImageFormat.TIFF -> ImageFormat.TIFF
 }

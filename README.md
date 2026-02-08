@@ -19,7 +19,6 @@
 - `acidify-core` - PC NTQQ 协议的核心实现 [![Maven Central](https://img.shields.io/maven-central/v/org.ntqqrev/acidify-core?label=Maven%20Central&logo=maven&color=blue)](https://central.sonatype.com/artifact/org.ntqqrev/acidify-core)
 - `yogurt` - 基于 Acidify 的 Milky 实现
 - `yogurt-jvm` - Yogurt 的 JVM 平台适配 (Workaround for Ktor plugin's incompatibility issue)
-- `yogurt-media-codec` - Yogurt 的多媒体编解码支持模块
 
 ### TypeScript
 
@@ -39,6 +38,7 @@
 ## See Also
 
 - [Milky](https://milky.ntqqrev.org/) - 基于 HTTP / WebSocket 通信的新时代 QQ 机器人应用接口标准
+- [acidify-codec](https://github.com/SaltifyDev/acidify-codec) - LagrangeCodec 的 Kotlin 绑定
 - [Cecilia](https://github.com/Wesley-Young/Cecilia) - 实验性的基于 Compose 的即时聊天软件
 
 ## Special Thanks
