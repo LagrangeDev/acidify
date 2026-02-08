@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupNotificationsReq
 import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupNotificationsResp
 import org.ntqqrev.acidify.internal.proto.oidb.GroupNotification
@@ -23,13 +23,13 @@ internal abstract class FetchGroupNotifications(val isFiltered: Boolean) :
         val notifications: List<GroupNotification>
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray =
+    override fun buildOidb(client: IClient, payload: Req): ByteArray =
         FetchGroupNotificationsReq(
             startSeq = payload.startSequence,
             count = payload.count,
         ).pbEncode()
 
-    override fun parseOidb(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
         val resp = payload.pbDecode<FetchGroupNotificationsResp>()
         return Resp(
             nextSequence = resp.nextStartSeq,

@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.system
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.proto.oidb.FetchUserInfoByUidReq
 import org.ntqqrev.acidify.internal.proto.oidb.FetchUserInfoByUinReq
@@ -48,22 +48,22 @@ internal object FetchUserInfo {
     }
 
     internal object ByUin : OidbService<Long, BotUserInfo>(0xfe1, 2, true) {
-        override fun buildOidb(client: LagrangeClient, payload: Long): ByteArray = FetchUserInfoByUinReq(
+        override fun buildOidb(client: IClient, payload: Long): ByteArray = FetchUserInfoByUinReq(
             uin = payload,
             keys = fetchKeys,
         ).pbEncode()
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): BotUserInfo =
+        override fun parseOidb(client: IClient, payload: ByteArray): BotUserInfo =
             parseUserInfo(payload)
     }
 
     internal object ByUid : OidbService<String, BotUserInfo>(0xfe1, 2) {
-        override fun buildOidb(client: LagrangeClient, payload: String): ByteArray = FetchUserInfoByUidReq(
+        override fun buildOidb(client: IClient, payload: String): ByteArray = FetchUserInfoByUidReq(
             uid = payload,
             keys = fetchKeys,
         ).pbEncode()
 
-        override fun parseOidb(client: LagrangeClient, payload: ByteArray): BotUserInfo =
+        override fun parseOidb(client: IClient, payload: ByteArray): BotUserInfo =
             parseUserInfo(payload)
     }
 }

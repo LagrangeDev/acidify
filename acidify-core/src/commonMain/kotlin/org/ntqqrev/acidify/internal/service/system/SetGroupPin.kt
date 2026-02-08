@@ -2,7 +2,7 @@
 
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.IClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetGroupPinReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -14,7 +14,7 @@ internal object SetGroupPin : NoOutputOidbService<SetGroupPin.Req>(0x5d6, 1) {
         val isPinned: Boolean
     )
 
-    override fun buildOidb(client: LagrangeClient, payload: Req): ByteArray = SetGroupPinReq(
+    override fun buildOidb(client: IClient, payload: Req): ByteArray = SetGroupPinReq(
         field1 = 0,
         field3 = 11,
         info = SetGroupPinReq.Info(
