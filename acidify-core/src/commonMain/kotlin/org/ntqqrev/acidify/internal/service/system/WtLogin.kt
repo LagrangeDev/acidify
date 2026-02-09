@@ -9,8 +9,6 @@ import org.ntqqrev.acidify.internal.service.EncryptType
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
 import org.ntqqrev.acidify.internal.service.NoInputService
-import org.ntqqrev.acidify.internal.tlv.buildTlv
-import org.ntqqrev.acidify.internal.tlv.buildTlvQRCode
 import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
 import kotlin.random.Random
@@ -139,7 +137,7 @@ internal abstract class WtLogin<R>(
                 writeBytes(ByteArray(0))
                 writeByte(0)
                 writeBytes(ByteArray(0), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
-                writeBytes(client.buildTlvQRCode {
+                transferFrom(client.buildTlvQRCode {
                     tlv16()
                     tlv1b()
                     tlv1d()
@@ -205,26 +203,25 @@ internal abstract class WtLogin<R>(
     object Login : WtLogin<Unit>("login", 2064) {
         override fun buildWtLoginPayload(client: AbstractClient): ByteArray {
             client.ensureLagrange()
-            val tlvPack = client.buildTlv {
-                tlv106A2()
-                tlv144()
-                tlv116()
-                tlv142()
-                tlv145()
-                tlv18()
-                tlv141()
-                tlv177()
-                tlv191()
-                tlv100()
-                tlv107()
-                tlv318()
-                tlv16a()
-                tlv166()
-                tlv521()
-            }
             val packet = Buffer().apply {
                 writeUShort(9u) // internal command
-                writeBytes(tlvPack)
+                transferFrom(client.buildTlv {
+                    tlv106A2()
+                    tlv144()
+                    tlv116()
+                    tlv142()
+                    tlv145()
+                    tlv18()
+                    tlv141()
+                    tlv177()
+                    tlv191()
+                    tlv100()
+                    tlv107()
+                    tlv318()
+                    tlv16a()
+                    tlv166()
+                    tlv521()
+                })
             }
             return packet.readByteArray()
         }

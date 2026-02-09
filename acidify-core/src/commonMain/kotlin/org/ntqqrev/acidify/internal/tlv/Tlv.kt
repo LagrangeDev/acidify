@@ -4,17 +4,12 @@ import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.util.Prefix
-import org.ntqqrev.acidify.internal.util.barrier
 import org.ntqqrev.acidify.internal.util.writeBytes
 import org.ntqqrev.acidify.internal.util.writeString
 import kotlin.random.Random
 import kotlin.time.Clock
 
-internal class Tlv(val client: LagrangeClient) {
-    private val builder = Buffer()
-
-    private var tlvCount: UShort = 0u
-
+internal class Tlv(val client: LagrangeClient) : TlvBuilder() {
     fun tlv18() = writeTlv(0x18u) {
         writeUShort(0u) // ping ver
         writeUInt(5u)
@@ -115,7 +110,7 @@ internal class Tlv(val client: LagrangeClient) {
             tlv124()
         }
 
-        writeBytes(TEA.encrypt(tlvPack.build(), client.sessionStore.tgtgt))
+        writeBytes(TEA.encrypt(tlvPack.build().readByteArray(), client.sessionStore.tgtgt))
     }
 
     fun tlv145() = writeTlv(0x145u) {
@@ -157,24 +152,4 @@ internal class Tlv(val client: LagrangeClient) {
         writeUInt(0x13u) // product type
         writeString("basicim", Prefix.UINT_16 or Prefix.LENGTH_ONLY)
     }
-
-    fun build(): ByteArray = Buffer().apply {
-        writeUShort(tlvCount)
-        writeBytes(builder.readByteArray())
-    }.readByteArray()
-
-    private fun writeTlv(tag: UShort, tlv: Sink.() -> Unit) {
-        tlvCount++
-
-        builder.writeUShort(tag)
-        builder.barrier(Prefix.UINT_16 or Prefix.LENGTH_ONLY) {
-            tlv()
-        }
-    }
-}
-
-internal inline fun LagrangeClient.buildTlv(block: Tlv.() -> Unit): ByteArray {
-    val tlv = Tlv(this)
-    tlv.block()
-    return tlv.build()
 }

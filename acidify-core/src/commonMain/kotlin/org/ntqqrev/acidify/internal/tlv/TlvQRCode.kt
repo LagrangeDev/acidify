@@ -1,15 +1,16 @@
 package org.ntqqrev.acidify.internal.tlv
 
-import kotlinx.io.*
+import kotlinx.io.writeUByte
+import kotlinx.io.writeUInt
+import kotlinx.io.writeUShort
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Req
-import org.ntqqrev.acidify.internal.util.*
+import org.ntqqrev.acidify.internal.util.Prefix
+import org.ntqqrev.acidify.internal.util.pbEncode
+import org.ntqqrev.acidify.internal.util.writeBytes
+import org.ntqqrev.acidify.internal.util.writeString
 
-internal class TlvQRCode(val client: LagrangeClient) {
-    private val builder = Buffer()
-
-    private var tlvCount: UShort = 0u
-
+internal class TlvQRCode(val client: LagrangeClient) : TlvBuilder() {
     fun tlv16() = writeTlv(0x16u) {
         writeUInt(0u)
         writeInt(client.appInfo.appId)
@@ -60,24 +61,4 @@ internal class TlvQRCode(val client: LagrangeClient) {
         ).pbEncode()
         writeBytes(body)
     }
-
-    fun build(): ByteArray = Buffer().apply {
-        writeUShort(tlvCount)
-        writeBytes(builder.readByteArray())
-    }.readByteArray()
-
-    private fun writeTlv(tag: UShort, tlv: Sink.() -> Unit) {
-        tlvCount++
-
-        builder.writeUShort(tag)
-        builder.barrier(Prefix.UINT_16 or Prefix.LENGTH_ONLY) {
-            tlv()
-        }
-    }
-}
-
-internal inline fun LagrangeClient.buildTlvQRCode(block: TlvQRCode.() -> Unit): ByteArray {
-    val tlv = TlvQRCode(this)
-    block(tlv)
-    return tlv.build()
 }
