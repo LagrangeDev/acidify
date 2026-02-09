@@ -31,6 +31,24 @@ internal class LagrangeClient(
     override val uid: String
         get() = sessionStore.uid
 
+    override val subAppId: Int
+        get() = appInfo.subAppId
+
+    override val currentVersion: String
+        get() = appInfo.currentVersion
+
+    override val a2: ByteArray
+        get() = sessionStore.a2
+
+    override val d2: ByteArray
+        get() = sessionStore.d2
+
+    override val d2Key: ByteArray
+        get() = sessionStore.d2Key
+
+    override val guid: ByteArray
+        get() = sessionStore.guid
+
     val loginContext = LoginContext(this)
     val packetContext = PacketContext(this)
     val ticketContext = TicketContext(this)

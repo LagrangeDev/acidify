@@ -9,6 +9,14 @@ internal sealed interface IClient : CoroutineScope {
     val uin: Long
     val uid: String
 
+    val subAppId: Int
+    val currentVersion: String
+
+    val d2: ByteArray
+    val d2Key: ByteArray
+    val a2: ByteArray
+    val guid: ByteArray
+
     fun createLogger(forObject: Any): Logger
     suspend fun doPostOnlineLogic()
     suspend fun doPreOfflineLogic()
