@@ -29,13 +29,13 @@ yogurt
 
 ### 通过 Java 运行时启动 (Kotlin/JVM)
 
-配置 Java 21+ 运行时，然后在 [Actions](https://github.com/LagrangeDev/acidify/actions/workflows/build-yogurt.yml) 中下载 JAR 文件，运行：
+配置 Java 25+ 运行时，然后在 [Actions](https://github.com/LagrangeDev/acidify/actions/workflows/build-yogurt.yml) 中下载 JAR 文件，运行：
 
 ```
 java -jar yogurt-jvm-all.jar
 ```
 
-注意：Yogurt 的 JVM 版本理论上可以在任何支持 Java 21+ 的平台上运行，但由于 Yogurt 依赖 [LagrangeCodec](https://github.com/LagrangeDev/LagrangeCodec) 的预编译构建，因此只支持在以下平台**发送语音和视频消息**：
+注意：Yogurt 的 JVM 版本理论上可以在任何支持 Java 25+ 的平台上运行，但由于 Yogurt 依赖 [LagrangeCodec](https://github.com/LagrangeDev/LagrangeCodec) 的预编译构建，因此只支持在以下平台**发送语音和视频消息**：
 
 | OS      | Arch       |
 |---------|------------|
