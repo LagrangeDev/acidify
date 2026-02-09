@@ -2,6 +2,10 @@ package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.packet.buildCode2DPacket
+import org.ntqqrev.acidify.internal.packet.buildWtLogin
+import org.ntqqrev.acidify.internal.packet.parseCode2DPacket
+import org.ntqqrev.acidify.internal.packet.parseWtLogin
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
 import org.ntqqrev.acidify.internal.service.NoInputService
 import org.ntqqrev.acidify.internal.tlv.buildTlvQRCode
@@ -27,12 +31,13 @@ internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_
             writeBytes(ByteArray(0), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
             writeBytes(tlvPack)
         }
-        return client.loginContext.buildCode2DPacket(packet.readByteArray(), 0x31u)
+        val code2d = client.buildCode2DPacket(packet.readByteArray(), 0x31)
+        return client.buildWtLogin(code2d, 2066)
     }
 
     override fun parse(client: LagrangeClient, payload: ByteArray): Result {
-        val wtLogin = client.loginContext.parseWtLogin(payload)
-        val code2d = client.loginContext.parseCode2DPacket(wtLogin)
+        val wtLogin = parseWtLogin(payload)
+        val code2d = parseCode2DPacket(wtLogin)
         val reader = code2d.reader()
         reader.discard(1)
         val sig = reader.readPrefixedBytes(Prefix.UINT_16 or Prefix.LENGTH_ONLY)

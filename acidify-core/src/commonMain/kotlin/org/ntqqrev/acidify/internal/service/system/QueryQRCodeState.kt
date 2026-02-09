@@ -2,6 +2,10 @@ package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.packet.buildCode2DPacket
+import org.ntqqrev.acidify.internal.packet.buildWtLogin
+import org.ntqqrev.acidify.internal.packet.parseCode2DPacket
+import org.ntqqrev.acidify.internal.packet.parseWtLogin
 import org.ntqqrev.acidify.internal.service.NoInputService
 import org.ntqqrev.acidify.internal.util.Prefix
 import org.ntqqrev.acidify.internal.util.readTlv
@@ -20,12 +24,13 @@ internal object QueryQRCodeState : NoInputService<QRCodeState>("wtlogin.trans_em
             writeBytes(ByteArray(0), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
             writeUShort(0u)  // actually it is the tlv count, but there is no tlv so 0x0 is used
         }
-        return client.loginContext.buildCode2DPacket(packet.readByteArray(), 0x12u)
+        val code2d = client.buildCode2DPacket(packet.readByteArray(), 0x12)
+        return client.buildWtLogin(code2d, 2066)
     }
 
     override fun parse(client: LagrangeClient, payload: ByteArray): QRCodeState {
-        val wtlogin = client.loginContext.parseWtLogin(payload)
-        val reader = client.loginContext.parseCode2DPacket(wtlogin).reader()
+        val wtlogin = parseWtLogin(payload)
+        val reader = parseCode2DPacket(wtlogin).reader()
         val state = QRCodeState.fromByte(reader.readByte())
         if (state == QRCodeState.CONFIRMED) {
             reader.discard(4)

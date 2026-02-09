@@ -1,6 +1,7 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
+import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.internal.service.Service
 import org.ntqqrev.acidify.logging.Logger
 
@@ -23,4 +24,5 @@ internal sealed interface IClient : CoroutineScope {
     suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long = 10_000L): R
     suspend fun <R> callService(service: Service<Unit, R>, timeout: Long = 10_000L): R =
         callService(service, Unit, timeout)
+    suspend fun dispatchPushSsoFrame(sso: SsoResponse)
 }

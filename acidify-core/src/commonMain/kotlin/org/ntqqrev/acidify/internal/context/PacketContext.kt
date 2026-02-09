@@ -150,7 +150,7 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
                 if (it != null) {
                     it.complete(sso)
                 } else {
-                    client.pushChannel.send(sso)
+                    client.dispatchPushSsoFrame(sso)
                 }
             }
         }

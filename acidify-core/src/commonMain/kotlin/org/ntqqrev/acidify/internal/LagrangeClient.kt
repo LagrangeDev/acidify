@@ -9,7 +9,6 @@ import org.ntqqrev.acidify.common.SignProvider
 import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.exception.ServiceException
 import org.ntqqrev.acidify.internal.context.HighwayContext
-import org.ntqqrev.acidify.internal.context.LoginContext
 import org.ntqqrev.acidify.internal.context.PacketContext
 import org.ntqqrev.acidify.internal.context.TicketContext
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
@@ -63,13 +62,12 @@ internal class LagrangeClient(
         "OidbSvcTrpcTcp.0x6d9_4"
     )
 
-    val loginContext = LoginContext(this)
+    val pushChannel = Channel<SsoResponse>(capacity = 15, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
     val packetContext = PacketContext(this)
     val ticketContext = TicketContext(this)
     val highwayContext = HighwayContext(this)
-    val pushChannel = Channel<SsoResponse>(capacity = 15, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val contextCollection = listOf(
-        loginContext,
         packetContext,
         ticketContext,
         highwayContext,
@@ -126,5 +124,9 @@ internal class LagrangeClient(
 
     override suspend fun <R> callService(service: Service<Unit, R>, timeout: Long): R {
         return callService(service, Unit, timeout)
+    }
+
+    override suspend fun dispatchPushSsoFrame(sso: SsoResponse) {
+        pushChannel.send(sso)
     }
 }

@@ -1,6 +1,7 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
+import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.common.android.AndroidAppInfo
 import org.ntqqrev.acidify.common.android.AndroidSessionStore
 import org.ntqqrev.acidify.common.android.AndroidSignProvider
@@ -55,6 +56,10 @@ internal class KuromeClient(
         payload: T,
         timeout: Long
     ): R {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun dispatchPushSsoFrame(sso: SsoResponse) {
         TODO("Not yet implemented")
     }
 }

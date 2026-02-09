@@ -7,6 +7,8 @@ import kotlinx.io.writeUShort
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
+import org.ntqqrev.acidify.internal.packet.buildWtLogin
+import org.ntqqrev.acidify.internal.packet.parseWtLogin
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.service.NoInputService
 import org.ntqqrev.acidify.internal.tlv.buildTlv
@@ -35,14 +37,14 @@ internal object WtLogin : NoInputService<Boolean>("wtlogin.login") {
             writeUShort(9u) // internal command
             writeFully(tlvPack)
         }
-        return client.loginContext.buildWtLogin(packet.readByteArray(), 2064u)
+        return client.buildWtLogin(packet.readByteArray(), 2064)
     }
 
     override fun parse(
         client: LagrangeClient,
         payload: ByteArray
     ): Boolean {
-        val reader = client.loginContext.parseWtLogin(payload).reader()
+        val reader = parseWtLogin(payload).reader()
 
         val command = reader.readUShort()
         val state = reader.readUByte()

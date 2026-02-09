@@ -54,7 +54,7 @@ internal class TicketContext(client: LagrangeClient) : AbstractContext(client) {
             "https%3A%2F%2Fh5.qzone.qq.com%2Fqqnt%2Fqzoneinpcqq%2Ffriend%3Frefresh%3D0%26clientuin%3D0%26darkMode%3D0&keyindex=19&random=2599"
         val urlString = "https://ssl.ptlogin2.qq.com/jump" +
                 "?ptlang=1033" +
-                "&clientuin=${client.sessionStore.uin}" +
+                "&clientuin=${client.uin}" +
                 "&clientkey=$clientKey" +
                 "&u1=$jump"
         httpClient.get(urlString)
