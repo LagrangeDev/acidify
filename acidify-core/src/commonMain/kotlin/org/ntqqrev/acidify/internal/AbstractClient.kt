@@ -20,8 +20,10 @@ internal sealed class AbstractClient(
     abstract val uin: Long
     abstract val uid: String
 
+    abstract val appId: Int
     abstract val subAppId: Int
     abstract val currentVersion: String
+    abstract val appClientVersion: Int
 
     abstract val d2: ByteArray
     abstract val d2Key: ByteArray

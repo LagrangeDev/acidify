@@ -23,11 +23,17 @@ internal class KuromeClient(
     override val uid: String
         get() = sessionStore.uid
 
+    override val appId: Int
+        get() = appInfo.appId
+
     override val subAppId: Int
         get() = appInfo.subAppId
 
     override val currentVersion: String
         get() = appInfo.currentVersion
+
+    override val appClientVersion: Int
+        get() = appInfo.appClientVersion
 
     override val a2: ByteArray
         get() = sessionStore.wloginSigs.a2

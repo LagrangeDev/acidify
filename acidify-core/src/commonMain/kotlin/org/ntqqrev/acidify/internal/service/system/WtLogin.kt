@@ -3,9 +3,9 @@ package org.ntqqrev.acidify.internal.service.system
 import kotlinx.io.*
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.AbstractClient
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.crypto.ecdh.Ecdh
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
-import org.ntqqrev.acidify.internal.packet.*
+import org.ntqqrev.acidify.internal.packet.EncryptType
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
 import org.ntqqrev.acidify.internal.service.NoInputService
@@ -13,46 +13,117 @@ import org.ntqqrev.acidify.internal.tlv.buildTlv
 import org.ntqqrev.acidify.internal.tlv.buildTlvQRCode
 import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
+import kotlin.random.Random
+import kotlin.time.Clock
 
 internal abstract class WtLogin<R>(
     cmdSuffix: String,
     val wtLoginSubCmd: Short
 ) : NoInputService<R>("wtlogin.$cmdSuffix") {
+    private val secp192k1BobPublicKey =
+        "04928D8850673088B343264E0C6BACB8496D697799F37211DEB25BB73906CB089FEA9639B4E0260498B51A992D50813DA8".hexToByteArray()
+    private val secp192k1 = Ecdh.generateKeyPair(Ecdh.Secp192K1)
+
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
     override fun build(client: AbstractClient, payload: Unit): ByteArray {
-        client.ensureLagrange()
-        return client.buildWtLogin(
-            payload = buildWtLoginPayload(client),
-            command = wtLoginSubCmd,
+        val encrypted = TeaProvider.encrypt(
+            data = buildWtLoginPayload(client),
+            key = Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
+        )
+        val packet = Buffer()
+        packet.writeByte(2)
+        packet.barrier(Prefix.UINT_16 or Prefix.INCLUDE_PREFIX, 1) {
+            writeShort(8001)
+            writeShort(short = wtLoginSubCmd)
+            writeShort(0) // sequence
+            writeUInt(client.uin.toUInt()) // uin
+            writeByte(3) // extVer
+            writeByte(135.toByte()) // cmdVer
+            writeInt(0) // actually unknown const 0
+            writeByte(19) // pubId
+            writeShort(0) // insId
+            writeUShort(client.appClientVersion.toUShort())
+            writeInt(0) // retryTime
+            // start encrypt head
+            writeByte(1)
+            writeByte(1)
+            writeBytes(Random.nextBytes(16))
+            writeUShort(0x102u) // unknown const
+            writeBytes(secp192k1.packPublic(true), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+            // end encrypt head
+            writeBytes(encrypted)
+            writeByte(3)
+        } // addition of 1, aiming to include packet start
+        return packet.readByteArray()
+    }
+
+    override fun parse(client: AbstractClient, payload: ByteArray): R {
+        val reader = payload.reader()
+        val header = reader.readByte()
+        if (header != 0x02.toByte()) throw Exception("Invalid Header")
+        reader.skip(15) // internalLength(2) + ver(2) + cmd(2) + sequence(2) + uin(4) + flag(1) + retryTime(2)
+        val encrypted = reader.readByteArray(reader.remaining - 1)
+        val decrypted = TeaProvider.decrypt(
+            encrypted,
+            Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
+        )
+        if (reader.readByte() != 0x03.toByte()) throw Exception("Packet end not found")
+        return parseWtLoginPayload(
+            client = client,
+            wtLogin = decrypted,
         )
     }
 
-    override fun parse(client: AbstractClient, payload: ByteArray): R = parseWtLoginPayload(
-        client = client.ensureLagrange(),
-        wtLogin = unwrapWtLogin(payload),
-    )
+    abstract fun buildWtLoginPayload(client: AbstractClient): ByteArray
 
-    abstract fun buildWtLoginPayload(client: LagrangeClient): ByteArray
-
-    abstract fun parseWtLoginPayload(client: LagrangeClient, wtLogin: ByteArray): R
+    abstract fun parseWtLoginPayload(client: AbstractClient, wtLogin: ByteArray): R
 
     abstract class TransEmp<R>(val transEmpSubCmd: Short) : WtLogin<R>("trans_emp", 2066) {
-        override fun buildWtLoginPayload(client: LagrangeClient): ByteArray =
-            client.buildCode2DPacket(
-                tlvPack = buildCode2DPayload(client),
-                command = transEmpSubCmd,
-            )
+        override fun buildWtLoginPayload(client: AbstractClient): ByteArray {
+            val tlvPack = buildCode2DPayload(client)
+            val requestBody = Buffer().apply {
+                writeInt(Clock.System.now().epochSeconds.toInt())
+                writeByte(0x2) // packet Start
+                writeShort((43 + tlvPack.size + 1).toShort()) // _head_len = 43 + data.size +1
+                writeShort(short = transEmpSubCmd)
+                writeBytes(ByteArray(21))
+                writeByte(0x3)
+                writeShort(0x0) // close
+                writeShort(0x32) // Version Code: 50
+                writeInt(0) // trans_emp sequence
+                writeLong(0) // dummy uin
+                writeBytes(value = tlvPack)
+                writeByte(0x3)
+            }
+            val packet = Buffer().apply {
+                writeByte(0x0) // encryptMethod == EncryptMethod.EM_ST || encryptMethod == EncryptMethod.EM_ECDH_ST
+                writeShort(requestBody.size.toShort())
+                writeInt(client.appId)
+                writeInt(0x72) // Role
+                writeBytes(ByteArray(0), Prefix.UINT_16 or Prefix.LENGTH_ONLY) // uSt
+                writeBytes(ByteArray(0), Prefix.UINT_8 or Prefix.LENGTH_ONLY) // rollback
+                transferFrom(requestBody)
+            }
+            return packet.readByteArray()
+        }
 
-        override fun parseWtLoginPayload(client: LagrangeClient, wtLogin: ByteArray): R =
-            parseCode2DPayload(
+        override fun parseWtLoginPayload(client: AbstractClient, wtLogin: ByteArray): R {
+            val reader = wtLogin.reader()
+            reader.readUInt() // packetLength
+            reader.discard(4)
+            reader.readUShort() // command
+            reader.discard(40)
+            reader.readUInt() // appid
+            return parseCode2DPayload(
                 client = client,
-                code2D = unwrapCode2DPacket(wtLogin),
+                code2D = reader.readByteArray(reader.remaining),
             )
+        }
 
-        abstract fun buildCode2DPayload(client: LagrangeClient): ByteArray
+        abstract fun buildCode2DPayload(client: AbstractClient): ByteArray
 
-        abstract fun parseCode2DPayload(client: LagrangeClient, code2D: ByteArray): R
+        abstract fun parseCode2DPayload(client: AbstractClient, code2D: ByteArray): R
 
         object FetchQRCode : TransEmp<FetchQRCode.Result>(0x31) {
             class Result(
@@ -60,7 +131,8 @@ internal abstract class WtLogin<R>(
                 val qrCodePng: ByteArray
             )
 
-            override fun buildCode2DPayload(client: LagrangeClient): ByteArray = Buffer().apply {
+            override fun buildCode2DPayload(client: AbstractClient): ByteArray = Buffer().apply {
+                client.ensureLagrange()
                 writeUShort(0u)
                 writeUInt(client.appInfo.appId.toUInt())
                 writeULong(0u) // uin
@@ -79,9 +151,10 @@ internal abstract class WtLogin<R>(
             }.readByteArray()
 
             override fun parseCode2DPayload(
-                client: LagrangeClient,
+                client: AbstractClient,
                 code2D: ByteArray
             ): Result {
+                client.ensureLagrange()
                 val reader = code2D.reader()
                 reader.discard(1)
                 val sig = reader.readPrefixedBytes(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
@@ -96,7 +169,8 @@ internal abstract class WtLogin<R>(
         }
 
         object QueryQRCodeState : TransEmp<QRCodeState>(0x12) {
-            override fun buildCode2DPayload(client: LagrangeClient): ByteArray = Buffer().apply {
+            override fun buildCode2DPayload(client: AbstractClient): ByteArray = Buffer().apply {
+                client.ensureLagrange()
                 writeUShort(0u)
                 writeUInt(client.appInfo.appId.toUInt())
                 writeBytes(client.sessionStore.qrSig, Prefix.UINT_16 or Prefix.LENGTH_ONLY)
@@ -107,9 +181,10 @@ internal abstract class WtLogin<R>(
             }.readByteArray()
 
             override fun parseCode2DPayload(
-                client: LagrangeClient,
+                client: AbstractClient,
                 code2D: ByteArray
             ): QRCodeState {
+                client.ensureLagrange()
                 val reader = code2D.reader()
                 val state = QRCodeState.fromByte(reader.readByte())
                 if (state == QRCodeState.CONFIRMED) {
@@ -128,7 +203,8 @@ internal abstract class WtLogin<R>(
     }
 
     object Login : WtLogin<Unit>("login", 2064) {
-        override fun buildWtLoginPayload(client: LagrangeClient): ByteArray {
+        override fun buildWtLoginPayload(client: AbstractClient): ByteArray {
+            client.ensureLagrange()
             val tlvPack = client.buildTlv {
                 tlv106A2()
                 tlv144()
@@ -154,10 +230,11 @@ internal abstract class WtLogin<R>(
         }
 
         override fun parseWtLoginPayload(
-            client: LagrangeClient,
+            client: AbstractClient,
             wtLogin: ByteArray
         ) {
-            val reader = unwrapWtLogin(wtLogin).reader()
+            client.ensureLagrange()
+            val reader = wtLogin.reader()
             reader.readUShort() // command
             val state = reader.readUByte()
             val tlv119Reader = reader.readTlv()
