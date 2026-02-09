@@ -7,6 +7,7 @@ import kotlinx.io.writeUShort
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
+import org.ntqqrev.acidify.internal.packet.EncryptType
 import org.ntqqrev.acidify.internal.packet.buildWtLogin
 import org.ntqqrev.acidify.internal.packet.parseWtLogin
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
@@ -15,6 +16,8 @@ import org.ntqqrev.acidify.internal.tlv.buildTlv
 import org.ntqqrev.acidify.internal.util.*
 
 internal object WtLogin : NoInputService<Boolean>("wtlogin.login") {
+    override val ssoEncryptType = EncryptType.WithEmptyKey
+
     override fun build(client: LagrangeClient, payload: Unit): ByteArray {
         val tlvPack = client.buildTlv {
             tlv106A2()

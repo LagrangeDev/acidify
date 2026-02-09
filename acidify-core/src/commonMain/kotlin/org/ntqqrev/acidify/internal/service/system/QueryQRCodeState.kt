@@ -2,6 +2,7 @@ package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.packet.EncryptType
 import org.ntqqrev.acidify.internal.packet.buildCode2DPacket
 import org.ntqqrev.acidify.internal.packet.buildWtLogin
 import org.ntqqrev.acidify.internal.packet.parseCode2DPacket
@@ -14,6 +15,8 @@ import org.ntqqrev.acidify.internal.util.writeBytes
 import org.ntqqrev.acidify.struct.QRCodeState
 
 internal object QueryQRCodeState : NoInputService<QRCodeState>("wtlogin.trans_emp") {
+    override val ssoEncryptType = EncryptType.WithEmptyKey
+
     override fun build(client: LagrangeClient, payload: Unit): ByteArray {
         val packet = Buffer().apply {
             writeUShort(0u)

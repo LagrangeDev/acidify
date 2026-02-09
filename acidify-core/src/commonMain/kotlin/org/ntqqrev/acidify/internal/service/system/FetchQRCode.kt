@@ -2,6 +2,7 @@ package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.packet.EncryptType
 import org.ntqqrev.acidify.internal.packet.buildCode2DPacket
 import org.ntqqrev.acidify.internal.packet.buildWtLogin
 import org.ntqqrev.acidify.internal.packet.parseCode2DPacket
@@ -12,6 +13,8 @@ import org.ntqqrev.acidify.internal.tlv.buildTlvQRCode
 import org.ntqqrev.acidify.internal.util.*
 
 internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_emp") {
+    override val ssoEncryptType = EncryptType.WithEmptyKey
+
     override fun build(client: LagrangeClient, payload: Unit): ByteArray {
         val tlvPack = client.buildTlvQRCode {
             tlv16()
