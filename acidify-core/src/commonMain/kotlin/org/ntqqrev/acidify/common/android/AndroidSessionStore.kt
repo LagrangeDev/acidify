@@ -44,7 +44,7 @@ class AndroidSessionStore(
             d2 = ByteArray(0)
             d2Key = ByteArray(16)
             a1 = ByteArray(0)
-            tgtgtKey = ByteArray(0)
+            tgtgtKey = Random.nextBytes(16)
             randomKey = ByteArray(16)
         }
     }
@@ -66,9 +66,9 @@ class AndroidSessionStore(
     }
 
     companion object {
-        fun empty(): AndroidSessionStore {
+        fun empty(uin: Long): AndroidSessionStore {
             return AndroidSessionStore(
-                uin = 0,
+                uin = uin,
                 uid = "",
                 state = State(),
                 wloginSigs = WLoginSigs(
@@ -79,7 +79,7 @@ class AndroidSessionStore(
                     a1 = ByteArray(0),
                     a1Key = ByteArray(16),
                     noPicSig = ByteArray(0),
-                    tgtgtKey = ByteArray(0),
+                    tgtgtKey = Random.nextBytes(16),
                     ksid = ByteArray(0),
                     superKey = ByteArray(0),
                     stKey = ByteArray(0),
