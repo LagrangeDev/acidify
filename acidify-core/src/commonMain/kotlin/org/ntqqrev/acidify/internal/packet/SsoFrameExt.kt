@@ -4,7 +4,7 @@ import dev.karmakrafts.kompress.Inflater
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.ntqqrev.acidify.common.SsoResponse
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.KuromeClient
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
@@ -18,7 +18,7 @@ internal val buildSsoFixedBytes = byteArrayOf(
     0x00, 0x00, 0x00, 0x00,
 )
 
-internal fun IClient.buildSsoReserved(secureInfo: SsoSecureInfo?) = when (this) {
+internal fun AbstractClient.buildSsoReserved(secureInfo: SsoSecureInfo?) = when (this) {
     is LagrangeClient -> SsoReservedFields(
         trace = generateTrace(),
         uid = uid,
@@ -34,7 +34,7 @@ internal fun IClient.buildSsoReserved(secureInfo: SsoSecureInfo?) = when (this) 
     )
 }.pbEncode()
 
-internal fun IClient.buildProtocol12(
+internal fun AbstractClient.buildProtocol12(
     command: String,
     payload: ByteArray,
     sequence: Int,
@@ -77,7 +77,7 @@ internal fun IClient.buildProtocol12(
     }
 }
 
-internal fun IClient.buildProtocol13(
+internal fun AbstractClient.buildProtocol13(
     command: String,
     payload: ByteArray,
     sequence: Int,
@@ -106,7 +106,7 @@ internal fun IClient.buildProtocol13(
     }
 }
 
-internal fun IClient.parseSsoFrame(packet: ByteArray): SsoResponse {
+internal fun AbstractClient.parseSsoFrame(packet: ByteArray): SsoResponse {
     val rawReader = packet.reader()
     val protocol = rawReader.readUInt()
     val authFlag = rawReader.readByte()

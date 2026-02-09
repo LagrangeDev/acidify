@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.OidbService
 import org.ntqqrev.acidify.internal.util.pbDecode
@@ -53,7 +53,7 @@ internal abstract class RichMediaUpload<T>(
     )
 
     protected fun buildBaseUploadReq(
-        client: IClient,
+        client: AbstractClient,
         uploadInfoList: List<UploadInfo>,
         compatQMsgSceneType: Int,
         extBizInfo: ExtBizInfo,
@@ -272,13 +272,13 @@ internal abstract class RichMediaUpload<T>(
         businessType = 1,
         scene = MessageScene.FRIEND
     ) {
-        override fun buildOidb(client: IClient, payload: ImageUploadRequest): ByteArray {
+        override fun buildOidb(client: AbstractClient, payload: ImageUploadRequest): ByteArray {
             val uploadInfoList = listOf(buildImageUploadInfo(payload))
             val extBizInfo = buildImageExtBizInfo(MessageScene.FRIEND, payload.subType, payload.textSummary)
             return buildBaseUploadReq(client, uploadInfoList, 1, extBizInfo)
         }
 
-        override fun parseOidb(client: IClient, payload: ByteArray): UploadResp =
+        override fun parseOidb(client: AbstractClient, payload: ByteArray): UploadResp =
             payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
@@ -290,13 +290,13 @@ internal abstract class RichMediaUpload<T>(
         businessType = 1,
         scene = MessageScene.GROUP
     ) {
-        override fun buildOidb(client: IClient, payload: ImageUploadRequest): ByteArray {
+        override fun buildOidb(client: AbstractClient, payload: ImageUploadRequest): ByteArray {
             val uploadInfoList = listOf(buildImageUploadInfo(payload))
             val extBizInfo = buildImageExtBizInfo(MessageScene.GROUP, payload.subType, payload.textSummary)
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo, payload.groupUin)
         }
 
-        override fun parseOidb(client: IClient, payload: ByteArray): UploadResp =
+        override fun parseOidb(client: AbstractClient, payload: ByteArray): UploadResp =
             payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
@@ -308,13 +308,13 @@ internal abstract class RichMediaUpload<T>(
         businessType = 3,
         scene = MessageScene.FRIEND
     ) {
-        override fun buildOidb(client: IClient, payload: RecordUploadRequest): ByteArray {
+        override fun buildOidb(client: AbstractClient, payload: RecordUploadRequest): ByteArray {
             val uploadInfoList = listOf(buildRecordUploadInfo(payload))
             val extBizInfo = buildPrivateRecordExtBizInfo()
             return buildBaseUploadReq(client, uploadInfoList, 1, extBizInfo)
         }
 
-        override fun parseOidb(client: IClient, payload: ByteArray): UploadResp =
+        override fun parseOidb(client: AbstractClient, payload: ByteArray): UploadResp =
             payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
@@ -326,13 +326,13 @@ internal abstract class RichMediaUpload<T>(
         businessType = 3,
         scene = MessageScene.GROUP
     ) {
-        override fun buildOidb(client: IClient, payload: RecordUploadRequest): ByteArray {
+        override fun buildOidb(client: AbstractClient, payload: RecordUploadRequest): ByteArray {
             val uploadInfoList = listOf(buildRecordUploadInfo(payload))
             val extBizInfo = buildGroupRecordExtBizInfo()
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo, payload.groupUin)
         }
 
-        override fun parseOidb(client: IClient, payload: ByteArray): UploadResp =
+        override fun parseOidb(client: AbstractClient, payload: ByteArray): UploadResp =
             payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
@@ -344,13 +344,13 @@ internal abstract class RichMediaUpload<T>(
         businessType = 2,
         scene = MessageScene.FRIEND
     ) {
-        override fun buildOidb(client: IClient, payload: VideoUploadRequest): ByteArray {
+        override fun buildOidb(client: AbstractClient, payload: VideoUploadRequest): ByteArray {
             val uploadInfoList = buildVideoUploadInfoList(payload)
             val extBizInfo = buildVideoExtBizInfo()
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo)
         }
 
-        override fun parseOidb(client: IClient, payload: ByteArray): UploadResp =
+        override fun parseOidb(client: AbstractClient, payload: ByteArray): UploadResp =
             payload.pbDecode<NTV2RichMediaResp>().upload
     }
 
@@ -362,13 +362,13 @@ internal abstract class RichMediaUpload<T>(
         businessType = 2,
         scene = MessageScene.GROUP
     ) {
-        override fun buildOidb(client: IClient, payload: VideoUploadRequest): ByteArray {
+        override fun buildOidb(client: AbstractClient, payload: VideoUploadRequest): ByteArray {
             val uploadInfoList = buildVideoUploadInfoList(payload)
             val extBizInfo = buildVideoExtBizInfo()
             return buildBaseUploadReq(client, uploadInfoList, 2, extBizInfo, payload.groupUin)
         }
 
-        override fun parseOidb(client: IClient, payload: ByteArray): UploadResp =
+        override fun parseOidb(client: AbstractClient, payload: ByteArray): UploadResp =
             payload.pbDecode<NTV2RichMediaResp>().upload
     }
 }

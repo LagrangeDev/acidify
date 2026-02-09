@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x8FCReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -12,7 +12,7 @@ internal object SetMemberTitle : NoOutputOidbService<SetMemberTitle.Req>(0x8fc, 
         val specialTitle: String
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         Oidb0x8FCReq(
             groupCode = payload.groupUin,
             memLevelInfo = listOf(

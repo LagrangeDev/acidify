@@ -162,18 +162,19 @@ class Bot internal constructor(
      * @param timeoutMillis 超时时间，默认 10000 毫秒
      */
     @UnsafeAcidifyApi
-    suspend fun sendPacket(cmd: String, payload: ByteArray, timeoutMillis: Long = 10000L): SsoResponse =
-        client.packetContext.sendPacket(
+    suspend fun sendPacket(cmd: String, payload: ByteArray, timeoutMillis: Long = 10000L): SsoResponse {
+        val sequence = client.ssoSequence++
+        return client.packetContext.sendPacket(
             command = cmd,
+            sequence = sequence,
             payload = payload,
             requestType = RequestType.D2Auth,
             encryptType = EncryptType.WithD2Key,
-            timeoutMillis = timeoutMillis
-        ) { seq ->
-            if (client.signRequiredCommand.contains(cmd)) {
+            timeoutMillis = timeoutMillis,
+            ssoSecureInfo = if (client.signRequiredCommand.contains(cmd)) {
                 client.signProvider.sign(
                     cmd = cmd,
-                    seq = seq,
+                    seq = sequence,
                     src = payload,
                 ).let {
                     SsoSecureInfo(
@@ -185,7 +186,8 @@ class Bot internal constructor(
             } else {
                 null
             }
-        }
+        )
+    }
 
     companion object {
         @JsStatic

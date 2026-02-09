@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Req
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D7Resp
 import org.ntqqrev.acidify.internal.service.OidbService
@@ -15,7 +15,7 @@ internal object RenameGroupFolder : OidbService<RenameGroupFolder.Req, Unit>(0x6
         val newFolderName: String
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         Oidb0x6D7Req(
             renameFolder = Oidb0x6D7Req.RenameFolder(
                 groupUin = payload.groupUin,
@@ -24,7 +24,7 @@ internal object RenameGroupFolder : OidbService<RenameGroupFolder.Req, Unit>(0x6
             )
         ).pbEncode()
 
-    override fun parseOidb(client: IClient, payload: ByteArray) {
+    override fun parseOidb(client: AbstractClient, payload: ByteArray) {
         val resp = payload.pbDecode<Oidb0x6D7Resp>().renameFolder
         checkRetCode(resp.retCode, resp.retMsg)
     }

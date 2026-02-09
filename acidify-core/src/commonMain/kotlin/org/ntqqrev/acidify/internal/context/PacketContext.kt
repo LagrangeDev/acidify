@@ -8,16 +8,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import org.ntqqrev.acidify.common.SsoResponse
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.packet.*
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.system.BotOnline
 import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.internal.util.readUInt32BE
-import kotlin.random.Random
 
-internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
-    private var sequence = Random.nextInt(0x10000, 0x20000)
+internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     private val host = "msfwifi.3g.qq.com"
     private val port = 8080
     private val selectorManager = SelectorManager(client.coroutineContext)
@@ -29,7 +27,6 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
     private val sendPacketMutex = Mutex()
     private val mapQueryMutex = Mutex()
     private var heartbeatJob: Job? = null
-    private val logger = client.createLogger(this)
 
     override suspend fun postOnline() {
         heartbeatJob = client.launch {
@@ -102,14 +99,13 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
 
     suspend inline fun sendPacket(
         command: String,
+        sequence: Int,
         payload: ByteArray,
         requestType: RequestType,
         encryptType: EncryptType,
         timeoutMillis: Long,
-        ssoSecureInfoProvider: (seq: Int) -> SsoSecureInfo?,
+        ssoSecureInfo: SsoSecureInfo?
     ): SsoResponse {
-        val sequence = this.sequence++
-        val ssoSecureInfo = ssoSecureInfoProvider(sequence)
         val packet = when (requestType) {
             RequestType.D2Auth -> client.buildProtocol12(
                 command = command,
@@ -150,7 +146,7 @@ internal class PacketContext(client: LagrangeClient) : AbstractContext(client) {
                 if (it != null) {
                     it.complete(sso)
                 } else {
-                    client.dispatchPushSsoFrame(sso)
+                    client.pushChannel.send(sso)
                 }
             }
         }

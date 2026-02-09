@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetMemberAdminReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -12,7 +12,7 @@ internal object SetMemberAdmin : NoOutputOidbService<SetMemberAdmin.Req>(0x1096,
         val isAdmin: Boolean
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         SetMemberAdminReq(
             groupCode = payload.groupUin,
             targetUid = payload.memberUid,

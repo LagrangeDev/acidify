@@ -1,12 +1,12 @@
 ﻿package org.ntqqrev.acidify.internal.service.friend
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetFilteredFriendRequestReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object SetFilteredFriendRequest : NoOutputOidbService<String>(0xd72, 0) {
-    override fun buildOidb(client: IClient, payload: String): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: String): ByteArray =
         SetFilteredFriendRequestReq(
             selfUid = client.uid,
             requestUid = payload,

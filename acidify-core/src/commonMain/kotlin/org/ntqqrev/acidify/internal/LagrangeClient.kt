@@ -1,16 +1,10 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.common.SessionStore
 import org.ntqqrev.acidify.common.SignProvider
-import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.exception.ServiceException
-import org.ntqqrev.acidify.internal.context.HighwayContext
-import org.ntqqrev.acidify.internal.context.PacketContext
-import org.ntqqrev.acidify.internal.context.TicketContext
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.Service
 import org.ntqqrev.acidify.logging.Logger
@@ -19,9 +13,9 @@ internal class LagrangeClient(
     val appInfo: AppInfo,
     val sessionStore: SessionStore,
     val signProvider: SignProvider,
-    val loggerFactory: (Any) -> Logger,
+    loggerFactory: (Any) -> Logger,
     scope: CoroutineScope,
-) : IClient, CoroutineScope by scope {
+) : AbstractClient(loggerFactory, scope) {
     override val os: String
         get() = appInfo.os
 
@@ -62,44 +56,20 @@ internal class LagrangeClient(
         "OidbSvcTrpcTcp.0x6d9_4"
     )
 
-    val pushChannel = Channel<SsoResponse>(capacity = 15, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    val packetContext = PacketContext(this)
-    val ticketContext = TicketContext(this)
-    val highwayContext = HighwayContext(this)
-    val contextCollection = listOf(
-        packetContext,
-        ticketContext,
-        highwayContext,
-    )
-
-    override fun createLogger(forObject: Any): Logger = loggerFactory(forObject)
-
-    override suspend fun doPostOnlineLogic() {
-        contextCollection.forEach {
-            it.postOnline()
-        }
-    }
-
-    override suspend fun doPreOfflineLogic() {
-        contextCollection.forEach {
-            it.preOffline()
-        }
-    }
-
     override suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long): R {
+        val sequence = ssoSequence++
         val byteArray = service.build(this, payload)
         val resp = packetContext.sendPacket(
             command = service.cmd,
+            sequence = sequence,
             payload = byteArray,
             requestType = service.ssoRequestType,
             encryptType = service.ssoEncryptType,
-            timeoutMillis = timeout
-        ) { seq ->
-            if (signRequiredCommand.contains(service.cmd)) {
+            timeoutMillis = timeout,
+            ssoSecureInfo = if (signRequiredCommand.contains(service.cmd)) {
                 signProvider.sign(
                     cmd = service.cmd,
-                    seq = seq,
+                    seq = sequence,
                     src = byteArray,
                 ).let {
                     SsoSecureInfo(
@@ -111,7 +81,7 @@ internal class LagrangeClient(
             } else {
                 null
             }
-        }
+        )
         if (resp.retCode != 0) {
             throw ServiceException(
                 service.cmd,
@@ -120,13 +90,5 @@ internal class LagrangeClient(
             )
         }
         return service.parse(this, resp.response)
-    }
-
-    override suspend fun <R> callService(service: Service<Unit, R>, timeout: Long): R {
-        return callService(service, Unit, timeout)
-    }
-
-    override suspend fun dispatchPushSsoFrame(sso: SsoResponse) {
-        pushChannel.send(sso)
     }
 }

@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupsReq
 import org.ntqqrev.acidify.internal.proto.oidb.FetchGroupsResp
 import org.ntqqrev.acidify.internal.service.NoInputOidbService
@@ -9,7 +9,7 @@ import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.struct.BotGroupData
 
 internal object FetchGroups : NoInputOidbService<List<BotGroupData>>(0xfe5, 2) {
-    override fun buildOidb(client: IClient, payload: Unit): ByteArray = FetchGroupsReq(
+    override fun buildOidb(client: AbstractClient, payload: Unit): ByteArray = FetchGroupsReq(
         config = FetchGroupsReq.Config(
             config1 = FetchGroupsReq.Config.Config1(
                 groupOwner = true,
@@ -62,7 +62,7 @@ internal object FetchGroups : NoInputOidbService<List<BotGroupData>>(0xfe5, 2) {
         )
     ).pbEncode()
 
-    override fun parseOidb(client: IClient, payload: ByteArray): List<BotGroupData> {
+    override fun parseOidb(client: AbstractClient, payload: ByteArray): List<BotGroupData> {
         val resp = payload.pbDecode<FetchGroupsResp>()
 
         return resp.groups.map { group ->

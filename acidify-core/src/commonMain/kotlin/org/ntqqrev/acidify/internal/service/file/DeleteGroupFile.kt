@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D6Req
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0x6D6Resp
 import org.ntqqrev.acidify.internal.service.OidbService
@@ -14,7 +14,7 @@ internal object DeleteGroupFile : OidbService<DeleteGroupFile.Req, Unit>(0x6d6, 
         val fileId: String
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         Oidb0x6D6Req(
             deleteFile = Oidb0x6D6Req.DeleteFile(
                 groupUin = payload.groupUin,
@@ -25,7 +25,7 @@ internal object DeleteGroupFile : OidbService<DeleteGroupFile.Req, Unit>(0x6d6, 
             )
         ).pbEncode()
 
-    override fun parseOidb(client: IClient, payload: ByteArray) {
+    override fun parseOidb(client: AbstractClient, payload: ByteArray) {
         val resp = payload.pbDecode<Oidb0x6D6Resp>().deleteFile
         checkRetCode(resp.retCode, resp.retMsg)
     }

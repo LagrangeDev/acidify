@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetGroupMessageReactionReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -14,7 +14,7 @@ internal abstract class SetGroupMessageReaction(isAdd: Boolean) :
         val type: Int,
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         SetGroupMessageReactionReq(
             groupCode = payload.groupUin,
             sequence = payload.sequence,

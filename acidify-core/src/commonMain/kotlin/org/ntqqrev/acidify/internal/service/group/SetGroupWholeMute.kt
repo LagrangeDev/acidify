@@ -2,7 +2,7 @@
 
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetGroupWholeMuteReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 
@@ -16,7 +16,7 @@ internal object SetGroupWholeMute : NoOutputOidbService<SetGroupWholeMute.Req>(0
         encodeDefaults = true
     }
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray = protobufModule.encodeToByteArray(
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray = protobufModule.encodeToByteArray(
         SetGroupWholeMuteReq(
             groupCode = payload.groupUin,
             state = SetGroupWholeMuteReq.State(

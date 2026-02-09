@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.OidbService
 import org.ntqqrev.acidify.internal.util.pbDecode
@@ -14,7 +14,7 @@ internal abstract class RichMediaDownload(
     val businessType: Int,
     val scene: MessageScene,
 ) : OidbService<IndexNode, String>(oidbCommand, oidbService) {
-    override fun buildOidb(client: IClient, payload: IndexNode): ByteArray = NTV2RichMediaReq(
+    override fun buildOidb(client: AbstractClient, payload: IndexNode): ByteArray = NTV2RichMediaReq(
         reqHead = MultiMediaReqHead(
             common = CommonHead(
                 requestId = 1,
@@ -42,7 +42,7 @@ internal abstract class RichMediaDownload(
         download = DownloadReq(node = payload),
     ).pbEncode()
 
-    override fun parseOidb(client: IClient, payload: ByteArray): String =
+    override fun parseOidb(client: AbstractClient, payload: ByteArray): String =
         payload.pbDecode<NTV2RichMediaResp>().let {
             val download = it.download
             val downloadInfo = download.info

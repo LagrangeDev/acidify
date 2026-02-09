@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.group
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetMemberMuteReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -12,7 +12,7 @@ internal object SetMemberMute : NoOutputOidbService<SetMemberMute.Req>(0x1253, 1
         val duration: Int
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         SetMemberMuteReq(
             groupCode = payload.groupUin,
             type = 1,

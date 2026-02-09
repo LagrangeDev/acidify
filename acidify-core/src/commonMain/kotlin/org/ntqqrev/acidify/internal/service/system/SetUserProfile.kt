@@ -1,6 +1,6 @@
 ﻿package org.ntqqrev.acidify.internal.service.system
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.proto.oidb.SetUserProfileReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
@@ -12,7 +12,7 @@ internal object SetUserProfile : NoOutputOidbService<SetUserProfile.Req>(0x112a,
         val numberProps: Map<UserInfoKey, Int> = mapOf(),
     )
 
-    override fun buildOidb(client: IClient, payload: Req) = SetUserProfileReq(
+    override fun buildOidb(client: AbstractClient, payload: Req) = SetUserProfileReq(
         uin = client.uin,
         stringProps = payload.stringProps.map { (key, value) ->
             SetUserProfileReq.StringProp(

@@ -1,7 +1,6 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
-import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.common.android.AndroidAppInfo
 import org.ntqqrev.acidify.common.android.AndroidSessionStore
 import org.ntqqrev.acidify.common.android.AndroidSignProvider
@@ -12,9 +11,9 @@ internal class KuromeClient(
     val appInfo: AndroidAppInfo,
     val sessionStore: AndroidSessionStore,
     val signProvider: AndroidSignProvider,
-    val loggerFactory: (Any) -> Logger,
+    loggerFactory: (Any) -> Logger,
     scope: CoroutineScope,
-) : IClient, CoroutineScope by scope {
+) : AbstractClient(loggerFactory, scope) {
     override val os: String
         get() = appInfo.os
 
@@ -42,24 +41,11 @@ internal class KuromeClient(
     override val guid: ByteArray
         get() = sessionStore.guid
 
-    override fun createLogger(forObject: Any): Logger = loggerFactory(forObject)
-
-    override suspend fun doPostOnlineLogic() {
-    }
-
-    override suspend fun doPreOfflineLogic() {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun <T, R> callService(
         service: Service<T, R>,
         payload: T,
         timeout: Long
     ): R {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun dispatchPushSsoFrame(sso: SsoResponse) {
         TODO("Not yet implemented")
     }
 }

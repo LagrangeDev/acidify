@@ -2,7 +2,7 @@
 
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.SetFriendPinReq
 import org.ntqqrev.acidify.internal.service.NoOutputOidbService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -14,7 +14,7 @@ internal object SetFriendPin : NoOutputOidbService<SetFriendPin.Req>(0x5d6, 18) 
         val isPinned: Boolean
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray = SetFriendPinReq(
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray = SetFriendPinReq(
         field1 = 0,
         field3 = 1,
         info = SetFriendPinReq.Info(

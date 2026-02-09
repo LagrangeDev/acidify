@@ -7,13 +7,13 @@ import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.service.system.FetchClientKey
 import org.ntqqrev.acidify.internal.service.system.FetchPSKey
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-internal class TicketContext(client: LagrangeClient) : AbstractContext(client) {
+internal class TicketContext(client: AbstractClient) : AbstractContext(client) {
     internal class KeyWithLifetime(var value: String, var expireTime: Long) {
         companion object {
             fun dummy() = KeyWithLifetime("", 0L)

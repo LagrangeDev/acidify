@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.GroupFileListReq
 import org.ntqqrev.acidify.internal.proto.oidb.GroupFileListReqBody
 import org.ntqqrev.acidify.internal.proto.oidb.GroupFileListResp
@@ -25,7 +25,7 @@ internal object GetGroupFileList : OidbService<GetGroupFileList.Req, GetGroupFil
         val isEnd: Boolean
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         GroupFileListReq(
             listReq = GroupFileListReqBody(
                 groupUin = payload.groupUin,
@@ -39,7 +39,7 @@ internal object GetGroupFileList : OidbService<GetGroupFileList.Req, GetGroupFil
             )
         ).pbEncode()
 
-    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: AbstractClient, payload: ByteArray): Resp {
         val resp = payload.pbDecode<GroupFileListResp>().listResp
         checkRetCode(resp.retCode)
 

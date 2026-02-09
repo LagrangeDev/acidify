@@ -6,7 +6,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.system.FetchHighwayInfo
 import org.ntqqrev.acidify.internal.util.md5
@@ -15,12 +15,11 @@ import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.internal.util.toIpString
 import org.ntqqrev.acidify.message.MessageScene
 
-internal class HighwayContext(client: IClient) : AbstractContext(client) {
+internal class HighwayContext(client: AbstractClient) : AbstractContext(client) {
     private var highwayHost: String = ""
     private var highwayPort: Int = 0
     private var sigSession: ByteArray = ByteArray(0)
     private val httpClient = HttpClient()
-    private val logger = client.createLogger(this)
 
     companion object {
         const val MAX_BLOCK_SIZE = 1024 * 1024 // 1MB
@@ -292,7 +291,7 @@ internal class HighwayContext(client: IClient) : AbstractContext(client) {
     }
 
     private class HttpSession(
-        private val client: IClient,
+        private val client: AbstractClient,
         private val httpClient: HttpClient,
         private val highwayHost: String,
         private val highwayPort: Int,
@@ -302,7 +301,7 @@ internal class HighwayContext(client: IClient) : AbstractContext(client) {
         private val md5: ByteArray,
         private val extendInfo: ByteArray
     ) {
-        private val logger = client.createLogger(this)
+        private val logger = client.loggerFactory.invoke(this)
 
         suspend fun upload() {
             var offset = 0

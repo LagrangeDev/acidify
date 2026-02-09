@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.IClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0xE37Req
 import org.ntqqrev.acidify.internal.proto.oidb.Oidb0xE37Resp
 import org.ntqqrev.acidify.internal.service.OidbService
@@ -29,7 +29,7 @@ internal object UploadPrivateFile : OidbService<UploadPrivateFile.Req, UploadPri
         val fileCrcMedia: String
     )
 
-    override fun buildOidb(client: IClient, payload: Req): ByteArray =
+    override fun buildOidb(client: AbstractClient, payload: Req): ByteArray =
         Oidb0xE37Req(
             subCommand = 1700,
             seq = 0,
@@ -49,7 +49,7 @@ internal object UploadPrivateFile : OidbService<UploadPrivateFile.Req, UploadPri
             field200 = 1,
         ).pbEncode()
 
-    override fun parseOidb(client: IClient, payload: ByteArray): Resp {
+    override fun parseOidb(client: AbstractClient, payload: ByteArray): Resp {
         val resp = payload.pbDecode<Oidb0xE37Resp>().uploadBody
         checkRetCode(resp.retCode, resp.retMsg)
         return Resp(
