@@ -1,9 +1,6 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
-import org.ntqqrev.acidify.common.AppInfo
-import org.ntqqrev.acidify.common.SessionStore
-import org.ntqqrev.acidify.common.SignProvider
 import org.ntqqrev.acidify.common.android.AndroidAppInfo
 import org.ntqqrev.acidify.common.android.AndroidSessionStore
 import org.ntqqrev.acidify.common.android.AndroidSignProvider

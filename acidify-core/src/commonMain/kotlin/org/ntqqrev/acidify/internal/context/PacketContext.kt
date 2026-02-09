@@ -7,7 +7,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
-import org.ntqqrev.acidify.common.SignResult
 import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.packet.*
