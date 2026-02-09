@@ -28,13 +28,10 @@ internal abstract class WtLogin<R>(
         )
     }
 
-    override fun parse(client: AbstractClient, payload: ByteArray): R {
-        client.ensureLagrange()
-        return parseWtLoginPayload(
-            client = client,
-            wtLogin = unwrapWtLogin(payload),
-        )
-    }
+    override fun parse(client: AbstractClient, payload: ByteArray): R = parseWtLoginPayload(
+        client = client.ensureLagrange(),
+        wtLogin = unwrapWtLogin(payload),
+    )
 
     abstract fun buildWtLoginPayload(client: LagrangeClient): ByteArray
 

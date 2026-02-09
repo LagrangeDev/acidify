@@ -10,12 +10,9 @@ import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.internal.util.pbEncode
 
 internal object BotOffline : NoInputService<String>("trpc.qq_new_tech.status_svc.StatusService.UnRegister") {
-    override fun build(client: AbstractClient, payload: Unit): ByteArray {
-        client.ensureLagrange()
-        return UnRegisterInfo(
-            device = client.generateDeviceInfo()
-        ).pbEncode()
-    }
+    override fun build(client: AbstractClient, payload: Unit): ByteArray = UnRegisterInfo(
+        device = client.ensureLagrange().generateDeviceInfo()
+    ).pbEncode()
 
     override fun parse(client: AbstractClient, payload: ByteArray): String =
         payload.pbDecode<RegisterInfoResponse>().message
