@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import org.ntqqrev.acidify.internal.proto.message.action.SsoGetC2cMsgReq
 import org.ntqqrev.acidify.internal.proto.message.action.SsoGetC2cMsgResp
@@ -17,7 +17,7 @@ internal object FetchFriendMessages :
         val endSequence: Long
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: AbstractClient, payload: Req): ByteArray {
         return SsoGetC2cMsgReq(
             peerUid = payload.peerUid,
             startSequence = payload.startSequence,
@@ -25,7 +25,7 @@ internal object FetchFriendMessages :
         ).pbEncode()
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): List<CommonMessage> {
+    override fun parse(client: AbstractClient, payload: ByteArray): List<CommonMessage> {
         val resp = payload.pbDecode<SsoGetC2cMsgResp>()
         checkRetCode(resp.retcode, resp.errorMsg)
         return resp.messages

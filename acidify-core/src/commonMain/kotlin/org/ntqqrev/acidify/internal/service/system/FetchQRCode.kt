@@ -1,12 +1,8 @@
 package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
-import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.EncryptType
-import org.ntqqrev.acidify.internal.packet.buildCode2DPacket
-import org.ntqqrev.acidify.internal.packet.buildWtLogin
-import org.ntqqrev.acidify.internal.packet.parseCode2DPacket
-import org.ntqqrev.acidify.internal.packet.parseWtLogin
+import org.ntqqrev.acidify.internal.AbstractClient
+import org.ntqqrev.acidify.internal.packet.*
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
 import org.ntqqrev.acidify.internal.service.NoInputService
 import org.ntqqrev.acidify.internal.tlv.buildTlvQRCode
@@ -15,7 +11,8 @@ import org.ntqqrev.acidify.internal.util.*
 internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_emp") {
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
-    override fun build(client: LagrangeClient, payload: Unit): ByteArray {
+    override fun build(client: AbstractClient, payload: Unit): ByteArray {
+        client.ensureLagrange()
         val tlvPack = client.buildTlvQRCode {
             tlv16()
             tlv1b()
@@ -38,7 +35,8 @@ internal object FetchQRCode : NoInputService<FetchQRCode.Result>("wtlogin.trans_
         return client.buildWtLogin(code2d, 2066)
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): Result {
+    override fun parse(client: AbstractClient, payload: ByteArray): Result {
+        client.ensureLagrange()
         val wtLogin = parseWtLogin(payload)
         val code2d = parseCode2DPacket(wtLogin)
         val reader = code2d.reader()

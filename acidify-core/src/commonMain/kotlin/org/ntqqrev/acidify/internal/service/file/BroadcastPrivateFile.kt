@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.file
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.*
 import org.ntqqrev.acidify.internal.proto.message.action.PbSendMsgReq
 import org.ntqqrev.acidify.internal.proto.message.action.PbSendMsgResp
@@ -32,7 +32,7 @@ internal object BroadcastPrivateFile :
     )
 
     @OptIn(ExperimentalTime::class)
-    override fun build(client: LagrangeClient, payload: Req): ByteArray =
+    override fun build(client: AbstractClient, payload: Req): ByteArray =
         PbSendMsgReq(
             routingHead = SendRoutingHead(
                 trans211 = Trans211(
@@ -62,7 +62,7 @@ internal object BroadcastPrivateFile :
             random = Random.nextInt(),
         ).pbEncode()
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): Resp {
+    override fun parse(client: AbstractClient, payload: ByteArray): Resp {
         val resp = payload.pbDecode<PbSendMsgResp>()
         return Resp(
             result = resp.result,

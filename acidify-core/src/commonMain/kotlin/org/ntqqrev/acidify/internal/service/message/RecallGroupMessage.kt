@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.action.GroupRecallMsg
 import org.ntqqrev.acidify.internal.service.NoOutputService
 import org.ntqqrev.acidify.internal.util.pbEncode
@@ -12,7 +12,7 @@ internal object RecallGroupMessage :
         val sequence: Long
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: AbstractClient, payload: Req): ByteArray {
         return GroupRecallMsg(
             type = 1,
             groupUin = payload.groupUin,

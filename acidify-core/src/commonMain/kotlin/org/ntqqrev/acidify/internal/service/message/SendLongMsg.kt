@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import org.ntqqrev.acidify.internal.proto.message.action.*
 import org.ntqqrev.acidify.internal.service.Service
@@ -19,7 +19,7 @@ internal object SendLongMsg :
         val nestedForwardTrace: Map<String, List<CommonMessage>>
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: AbstractClient, payload: Req): ByteArray {
         val content = PbMultiMsgTransmit(
             items = buildList {
                 add(
@@ -49,10 +49,12 @@ internal object SendLongMsg :
             attr = LongMsgAttr(
                 subCmd = 4,
                 clientType = 1,
-                platform = when (client.appInfo.os) {
+                platform = when (client.os) {
                     "Windows" -> 3
                     "Linux" -> 6
                     "Mac" -> 7
+                    // 8 for iOS
+                    "AndroidPhone", "AndroidPad" -> 9
                     else -> 0
                 },
                 proxyType = 0,
@@ -62,7 +64,7 @@ internal object SendLongMsg :
         return longMsg.pbEncode()
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): String {
+    override fun parse(client: AbstractClient, payload: ByteArray): String {
         val rsp = payload.pbDecode<LongMsgInterfaceResp>()
         return rsp.sendResp?.resId
             ?: throw IllegalStateException("No resId in LongMsgInterfaceResp")

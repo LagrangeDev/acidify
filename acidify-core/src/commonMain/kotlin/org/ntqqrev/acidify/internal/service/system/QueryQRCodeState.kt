@@ -1,23 +1,17 @@
 package org.ntqqrev.acidify.internal.service.system
 
 import kotlinx.io.*
-import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.EncryptType
-import org.ntqqrev.acidify.internal.packet.buildCode2DPacket
-import org.ntqqrev.acidify.internal.packet.buildWtLogin
-import org.ntqqrev.acidify.internal.packet.parseCode2DPacket
-import org.ntqqrev.acidify.internal.packet.parseWtLogin
+import org.ntqqrev.acidify.internal.AbstractClient
+import org.ntqqrev.acidify.internal.packet.*
 import org.ntqqrev.acidify.internal.service.NoInputService
-import org.ntqqrev.acidify.internal.util.Prefix
-import org.ntqqrev.acidify.internal.util.readTlv
-import org.ntqqrev.acidify.internal.util.reader
-import org.ntqqrev.acidify.internal.util.writeBytes
+import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
 
 internal object QueryQRCodeState : NoInputService<QRCodeState>("wtlogin.trans_emp") {
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
-    override fun build(client: LagrangeClient, payload: Unit): ByteArray {
+    override fun build(client: AbstractClient, payload: Unit): ByteArray {
+        client.ensureLagrange()
         val packet = Buffer().apply {
             writeUShort(0u)
             writeUInt(client.appInfo.appId.toUInt())
@@ -31,7 +25,8 @@ internal object QueryQRCodeState : NoInputService<QRCodeState>("wtlogin.trans_em
         return client.buildWtLogin(code2d, 2066)
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): QRCodeState {
+    override fun parse(client: AbstractClient, payload: ByteArray): QRCodeState {
+        client.ensureLagrange()
         val wtlogin = parseWtLogin(payload)
         val reader = parseCode2DPacket(wtlogin).reader()
         val state = QRCodeState.fromByte(reader.readByte())

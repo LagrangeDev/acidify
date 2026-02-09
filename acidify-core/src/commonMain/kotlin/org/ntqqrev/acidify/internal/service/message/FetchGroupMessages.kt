@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import org.ntqqrev.acidify.internal.proto.message.action.SsoGetGroupMsgReq
 import org.ntqqrev.acidify.internal.proto.message.action.SsoGetGroupMsgResp
@@ -18,7 +18,7 @@ internal object FetchGroupMessages :
         val filter: Int = 1
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: AbstractClient, payload: Req): ByteArray {
         return SsoGetGroupMsgReq(
             groupInfo = SsoGetGroupMsgReq.GroupInfo(
                 groupUin = payload.groupUin,
@@ -29,7 +29,7 @@ internal object FetchGroupMessages :
         ).pbEncode()
     }
 
-    override fun parse(client: LagrangeClient, payload: ByteArray): List<CommonMessage> {
+    override fun parse(client: AbstractClient, payload: ByteArray): List<CommonMessage> {
         val resp = payload.pbDecode<SsoGetGroupMsgResp>()
         checkRetCode(resp.retcode, resp.errorMsg)
         return resp.body.messages

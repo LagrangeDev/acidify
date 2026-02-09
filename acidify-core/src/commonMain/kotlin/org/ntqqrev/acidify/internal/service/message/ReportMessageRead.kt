@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.internal.service.message
 
-import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.action.SsoReadedReportC2C
 import org.ntqqrev.acidify.internal.proto.message.action.SsoReadedReportGroup
 import org.ntqqrev.acidify.internal.proto.message.action.SsoReadedReportReq
@@ -16,7 +16,7 @@ internal object ReportMessageRead :
         val time: Long,
     )
 
-    override fun build(client: LagrangeClient, payload: Req): ByteArray {
+    override fun build(client: AbstractClient, payload: Req): ByteArray {
         return if (payload.targetUid != null) {
             // Friend message
             SsoReadedReportReq(
