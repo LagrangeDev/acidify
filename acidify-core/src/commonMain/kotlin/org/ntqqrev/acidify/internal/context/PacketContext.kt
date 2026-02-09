@@ -14,7 +14,7 @@ import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.KuromeClient
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
+import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.proto.system.SsoReservedFields
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.EncryptType
@@ -234,8 +234,8 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
             }
             when (encryptType) {
                 EncryptType.None -> transferFrom(sso)
-                EncryptType.WithD2Key -> writeBytes(TeaProvider.encrypt(sso.readByteArray(), d2Key))
-                EncryptType.WithEmptyKey -> writeBytes(TeaProvider.encrypt(sso.readByteArray(), ByteArray(16)))
+                EncryptType.WithD2Key -> writeBytes(TEA.encrypt(sso.readByteArray(), d2Key))
+                EncryptType.WithEmptyKey -> writeBytes(TEA.encrypt(sso.readByteArray(), ByteArray(16)))
             }
         }
     }
@@ -263,8 +263,8 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
             }
             when (encryptType) {
                 EncryptType.None -> transferFrom(sso)
-                EncryptType.WithD2Key -> writeBytes(TeaProvider.encrypt(sso.readByteArray(), d2Key))
-                EncryptType.WithEmptyKey -> writeBytes(TeaProvider.encrypt(sso.readByteArray(), ByteArray(16)))
+                EncryptType.WithD2Key -> writeBytes(TEA.encrypt(sso.readByteArray(), d2Key))
+                EncryptType.WithEmptyKey -> writeBytes(TEA.encrypt(sso.readByteArray(), ByteArray(16)))
             }
         }
     }
@@ -279,8 +279,8 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         val encrypted = rawReader.readByteArray()
         val decrypted = when (authFlag) {
             EncryptType.None.underlying -> encrypted
-            EncryptType.WithD2Key.underlying -> TeaProvider.decrypt(encrypted, d2Key)
-            EncryptType.WithEmptyKey.underlying -> TeaProvider.decrypt(encrypted, ByteArray(16))
+            EncryptType.WithD2Key.underlying -> TEA.decrypt(encrypted, d2Key)
+            EncryptType.WithEmptyKey.underlying -> TEA.decrypt(encrypted, ByteArray(16))
             else -> throw Exception("Unrecognized auth flag: $authFlag")
         }
 

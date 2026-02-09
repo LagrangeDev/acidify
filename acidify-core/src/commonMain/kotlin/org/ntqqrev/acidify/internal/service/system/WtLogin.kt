@@ -4,7 +4,7 @@ import kotlinx.io.*
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.crypto.ecdh.Ecdh
-import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
+import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.service.EncryptType
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
@@ -27,7 +27,7 @@ internal abstract class WtLogin<R>(
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
     override fun build(client: AbstractClient, payload: Unit): ByteArray {
-        val encrypted = TeaProvider.encrypt(
+        val encrypted = TEA.encrypt(
             data = buildWtLoginPayload(client),
             key = Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
         )
@@ -64,7 +64,7 @@ internal abstract class WtLogin<R>(
         if (header != 0x02.toByte()) throw Exception("Invalid Header")
         reader.skip(15) // internalLength(2) + ver(2) + cmd(2) + sequence(2) + uin(4) + flag(1) + retryTime(2)
         val encrypted = reader.readByteArray(reader.remaining - 1)
-        val decrypted = TeaProvider.decrypt(
+        val decrypted = TEA.decrypt(
             encrypted,
             Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
         )
@@ -240,7 +240,7 @@ internal abstract class WtLogin<R>(
             val tlv119Reader = reader.readTlv()
             if (state.toInt() == 0) {
                 val tlv119 = tlv119Reader[0x119u]!!
-                val array = TeaProvider.decrypt(tlv119, client.sessionStore.tgtgt)
+                val array = TEA.decrypt(tlv119, client.sessionStore.tgtgt)
                 val tlvPack = array.parseTlv()
                 client.sessionStore.apply {
                     d2Key = tlvPack[0x305u]!!

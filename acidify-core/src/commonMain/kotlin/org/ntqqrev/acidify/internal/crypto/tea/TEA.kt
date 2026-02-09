@@ -2,7 +2,7 @@ package org.ntqqrev.acidify.internal.crypto.tea
 
 import kotlin.random.Random
 
-internal object TeaProvider {
+internal object TEA {
     /**
      * Get the cipher length for given data size
      * @param dataSize Size of data to encrypt
@@ -21,11 +21,11 @@ internal object TeaProvider {
         return dataSize - ((dataSize and 7) + 3) - 7
     }
 
-    fun encrypt(data: ByteArray, key: ByteArray): ByteArray = TEAImpl().encrypt(data, key)
-    fun decrypt(data: ByteArray, key: ByteArray): ByteArray = TEAImpl().decrypt(data, key)
+    fun encrypt(data: ByteArray, key: ByteArray): ByteArray = TeaSession().encrypt(data, key)
+    fun decrypt(data: ByteArray, key: ByteArray): ByteArray = TeaSession().decrypt(data, key)
 }
 
-internal class TEAImpl {
+private class TeaSession {
     private var contextStart = 0
     private var crypt = 0
     private var key: ByteArray = ByteArray(0)

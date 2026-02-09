@@ -2,7 +2,7 @@ package org.ntqqrev.acidify.internal.tlv
 
 import kotlinx.io.*
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
+import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.util.Prefix
 import org.ntqqrev.acidify.internal.util.barrier
 import org.ntqqrev.acidify.internal.util.writeBytes
@@ -65,7 +65,7 @@ internal class Tlv(val client: LagrangeClient) {
         buf.writeBytes(ByteArray(4))
         buf.writeBytes(md5pass)
 
-        writeBytes(TeaProvider.encrypt(body.readByteArray(), buf.readByteArray()))
+        writeBytes(TEA.encrypt(body.readByteArray(), buf.readByteArray()))
     }
 
     fun tlv107() = writeTlv(0x107u) {
@@ -115,7 +115,7 @@ internal class Tlv(val client: LagrangeClient) {
             tlv124()
         }
 
-        writeBytes(TeaProvider.encrypt(tlvPack.build(), client.sessionStore.tgtgt))
+        writeBytes(TEA.encrypt(tlvPack.build(), client.sessionStore.tgtgt))
     }
 
     fun tlv145() = writeTlv(0x145u) {
