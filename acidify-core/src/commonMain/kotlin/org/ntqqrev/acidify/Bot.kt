@@ -22,8 +22,8 @@ import org.ntqqrev.acidify.event.internal.KickSignal
 import org.ntqqrev.acidify.event.internal.MsgPushSignal
 import org.ntqqrev.acidify.internal.CacheUtility
 import org.ntqqrev.acidify.internal.LagrangeClient
-import org.ntqqrev.acidify.internal.packet.EncryptType
-import org.ntqqrev.acidify.internal.packet.RequestType
+import org.ntqqrev.acidify.internal.service.EncryptType
+import org.ntqqrev.acidify.internal.service.RequestType
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.logging.*
 import org.ntqqrev.acidify.struct.BotFaceDetail

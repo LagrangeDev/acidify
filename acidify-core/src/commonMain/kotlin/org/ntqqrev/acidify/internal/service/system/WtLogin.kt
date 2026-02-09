@@ -5,7 +5,7 @@ import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.crypto.ecdh.Ecdh
 import org.ntqqrev.acidify.internal.crypto.tea.TeaProvider
-import org.ntqqrev.acidify.internal.packet.EncryptType
+import org.ntqqrev.acidify.internal.service.EncryptType
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
 import org.ntqqrev.acidify.internal.service.NoInputService

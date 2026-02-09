@@ -1,8 +1,6 @@
 package org.ntqqrev.acidify.internal.service
 
 import org.ntqqrev.acidify.internal.AbstractClient
-import org.ntqqrev.acidify.internal.packet.EncryptType
-import org.ntqqrev.acidify.internal.packet.RequestType
 
 internal abstract class Service<T, R>(val cmd: String) {
     open val ssoRequestType = RequestType.D2Auth

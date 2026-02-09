@@ -1,4 +1,4 @@
-package org.ntqqrev.acidify.internal.packet
+package org.ntqqrev.acidify.internal.service
 
 enum class RequestType {
     D2Auth,
