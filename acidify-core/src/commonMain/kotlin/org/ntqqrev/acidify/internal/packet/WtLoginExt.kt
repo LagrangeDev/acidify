@@ -80,17 +80,7 @@ internal fun LagrangeClient.buildWtLogin(payload: ByteArray, command: Short): By
     return packet.readByteArray()
 }
 
-internal fun parseCode2DPacket(wtlogin: ByteArray): ByteArray {
-    val reader = wtlogin.reader()
-    reader.readUInt() // packetLength
-    reader.discard(4)
-    reader.readUShort() // command
-    reader.discard(40)
-    reader.readUInt() // appid
-    return reader.readByteArray(reader.remaining)
-}
-
-internal fun parseWtLogin(raw: ByteArray): ByteArray {
+internal fun unwrapWtLogin(raw: ByteArray): ByteArray {
     val reader = raw.reader()
     val header = reader.readByte()
     if (header != 0x02.toByte()) throw Exception("Invalid Header")
@@ -103,4 +93,14 @@ internal fun parseWtLogin(raw: ByteArray): ByteArray {
     if (reader.readByte() != 0x03.toByte()) throw Exception("Packet end not found")
 
     return decrypted
+}
+
+internal fun unwrapCode2DPacket(wtLogin: ByteArray): ByteArray {
+    val reader = wtLogin.reader()
+    reader.readUInt() // packetLength
+    reader.discard(4)
+    reader.readUShort() // command
+    reader.discard(40)
+    reader.readUInt() // appid
+    return reader.readByteArray(reader.remaining)
 }

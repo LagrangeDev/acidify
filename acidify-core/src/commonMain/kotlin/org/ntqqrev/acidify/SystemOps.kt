@@ -24,12 +24,12 @@ import org.ntqqrev.acidify.struct.*
  */
 suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
     require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
-    val qrCode = client.callService(FetchQRCode)
+    val qrCode = client.callService(WtLogin.TransEmp.FetchQRCode)
     logger.i { "二维码 URL：${qrCode.qrCodeUrl}" }
     sharedEventFlow.emit(QRCodeGeneratedEvent(qrCode.qrCodeUrl, qrCode.qrCodePng))
 
     while (true) {
-        val state = client.callService(QueryQRCodeState)
+        val state = client.callService(WtLogin.TransEmp.QueryQRCodeState)
         logger.d { "二维码状态：${state.name} (${state.value})" }
         sharedEventFlow.emit(QRCodeStateQueryEvent(state))
         when (state) {
@@ -42,7 +42,7 @@ suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolea
         delay(queryInterval)
     }
 
-    client.callService(WtLogin)
+    client.callService(WtLogin.Login)
     logger.d { "成功获取 $uin 的登录凭据" }
     sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
     online(preloadContacts)
