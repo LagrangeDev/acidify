@@ -5,7 +5,6 @@ import kotlinx.coroutines.sync.withLock
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
 import org.ntqqrev.acidify.event.QRCodeStateQueryEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
-import org.ntqqrev.acidify.exception.BotOnlineException
 import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.service.friend.FetchFriends
 import org.ntqqrev.acidify.internal.service.group.FetchGroupMembers
@@ -56,10 +55,7 @@ suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolea
  * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
  */
 suspend fun Bot.online(preloadContacts: Boolean = false) {
-    val result = client.callService(BotOnline)
-    if (result != "register success") {
-        throw BotOnlineException(result)
-    }
+    client.sendOnlinePacket()
     isLoggedIn = true
     logger.i { "用户 $uin 已上线" }
     client.doPostOnlineLogic()

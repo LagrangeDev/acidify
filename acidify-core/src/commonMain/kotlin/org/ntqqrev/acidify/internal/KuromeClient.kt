@@ -48,4 +48,12 @@ internal class KuromeClient(
     ): R {
         TODO("Not yet implemented")
     }
+
+    override suspend fun sendHeartbeat() {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun sendOnlinePacket() {
+        TODO("Not yet implemented")
+    }
 }

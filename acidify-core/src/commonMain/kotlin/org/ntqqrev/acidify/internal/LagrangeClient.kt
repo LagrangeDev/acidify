@@ -7,6 +7,8 @@ import org.ntqqrev.acidify.common.SignProvider
 import org.ntqqrev.acidify.exception.ServiceException
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.service.system.BotOnline
+import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.logging.Logger
 
 internal class LagrangeClient(
@@ -91,4 +93,8 @@ internal class LagrangeClient(
         }
         return service.parse(this, resp.response)
     }
+
+    override suspend fun sendHeartbeat() = callService(Heartbeat)
+
+    override suspend fun sendOnlinePacket() = callService(BotOnline)
 }

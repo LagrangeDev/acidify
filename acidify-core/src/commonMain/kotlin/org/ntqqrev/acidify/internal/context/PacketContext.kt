@@ -11,8 +11,6 @@ import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.packet.*
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
-import org.ntqqrev.acidify.internal.service.system.BotOnline
-import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.internal.util.readUInt32BE
 
 internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
@@ -32,7 +30,7 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         heartbeatJob = client.launch {
             while (isActive) {
                 try {
-                    client.callService(Heartbeat)
+                    client.sendHeartbeat()
                 } catch (e: Exception) {
                     logger.w(e) { "心跳包发送失败" }
                 }
@@ -56,7 +54,7 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                         client.launch(CoroutineExceptionHandler { _, t ->
                             logger.e(t) { "发送上线包时出现错误" }
                         }) {
-                            client.callService(BotOnline)
+                            client.sendOnlinePacket()
                             logger.i { "上线包发送成功，重连完成" }
                             client.doPostOnlineLogic()
                         }

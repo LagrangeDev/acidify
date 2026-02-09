@@ -61,4 +61,8 @@ internal sealed class AbstractClient(
 
     suspend fun <R> callService(service: Service<Unit, R>, timeout: Long = 10_000L): R =
         callService(service, Unit, timeout)
+
+    abstract suspend fun sendHeartbeat()
+
+    abstract suspend fun sendOnlinePacket()
 }
