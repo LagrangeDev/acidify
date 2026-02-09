@@ -22,6 +22,9 @@ import org.ntqqrev.acidify.event.internal.KickSignal
 import org.ntqqrev.acidify.event.internal.MsgPushSignal
 import org.ntqqrev.acidify.internal.CacheUtility
 import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.packet.EncryptType
+import org.ntqqrev.acidify.internal.packet.RequestType
+import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.logging.*
 import org.ntqqrev.acidify.struct.BotFaceDetail
 import kotlin.js.JsName
@@ -160,7 +163,29 @@ class Bot internal constructor(
      */
     @UnsafeAcidifyApi
     suspend fun sendPacket(cmd: String, payload: ByteArray, timeoutMillis: Long = 10000L): SsoResponse =
-        client.packetContext.sendPacket(cmd, payload, timeoutMillis)
+        client.packetContext.sendPacket(
+            command = cmd,
+            payload = payload,
+            requestType = RequestType.D2Auth,
+            encryptType = EncryptType.WithD2Key,
+            timeoutMillis = timeoutMillis
+        ) { seq ->
+            if (client.signRequiredCommand.contains(cmd)) {
+                client.signProvider.sign(
+                    cmd = cmd,
+                    seq = seq,
+                    src = payload,
+                ).let {
+                    SsoSecureInfo(
+                        sign = it.sign,
+                        token = it.token,
+                        extra = it.extra,
+                    )
+                }
+            } else {
+                null
+            }
+        }
 
     companion object {
         @JsStatic

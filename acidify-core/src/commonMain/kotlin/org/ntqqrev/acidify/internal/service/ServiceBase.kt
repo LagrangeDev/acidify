@@ -1,8 +1,13 @@
 package org.ntqqrev.acidify.internal.service
 
 import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.packet.EncryptType
+import org.ntqqrev.acidify.internal.packet.RequestType
 
 internal abstract class Service<T, R>(val cmd: String) {
+    open val ssoRequestType = RequestType.D2Auth
+    open val ssoEncryptType = EncryptType.WithD2Key
+
     abstract fun build(client: LagrangeClient, payload: T): ByteArray
     abstract fun parse(client: LagrangeClient, payload: ByteArray): R
 }

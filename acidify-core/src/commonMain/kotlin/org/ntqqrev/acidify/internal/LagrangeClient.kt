@@ -12,6 +12,7 @@ import org.ntqqrev.acidify.internal.context.HighwayContext
 import org.ntqqrev.acidify.internal.context.LoginContext
 import org.ntqqrev.acidify.internal.context.PacketContext
 import org.ntqqrev.acidify.internal.context.TicketContext
+import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.Service
 import org.ntqqrev.acidify.logging.Logger
 
@@ -49,6 +50,19 @@ internal class LagrangeClient(
     override val guid: ByteArray
         get() = sessionStore.guid
 
+    val signRequiredCommand = setOf(
+        "MessageSvc.PbSendMsg",
+        "wtlogin.trans_emp",
+        "wtlogin.login",
+        "trpc.login.ecdh.EcdhService.SsoKeyExchange",
+        "trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLogin",
+        "trpc.login.ecdh.EcdhService.SsoNTLoginEasyLogin",
+        "trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginNewDevice",
+        "trpc.login.ecdh.EcdhService.SsoNTLoginEasyLoginUnusualDevice",
+        "trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginUnusualDevice",
+        "OidbSvcTrpcTcp.0x6d9_4"
+    )
+
     val loginContext = LoginContext(this)
     val packetContext = PacketContext(this)
     val ticketContext = TicketContext(this)
@@ -77,7 +91,29 @@ internal class LagrangeClient(
 
     override suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long): R {
         val byteArray = service.build(this, payload)
-        val resp = packetContext.sendPacket(service.cmd, byteArray, timeout)
+        val resp = packetContext.sendPacket(
+            command = service.cmd,
+            payload = byteArray,
+            requestType = service.ssoRequestType,
+            encryptType = service.ssoEncryptType,
+            timeoutMillis = timeout
+        ) { seq ->
+            if (signRequiredCommand.contains(service.cmd)) {
+                signProvider.sign(
+                    cmd = service.cmd,
+                    seq = seq,
+                    src = byteArray,
+                ).let {
+                    SsoSecureInfo(
+                        sign = it.sign,
+                        token = it.token,
+                        extra = it.extra,
+                    )
+                }
+            } else {
+                null
+            }
+        }
         if (resp.retCode != 0) {
             throw ServiceException(
                 service.cmd,
