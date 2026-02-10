@@ -10,6 +10,7 @@ import kotlin.random.Random
 @Serializable
 class AndroidSessionStore(
     var uin: Long,
+    var password: String,
     var uid: String,
     var state: State,
     var wloginSigs: WLoginSigs,
@@ -66,9 +67,10 @@ class AndroidSessionStore(
     }
 
     companion object {
-        fun empty(uin: Long): AndroidSessionStore {
+        fun empty(uin: Long, password: String): AndroidSessionStore {
             return AndroidSessionStore(
                 uin = uin,
+                password = password,
                 uid = "",
                 state = State(),
                 wloginSigs = WLoginSigs(
