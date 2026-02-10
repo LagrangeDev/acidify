@@ -5,28 +5,28 @@ import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.crypto.ecdh.Ecdh
 import org.ntqqrev.acidify.internal.crypto.tea.TEA
-import org.ntqqrev.acidify.internal.service.EncryptType
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
-import org.ntqqrev.acidify.internal.service.NoInputService
+import org.ntqqrev.acidify.internal.service.EncryptType
+import org.ntqqrev.acidify.internal.service.Service
 import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
 import kotlin.random.Random
 import kotlin.time.Clock
 
-internal abstract class WtLogin<R>(
+internal abstract class WtLogin<T, R>(
     cmdSuffix: String,
     val wtLoginSubCmd: Short
-) : NoInputService<R>("wtlogin.$cmdSuffix") {
+) : Service<T, R>("wtlogin.$cmdSuffix") {
     private val secp192k1BobPublicKey =
         "04928D8850673088B343264E0C6BACB8496D697799F37211DEB25BB73906CB089FEA9639B4E0260498B51A992D50813DA8".hexToByteArray()
     private val secp192k1 = Ecdh.generateKeyPair(Ecdh.Secp192K1)
 
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
-    override fun build(client: AbstractClient, payload: Unit): ByteArray {
+    override fun build(client: AbstractClient, payload: T): ByteArray {
         val encrypted = TEA.encrypt(
-            data = buildWtLoginPayload(client),
+            data = buildWtLoginPayload(client, payload),
             key = Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
         )
         val packet = Buffer()
@@ -73,12 +73,12 @@ internal abstract class WtLogin<R>(
         )
     }
 
-    abstract fun buildWtLoginPayload(client: AbstractClient): ByteArray
+    abstract fun buildWtLoginPayload(client: AbstractClient, payload: T): ByteArray
 
     abstract fun parseWtLoginPayload(client: AbstractClient, wtLogin: ByteArray): R
 
-    abstract class TransEmp<R>(val transEmpSubCmd: Short) : WtLogin<R>("trans_emp", 2066) {
-        override fun buildWtLoginPayload(client: AbstractClient): ByteArray {
+    abstract class TransEmp<R>(val transEmpSubCmd: Short) : WtLogin<Unit, R>("trans_emp", 2066) {
+        override fun buildWtLoginPayload(client: AbstractClient, payload: Unit): ByteArray {
             val tlvPack = buildCode2DPayload(client)
             val requestBody = Buffer().apply {
                 writeInt(Clock.System.now().epochSeconds.toInt())
@@ -200,8 +200,8 @@ internal abstract class WtLogin<R>(
         }
     }
 
-    object Login : WtLogin<Unit>("login", 2064) {
-        override fun buildWtLoginPayload(client: AbstractClient): ByteArray {
+    object Login : WtLogin<Unit, Unit>("login", 2064) {
+        override fun buildWtLoginPayload(client: AbstractClient, payload: Unit): ByteArray {
             client.ensureLagrange()
             val packet = Buffer().apply {
                 writeUShort(9u) // internal command
