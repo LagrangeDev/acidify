@@ -125,6 +125,7 @@ internal abstract class WtLogin<T, R>(
 
         object FetchQRCode : TransEmp<FetchQRCode.Result>(0x31) {
             class Result(
+                val qrSig: ByteArray,
                 val qrCodeUrl: String,
                 val qrCodePng: ByteArray
             )
@@ -157,16 +158,27 @@ internal abstract class WtLogin<T, R>(
                 reader.discard(1)
                 val sig = reader.readPrefixedBytes(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
                 val tlv = reader.readTlv()
-                client.sessionStore.qrSig = sig
                 val respD1Body = tlv[0xD1u]!!.pbDecode<TlvQRCodeBodyD1Resp>()
                 return Result(
+                    qrSig = sig,
                     qrCodeUrl = respD1Body.qrCodeUrl,
                     qrCodePng = tlv[0x17u]!!
                 )
             }
         }
 
-        object QueryQRCodeState : TransEmp<QRCodeState>(0x12) {
+        object QueryQRCodeState : TransEmp<QueryQRCodeState.Result>(0x12) {
+            sealed class Result(val state: QRCodeState) {
+                class Success(
+                    val uin: Long,
+                    val tgtgt: ByteArray,
+                    val encryptedA1: ByteArray,
+                    val noPicSig: ByteArray
+                ) : Result(QRCodeState.CONFIRMED)
+
+                class Other(state: QRCodeState) : Result(state)
+            }
+
             override fun buildCode2DPayload(client: AbstractClient): ByteArray = Buffer().apply {
                 client.ensureLagrange()
                 writeUShort(0u)
@@ -181,21 +193,24 @@ internal abstract class WtLogin<T, R>(
             override fun parseCode2DPayload(
                 client: AbstractClient,
                 code2D: ByteArray
-            ): QRCodeState {
+            ): Result {
                 client.ensureLagrange()
                 val reader = code2D.reader()
                 val state = QRCodeState.fromByte(reader.readByte())
                 if (state == QRCodeState.CONFIRMED) {
                     reader.discard(4)
-                    client.sessionStore.uin = reader.readUInt().toLong()
+                    val uin = reader.readUInt().toLong()
                     reader.discard(4)
-
                     val tlv = reader.readTlv()
-                    client.sessionStore.tgtgt = tlv[0x1eu]!!
-                    client.sessionStore.encryptedA1 = tlv[0x18u]!!
-                    client.sessionStore.noPicSig = tlv[0x19u]!!
+                    return Result.Success(
+                        uin = uin,
+                        tgtgt = tlv[0x1eu]!!,
+                        encryptedA1 = tlv[0x18u]!!,
+                        noPicSig = tlv[0x19u]!!
+                    )
+                } else {
+                    return Result.Other(state)
                 }
-                return state
             }
         }
     }
@@ -223,8 +238,19 @@ internal abstract class WtLogin<T, R>(
         abstract fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>): R
     }
 
-    object PCLogin : Login<Unit, Unit>(9) {
-        override fun buildLoginTlv(client: AbstractClient, payload: Unit): Buffer = client.ensureLagrange().buildTlv {
+    object PCLogin : Login<Unit, PCLogin.Result>(9) {
+        class Result(
+            val d2Key: ByteArray,
+            val uid: String,
+            val a2: ByteArray,
+            val d2: ByteArray,
+            val encryptedA1: ByteArray,
+        )
+
+        override fun buildLoginTlv(
+            client: AbstractClient,
+            payload: Unit
+        ): Buffer = client.ensureLagrange().buildTlv {
             tlv106A2()
             tlv144()
             tlv116()
@@ -242,20 +268,23 @@ internal abstract class WtLogin<T, R>(
             tlv521()
         }
 
-        override fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>) {
+        override fun parseLoginTlv(
+            client: AbstractClient,
+            state: UByte,
+            tlvPack: Map<UShort, ByteArray>
+        ): Result {
             client.ensureLagrange()
             if (state.toInt() == 0) {
                 val tlv119 = tlvPack[0x119u]!!
                 val array = TEA.decrypt(tlv119, client.sessionStore.tgtgt)
                 val internalTlvPack = array.parseTlv()
-                client.sessionStore.apply {
-                    d2Key = internalTlvPack[0x305u]!!
-                    uid = internalTlvPack[0x543u]!!.pbDecode<TlvBody543>().layer1.layer2.uid
-                    a2 = internalTlvPack[0x10Au]!!
-                    d2 = internalTlvPack[0x143u]!!
-                    encryptedA1 = internalTlvPack[0x106u]!!
-                }
-                return
+                return Result(
+                    d2Key = internalTlvPack[0x305u]!!,
+                    uid = internalTlvPack[0x543u]!!.pbDecode<TlvBody543>().layer1.layer2.uid,
+                    a2 = internalTlvPack[0x10Au]!!,
+                    d2 = internalTlvPack[0x143u]!!,
+                    encryptedA1 = internalTlvPack[0x106u]!!,
+                )
             } else {
                 val tlv146 = tlvPack[0x146u]!!.reader()
                 val code = tlv146.readInt()

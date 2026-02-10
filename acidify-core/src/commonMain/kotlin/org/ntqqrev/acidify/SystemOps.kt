@@ -24,26 +24,51 @@ import org.ntqqrev.acidify.struct.*
  */
 suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
     require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
+
+    // Step 1: query QR code
     val qrCode = client.callService(WtLogin.TransEmp.FetchQRCode)
+    client.sessionStore.qrSig = qrCode.qrSig
     logger.i { "二维码 URL：${qrCode.qrCodeUrl}" }
     sharedEventFlow.emit(QRCodeGeneratedEvent(qrCode.qrCodeUrl, qrCode.qrCodePng))
 
+    // Step 2: poll QR code state until confirmed / error
     while (true) {
-        val state = client.callService(WtLogin.TransEmp.QueryQRCodeState)
+        val result = client.callService(WtLogin.TransEmp.QueryQRCodeState)
+        val state = result.state
         logger.d { "二维码状态：${state.name} (${state.value})" }
         sharedEventFlow.emit(QRCodeStateQueryEvent(state))
-        when (state) {
-            QRCodeState.CONFIRMED -> break
-            QRCodeState.CODE_EXPIRED -> throw IllegalStateException("二维码已过期")
-            QRCodeState.CANCELLED -> throw IllegalStateException("用户取消了登录")
-            QRCodeState.UNKNOWN -> throw IllegalStateException("未知的二维码状态")
-            else -> {} // pass
+        when (result) {
+            is WtLogin.TransEmp.QueryQRCodeState.Result.Success -> {
+                logger.i { "二维码已确认，登录用户：${result.uin}" }
+                client.sessionStore.apply {
+                    uin = result.uin
+                    tgtgt = result.tgtgt
+                    encryptedA1 = result.encryptedA1
+                    noPicSig = result.noPicSig
+                }
+                break
+            }
+            is WtLogin.TransEmp.QueryQRCodeState.Result.Other -> {
+                when (state) {
+                    QRCodeState.CODE_EXPIRED -> throw IllegalStateException("二维码已过期")
+                    QRCodeState.CANCELLED -> throw IllegalStateException("用户取消了登录")
+                    QRCodeState.UNKNOWN -> throw IllegalStateException("未知的二维码状态")
+                    else -> {} // pass
+                }
+            }
         }
         delay(queryInterval)
     }
 
-    client.callService(WtLogin.PCLogin)
-    logger.d { "成功获取 $uin 的登录凭据" }
+    // Step 3: get login credentials and complete login
+    val result = client.callService(WtLogin.PCLogin)
+    client.sessionStore.apply {
+        uid = result.uid
+        a2 = result.a2
+        d2 = result.d2
+        d2Key = result.d2Key
+        encryptedA1 = result.encryptedA1
+    }
     sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
     online(preloadContacts)
 }
