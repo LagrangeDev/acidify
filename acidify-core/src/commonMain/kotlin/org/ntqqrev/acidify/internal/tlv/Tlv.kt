@@ -1,13 +1,14 @@
 package org.ntqqrev.acidify.internal.tlv
 
-import kotlinx.io.*
+import kotlinx.io.readByteArray
+import kotlinx.io.writeUByte
+import kotlinx.io.writeUInt
+import kotlinx.io.writeUShort
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.util.Prefix
 import org.ntqqrev.acidify.internal.util.writeBytes
 import org.ntqqrev.acidify.internal.util.writeString
-import kotlin.random.Random
-import kotlin.time.Clock
 
 internal class Tlv(val client: LagrangeClient) : TlvBuilder() {
     fun tlv18() = writeTlv(0x18u) {
@@ -31,36 +32,6 @@ internal class Tlv(val client: LagrangeClient) : TlvBuilder() {
 
     fun tlv106A2() = writeTlv(0x106u) {
         writeBytes(client.sessionStore.encryptedA1)
-    }
-
-    fun tlv106(md5pass: ByteArray) = writeTlv(0x106u) {
-        val body = Buffer().apply {
-            writeUShort(4u) // tgtgt ver
-            writeBytes(Random.nextBytes(4)) // crypto.randomBytes(4)
-            writeUInt(0u) // sso ver
-            writeInt(client.appInfo.appId)
-            writeInt(8001) // app client ver
-            writeULong(client.sessionStore.uin.toULong())
-            writeInt(Clock.System.now().epochSeconds.toInt())
-            writeUInt(0u) // dummy ip
-            writeByte(1) // save password
-            writeBytes(md5pass)
-            writeBytes(client.sessionStore.a2)
-            writeUInt(0u)
-            writeByte(1) // guid available
-            writeBytes(client.sessionStore.guid)
-            writeUInt(1u)
-            writeUInt(1u) // login type password
-            writeString(client.sessionStore.uin.toString(), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
-        }
-
-        val buf = Buffer()
-
-        buf.writeInt(client.sessionStore.uin.toInt())
-        buf.writeBytes(ByteArray(4))
-        buf.writeBytes(md5pass)
-
-        writeBytes(TEA.encrypt(body.readByteArray(), buf.readByteArray()))
     }
 
     fun tlv107() = writeTlv(0x107u) {
