@@ -203,7 +203,7 @@ internal class MessageBuildingContext(
             else -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        uploadResp.uKey.takeIf { it.isNotEmpty() }?.let {
+        if (uploadResp.uKey.isNotEmpty()) {
             bot.client.highwayContext.uploadImage(
                 image = raw,
                 imageMd5 = imageMd5Bytes,
@@ -211,7 +211,9 @@ internal class MessageBuildingContext(
                 uploadResp = uploadResp,
                 messageScene = scene
             )
-        } ?: logger.d { "uKey 为空，服务器可能已存在该图片，跳过上传" }
+        } else {
+            logger.d { "uKey 为空，服务器可能已存在该图片，跳过上传" }
+        }
 
         val msgInfoBuf = uploadResp.msgInfoBuf
         val businessType = when (scene) {
@@ -284,7 +286,7 @@ internal class MessageBuildingContext(
             else -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        uploadResp.uKey.takeIf { it.isNotEmpty() }?.let {
+        if (uploadResp.uKey.isNotEmpty()) {
             bot.client.highwayContext.uploadRecord(
                 record = rawSilk,
                 recordMd5 = recordMd5Bytes,
@@ -292,7 +294,9 @@ internal class MessageBuildingContext(
                 uploadResp = uploadResp,
                 messageScene = scene
             )
-        } ?: logger.d { "uKey 为空，服务器可能已存在该语音，跳过上传" }
+        } else {
+            logger.d { "uKey 为空，服务器可能已存在该语音，跳过上传" }
+        }
 
         val msgInfoBuf = uploadResp.msgInfoBuf
         val businessType = when (scene) {
@@ -364,17 +368,18 @@ internal class MessageBuildingContext(
             else -> throw IllegalArgumentException("不支持的消息场景: $scene")
         }
 
-        uploadResp.uKey.takeIf { it.isNotEmpty() }?.let {
-            bot.client.highwayContext.uploadVideo(
-                video = raw,
-                videoMd5 = videoMd5Bytes,
-                videoSha1 = videoSha1Bytes,
-                uploadResp = uploadResp,
-                messageScene = scene
+        if (uploadResp.uKey.isNotEmpty()) {
+            // TODO: fix highway here
+            bot.client.flashTransferContext.uploadFile(
+                uKey = uploadResp.uKey,
+                appId = if (scene == MessageScene.FRIEND) 1413 else 1415,
+                bodyStream = raw,
             )
-        } ?: logger.d { "uKey 为空，服务器可能已存在该视频，跳过上传" }
+        } else {
+            logger.d { "uKey 为空，服务器可能已存在该视频，跳过上传" }
+        }
 
-        uploadResp.subFileInfos.firstOrNull()?.uKey?.takeIf { it.isNotEmpty() }?.let {
+        if (uploadResp.subFileInfos.firstOrNull()?.uKey?.isNotEmpty() == true) {
             bot.client.highwayContext.uploadVideoThumbnail(
                 thumbnail = thumb,
                 thumbnailMd5 = thumbMd5Bytes,
@@ -382,7 +387,9 @@ internal class MessageBuildingContext(
                 uploadResp = uploadResp,
                 messageScene = scene
             )
-        } ?: logger.d { "视频缩略图 uKey 为空，服务器可能已存在该缩略图，跳过上传" }
+        } else {
+            logger.d { "视频缩略图 uKey 为空，服务器可能已存在该缩略图，跳过上传" }
+        }
 
         val msgInfoBuf = uploadResp.msgInfoBuf
         val businessType = when (scene) {

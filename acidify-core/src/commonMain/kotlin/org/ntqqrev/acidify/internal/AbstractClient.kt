@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import org.ntqqrev.acidify.common.SsoResponse
+import org.ntqqrev.acidify.internal.context.FlashTransferContext
 import org.ntqqrev.acidify.internal.context.HighwayContext
 import org.ntqqrev.acidify.internal.context.PacketContext
 import org.ntqqrev.acidify.internal.context.TicketContext
@@ -37,6 +38,7 @@ internal sealed class AbstractClient(
 
     var ssoSequence by atomic(Random.nextInt(0x10000, 0x20000))
 
+    val flashTransferContext = FlashTransferContext(this)
     val highwayContext = HighwayContext(this)
     val packetContext = PacketContext(this)
     val ticketContext = TicketContext(this)
@@ -45,6 +47,7 @@ internal sealed class AbstractClient(
         packetContext,
         ticketContext,
         highwayContext,
+        flashTransferContext,
     )
 
     suspend fun doPostOnlineLogic() {
