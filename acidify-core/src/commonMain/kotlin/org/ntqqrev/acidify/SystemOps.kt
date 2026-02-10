@@ -42,7 +42,7 @@ suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolea
         delay(queryInterval)
     }
 
-    client.callService(WtLogin.Login)
+    client.callService(WtLogin.PCLogin)
     logger.d { "成功获取 $uin 的登录凭据" }
     sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
     online(preloadContacts)

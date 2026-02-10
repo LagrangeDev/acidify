@@ -200,55 +200,64 @@ internal abstract class WtLogin<T, R>(
         }
     }
 
-    object Login : WtLogin<Unit, Unit>("login", 2064) {
-        override fun buildWtLoginPayload(client: AbstractClient, payload: Unit): ByteArray {
-            client.ensureLagrange()
+    abstract class Login<T, R>(val internalCmd: Short) : WtLogin<T, R>("login", 2064) {
+        override fun buildWtLoginPayload(client: AbstractClient, payload: T): ByteArray {
+            val tlvPack = buildLoginTlv(client, payload)
             val packet = Buffer().apply {
-                writeUShort(9u) // internal command
-                transferFrom(client.buildTlv {
-                    tlv106A2()
-                    tlv144()
-                    tlv116()
-                    tlv142()
-                    tlv145()
-                    tlv18()
-                    tlv141()
-                    tlv177()
-                    tlv191()
-                    tlv100()
-                    tlv107()
-                    tlv318()
-                    tlv16a()
-                    tlv166()
-                    tlv521()
-                })
+                writeUShort(internalCmd.toUShort())
+                transferFrom(tlvPack)
             }
             return packet.readByteArray()
         }
 
-        override fun parseWtLoginPayload(
-            client: AbstractClient,
-            wtLogin: ByteArray
-        ) {
-            client.ensureLagrange()
+        override fun parseWtLoginPayload(client: AbstractClient, wtLogin: ByteArray): R {
             val reader = wtLogin.reader()
             reader.readUShort() // command
             val state = reader.readUByte()
-            val tlv119Reader = reader.readTlv()
+            val tlvPack = reader.readTlv()
+            return parseLoginTlv(client, state, tlvPack)
+        }
+
+        abstract fun buildLoginTlv(client: AbstractClient, payload: T): Buffer
+
+        abstract fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>): R
+    }
+
+    object PCLogin : Login<Unit, Unit>(9) {
+        override fun buildLoginTlv(client: AbstractClient, payload: Unit): Buffer = client.ensureLagrange().buildTlv {
+            tlv106A2()
+            tlv144()
+            tlv116()
+            tlv142()
+            tlv145()
+            tlv18()
+            tlv141()
+            tlv177()
+            tlv191()
+            tlv100()
+            tlv107()
+            tlv318()
+            tlv16a()
+            tlv166()
+            tlv521()
+        }
+
+        override fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>) {
+            client.ensureLagrange()
             if (state.toInt() == 0) {
-                val tlv119 = tlv119Reader[0x119u]!!
+                val tlv119 = tlvPack[0x119u]!!
                 val array = TEA.decrypt(tlv119, client.sessionStore.tgtgt)
-                val tlvPack = array.parseTlv()
+                val internalTlvPack = array.parseTlv()
                 client.sessionStore.apply {
-                    d2Key = tlvPack[0x305u]!!
-                    uid = tlvPack[0x543u]!!.pbDecode<TlvBody543>().layer1.layer2.uid
-                    a2 = tlvPack[0x10Au]!!
-                    d2 = tlvPack[0x143u]!!
-                    encryptedA1 = tlvPack[0x106u]!!
+                    d2Key = internalTlvPack[0x305u]!!
+                    uid = internalTlvPack[0x543u]!!.pbDecode<TlvBody543>().layer1.layer2.uid
+                    a2 = internalTlvPack[0x10Au]!!
+                    d2 = internalTlvPack[0x143u]!!
+                    encryptedA1 = internalTlvPack[0x106u]!!
                 }
                 return
             } else {
-                val tlv146 = tlv119Reader[0x146u]!!.reader()
+                val tlv146 = tlvPack[0x146u]!!.reader()
                 val code = tlv146.readInt()
                 val tag = tlv146.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
                 val message = tlv146.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
