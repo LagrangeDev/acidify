@@ -2,8 +2,10 @@ package org.ntqqrev.acidify.internal.util
 
 import kotlinx.io.Buffer
 import org.ntqqrev.acidify.exception.ServiceInternalException
+import org.ntqqrev.acidify.internal.KuromeClient
 import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.tlv.AndroidTlv
 import org.ntqqrev.acidify.internal.tlv.Tlv
 import org.ntqqrev.acidify.internal.tlv.TlvQRCode
 
@@ -22,5 +24,11 @@ internal inline fun LagrangeClient.buildTlv(block: Tlv.() -> Unit): Buffer {
 internal inline fun LagrangeClient.buildTlvQRCode(block: TlvQRCode.() -> Unit): Buffer {
     val tlv = TlvQRCode(this)
     block(tlv)
+    return tlv.build()
+}
+
+internal inline fun KuromeClient.buildTlv(block: AndroidTlv.() -> Unit): Buffer {
+    val tlv = AndroidTlv(this)
+    tlv.block()
     return tlv.build()
 }

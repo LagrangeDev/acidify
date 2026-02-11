@@ -4,6 +4,7 @@ import kotlinx.io.*
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.crypto.ecdh.Ecdh
+import org.ntqqrev.acidify.internal.crypto.pow.POW
 import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.proto.login.TlvBody543
 import org.ntqqrev.acidify.internal.proto.login.TlvQRCodeBodyD1Resp
@@ -291,6 +292,129 @@ internal abstract class WtLogin<T, R>(
                 val tag = tlv146.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
                 val message = tlv146.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
                 throw WtLoginException(code, tag, message)
+            }
+        }
+
+        abstract class AndroidLogin<T>(internalCmd: Short) : Login<T, AndroidLogin.Resp>(internalCmd) {
+            class Resp(
+                val state: UByte,
+                val tlvPack: Map<UShort, ByteArray>
+            )
+
+            override fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>) =
+                Resp(state, tlvPack)
+
+            object Tgtgt : AndroidLogin<Tgtgt.Req>(0x09) {
+                class Req(
+                    val energy: ByteArray,
+                    val debugXwid: ByteArray,
+                )
+
+                override fun buildLoginTlv(
+                    client: AbstractClient,
+                    payload: Req
+                ): Buffer = client.ensureKurome().buildTlv {
+                    tlv18()
+                    tlv1()
+                    tlv106Pwd()
+                    tlv100()
+                    tlv107()
+                    tlv116()
+                    tlv142()
+                    tlv144Report()
+                    tlv145()
+                    tlv147()
+                    tlv154()
+                    tlv141()
+                    tlv8()
+                    tlv511()
+                    tlv187()
+                    tlv188()
+                    tlv191(0x82u)
+                    tlv177()
+                    tlv516()
+                    tlv521()
+                    tlv525()
+                    tlv544(payload.energy)
+                    tlv545()
+                    tlv548(POW.generateTlv548())
+                    tlv553(payload.debugXwid)
+                }
+            }
+
+            object SubmitCaptchaTicket : AndroidLogin<SubmitCaptchaTicket.Req>(0x02) {
+                class Req(
+                    val energy: ByteArray,
+                    val debugXwid: ByteArray,
+                    val ticket: String,
+                )
+
+                override fun buildLoginTlv(
+                    client: AbstractClient,
+                    payload: Req
+                ): Buffer = client.ensureKurome().buildTlv {
+                    tlv193(payload.ticket.encodeToByteArray())
+                    tlv8()
+                    client.sessionStore.state.tlv104?.let {
+                        tlv104(it)
+                    }
+                    tlv116()
+                    client.sessionStore.state.tlv547?.let {
+                        tlv547(it)
+                    }
+                    tlv544(payload.energy)
+                    tlv553(payload.debugXwid)
+                }
+            }
+
+            object FetchSMSCode : AndroidLogin<FetchSMSCode.Req>(0x08) {
+                class Req(
+                    val debugXwid: ByteArray,
+                )
+
+                override fun buildLoginTlv(
+                    client: AbstractClient,
+                    payload: Req
+                ): Buffer = client.ensureKurome().buildTlv {
+                    tlv8()
+                    client.sessionStore.state.tlv104?.let {
+                        tlv104(it)
+                    }
+                    tlv116()
+                    client.sessionStore.state.tlv174?.let {
+                        tlv174(it)
+                    }
+                    tlv17a()
+                    tlv197()
+                    tlv553(payload.debugXwid)
+                }
+            }
+
+            object SubmitSMSCode : AndroidLogin<SubmitSMSCode.Req>(0x07) {
+                class Req(
+                    val energy: ByteArray,
+                    val debugXwid: ByteArray,
+                    val smsCode: String,
+                )
+
+                override fun buildLoginTlv(
+                    client: AbstractClient,
+                    payload: Req
+                ): Buffer = client.ensureKurome().buildTlv {
+                    tlv8()
+                    client.sessionStore.state.tlv104?.let {
+                        tlv104(it)
+                    }
+                    tlv116()
+                    client.sessionStore.state.tlv174?.let {
+                        tlv174(it)
+                    }
+                    tlv17c(payload.smsCode)
+                    tlv401()
+                    tlv198()
+                    tlv544(payload.energy)
+                    tlv553(payload.debugXwid)
+                }
             }
         }
     }
