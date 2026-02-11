@@ -1,10 +1,15 @@
 package org.ntqqrev.acidify
 
 import kotlinx.coroutines.delay
+import org.ntqqrev.acidify.event.AndroidSessionStoreUpdatedEvent
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
 import org.ntqqrev.acidify.event.QRCodeStateQueryEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
+import org.ntqqrev.acidify.exception.WtLoginException
+import org.ntqqrev.acidify.internal.crypto.pow.POW
+import org.ntqqrev.acidify.internal.proto.system.AndroidThirdPartyLoginResponse
 import org.ntqqrev.acidify.internal.service.system.WtLogin
+import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
 
 /**
@@ -96,4 +101,112 @@ suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = fa
             qrCodeLogin(queryInterval, preloadContacts)
         }
     }
+}
+
+/**
+ * 使用 [org.ntqqrev.acidify.common.android.AndroidSessionStore] 中的密码进行登录。
+ * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
+ */
+suspend fun AndroidBot.login(
+    onRequireCaptchaTicket: suspend (captchaUrl: String) -> String,
+    onRequireSmsCode: suspend (countryCode: String, phone: String, smsUrl: String) -> String,
+    preloadContacts: Boolean = false
+) {
+    var result: WtLogin.AndroidLogin.Resp = client.callService(
+        WtLogin.AndroidLogin.Tgtgt,
+        WtLogin.AndroidLogin.Tgtgt.Req(
+            energy = client.getEnergyFor(WtLogin.AndroidLogin.Tgtgt),
+            debugXwid = client.getDebugXwidFor(WtLogin.AndroidLogin.Tgtgt),
+        )
+    )
+
+    if (result.state == 2u.toUByte()) { // Need captcha verify
+        result.tlvPack[0x104u]?.let {
+            sessionStore.state.tlv104 = it
+        }
+        result.tlvPack[0x546u]?.let {
+            sessionStore.state.tlv547 = POW.generateTlv547(it)
+        }
+        val captchaUrl = result.tlvPack[0x192u]!!.decodeToString()
+        val ticket = onRequireCaptchaTicket(captchaUrl)
+        result = client.callService(
+            WtLogin.AndroidLogin.SubmitCaptchaTicket,
+            WtLogin.AndroidLogin.SubmitCaptchaTicket.Req(
+                energy = client.getEnergyFor(WtLogin.AndroidLogin.SubmitCaptchaTicket),
+                debugXwid = client.getDebugXwidFor(WtLogin.AndroidLogin.SubmitCaptchaTicket),
+                ticket = ticket,
+            )
+        )
+    }
+
+    if (result.state == 239u.toUByte()) { // Device lock via SMS code
+        result.tlvPack[0x104u]?.let {
+            sessionStore.state.tlv104 = it
+        }
+        result.tlvPack[0x174u]?.let {
+            sessionStore.state.tlv174 = it
+        }
+        val smsUrl = result.tlvPack[0x204u]!!.decodeToString()
+        val tlv178Reader = result.tlvPack[0x178u]!!.reader()
+        val countryCode = tlv178Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+        val phone = tlv178Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+
+        result = client.callService(
+            WtLogin.AndroidLogin.FetchSMSCode,
+            WtLogin.AndroidLogin.FetchSMSCode.Req(
+                debugXwid = client.getDebugXwidFor(WtLogin.AndroidLogin.FetchSMSCode),
+            )
+        )
+
+        if (result.state == 160u.toUByte()) { // SMS required
+            result.tlvPack[0x104u]?.let {
+                sessionStore.state.tlv104 = it
+            }
+            val smsCode = onRequireSmsCode(countryCode, phone, smsUrl)
+            result = client.callService(
+                WtLogin.AndroidLogin.SubmitSMSCode,
+                WtLogin.AndroidLogin.SubmitSMSCode.Req(
+                    energy = client.getEnergyFor(WtLogin.AndroidLogin.SubmitSMSCode),
+                    debugXwid = client.getDebugXwidFor(WtLogin.AndroidLogin.SubmitSMSCode),
+                    smsCode = smsCode,
+                )
+            )
+        }
+    }
+
+    if (result.state != 0u.toUByte()) { // fallback; the error should be in tlv 146
+        throw WtLoginException(result.state.toInt(), "", "")
+    }
+
+    sessionStore.apply {
+        wloginSigs.stWeb = result.tlvPack[0x103u]!!
+        wloginSigs.d2 = result.tlvPack[0x143u]!!
+        wloginSigs.ksid = result.tlvPack[0x108u]!!
+        wloginSigs.a2 = result.tlvPack[0x10Au]!!
+        wloginSigs.a1Key = result.tlvPack[0x10Cu]!!
+        wloginSigs.a2Key = result.tlvPack[0x10Du]!!
+        wloginSigs.stKey = result.tlvPack[0x10Eu]!!
+        wloginSigs.st = result.tlvPack[0x114u]!!
+        // result.tlvPack[0x11Au]!!let { /* save age, gender, nickname */ }
+        wloginSigs.sKey = result.tlvPack[0x120u]!!
+        wloginSigs.wtSessionTicket = result.tlvPack[0x133u]!!
+        wloginSigs.wtSessionTicketKey = result.tlvPack[0x134u]!!
+        wloginSigs.d2Key = result.tlvPack[0x305u]!!
+        wloginSigs.a1 = result.tlvPack[0x106u]!!
+        wloginSigs.noPicSig = result.tlvPack[0x16Au]!!
+        wloginSigs.superKey = result.tlvPack[0x16Du]!!
+        wloginSigs.psKey = mutableMapOf<String, String>().apply {
+            val tlv512Reader = result.tlvPack[0x512u]!!.reader()
+            val domainCount = tlv512Reader.readUShort()
+            repeat(domainCount.toInt()) {
+                val domain = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                val key = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                val pt4Token = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                this[domain] = key
+            }
+        }
+        uid = result.tlvPack[0x543u]!!.pbDecode<AndroidThirdPartyLoginResponse>().commonInfo.rspNT.uid
+    }
+    sharedEventFlow.emit(AndroidSessionStoreUpdatedEvent(sessionStore))
+    // TODO: send online packet
 }

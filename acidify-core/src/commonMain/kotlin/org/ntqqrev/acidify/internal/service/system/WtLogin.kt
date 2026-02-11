@@ -302,8 +302,16 @@ internal abstract class WtLogin<T, R>(
             val tlvPack: Map<UShort, ByteArray>
         )
 
-        override fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>) =
-            Resp(state, tlvPack)
+        override fun parseLoginTlv(client: AbstractClient, state: UByte, tlvPack: Map<UShort, ByteArray>): Resp {
+            tlvPack[0x146u]?.let {
+                val tlv146 = it.reader()
+                val code = tlv146.readInt()
+                val tag = tlv146.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                val message = tlv146.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                throw WtLoginException(code, tag, message)
+            }
+            return Resp(state, tlvPack)
+        }
 
         object Tgtgt : AndroidLogin<Tgtgt.Req>(0x09) {
             class Req(
