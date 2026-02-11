@@ -1,10 +1,9 @@
 package org.ntqqrev.acidify.entity
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
+import org.ntqqrev.acidify.entity.internal.CacheUtility
 import org.ntqqrev.acidify.fetchGroupMembers
-import org.ntqqrev.acidify.internal.CacheUtility
 import org.ntqqrev.acidify.struct.BotGroupData
-import org.ntqqrev.acidify.struct.BotGroupMemberData
 import org.ntqqrev.acidify.struct.GroupMemberRole
 import kotlin.js.JsExport
 
@@ -13,10 +12,10 @@ import kotlin.js.JsExport
  */
 @JsExport
 class BotGroup internal constructor(
-    bot: Bot,
+    bot: AbstractBot,
     data: BotGroupData,
 ) : BotEntity<BotGroupData>(bot, data) {
-    private val memberCache = CacheUtility<Long, BotGroupMember, BotGroupMemberData>(
+    private val memberCache = CacheUtility(
         bot = bot,
         updateCache = { bot -> bot.fetchGroupMembers(uin).associateBy { it.uin } },
         entityFactory = { bot, data ->

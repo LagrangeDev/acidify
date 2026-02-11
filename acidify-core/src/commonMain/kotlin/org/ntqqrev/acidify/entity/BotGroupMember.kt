@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.entity
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.struct.BotGroupMemberData
 import org.ntqqrev.acidify.struct.GroupMemberRole
 import kotlin.js.JsExport
@@ -13,7 +13,7 @@ import kotlin.time.ExperimentalTime
  */
 @JsExport
 class BotGroupMember internal constructor(
-    bot: Bot,
+    bot: AbstractBot,
     data: BotGroupMemberData,
     val group: BotGroup,
 ) : BotEntity<BotGroupMemberData>(bot, data) {

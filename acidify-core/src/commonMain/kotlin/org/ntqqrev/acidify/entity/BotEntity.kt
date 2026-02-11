@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.entity
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 
 /**
  * Bot 实体基类
@@ -12,7 +12,7 @@ import org.ntqqrev.acidify.Bot
  * @property data 绑定的数据
  */
 abstract class BotEntity<T>(
-    val bot: Bot,
+    val bot: AbstractBot,
     internal var data: T,
 ) {
     /**

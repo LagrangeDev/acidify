@@ -1,6 +1,6 @@
 package org.ntqqrev.acidify.entity
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.struct.BotFriendData
 import org.ntqqrev.acidify.struct.UserInfoGender
 import kotlin.js.JsExport
@@ -10,7 +10,7 @@ import kotlin.js.JsExport
  */
 @JsExport
 class BotFriend internal constructor(
-    bot: Bot,
+    bot: AbstractBot,
     data: BotFriendData,
 ) : BotEntity<BotFriendData>(bot, data) {
 

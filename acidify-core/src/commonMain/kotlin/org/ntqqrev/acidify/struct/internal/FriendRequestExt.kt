@@ -1,13 +1,13 @@
 package org.ntqqrev.acidify.struct.internal
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.getUinByUid
 import org.ntqqrev.acidify.internal.proto.oidb.FilteredFriendRequestItem
 import org.ntqqrev.acidify.internal.proto.oidb.FriendRequestItem
 import org.ntqqrev.acidify.struct.BotFriendRequest
 import org.ntqqrev.acidify.struct.RequestState
 
-internal suspend fun Bot.parseFriendRequest(
+internal suspend fun AbstractBot.parseFriendRequest(
     raw: FriendRequestItem
 ) = BotFriendRequest(
     time = raw.timestamp,
@@ -26,7 +26,7 @@ internal suspend fun Bot.parseFriendRequest(
     isFiltered = false
 )
 
-internal suspend fun Bot.parseFilteredFriendRequest(
+internal suspend fun AbstractBot.parseFilteredFriendRequest(
     raw: FilteredFriendRequestItem
 ) = BotFriendRequest(
     time = raw.timestamp,

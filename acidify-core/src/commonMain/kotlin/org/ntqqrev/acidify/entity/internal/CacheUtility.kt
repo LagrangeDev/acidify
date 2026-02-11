@@ -1,15 +1,15 @@
-package org.ntqqrev.acidify.internal
+package org.ntqqrev.acidify.entity.internal
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.entity.BotEntity
 
 internal class CacheUtility<K, V : BotEntity<D>, D>(
-    val bot: Bot,
-    private val updateCache: suspend (bot: Bot) -> Map<K, D>,
-    private val entityFactory: (bot: Bot, data: D) -> V,
+    val bot: AbstractBot,
+    private val updateCache: suspend (bot: AbstractBot) -> Map<K, D>,
+    private val entityFactory: (bot: AbstractBot, data: D) -> V,
 ) {
     private val mutex = Mutex()
     private var map = mutableMapOf<K, V>()

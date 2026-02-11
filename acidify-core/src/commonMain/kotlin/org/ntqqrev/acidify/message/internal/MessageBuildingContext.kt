@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.getFriendHistoryMessages
 import org.ntqqrev.acidify.getGroupHistoryMessages
 import org.ntqqrev.acidify.getUidByUin
@@ -32,7 +32,7 @@ import kotlin.random.Random
 import kotlin.time.Clock
 
 internal class MessageBuildingContext(
-    val bot: Bot,
+    val bot: AbstractBot,
     val scene: MessageScene,
     val peerUin: Long,
     val peerUid: String,

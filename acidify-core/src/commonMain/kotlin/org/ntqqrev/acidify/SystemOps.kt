@@ -2,9 +2,6 @@ package org.ntqqrev.acidify
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
-import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
-import org.ntqqrev.acidify.event.QRCodeStateQueryEvent
-import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
 import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.service.friend.FetchFriends
 import org.ntqqrev.acidify.internal.service.group.FetchGroupMembers
@@ -13,73 +10,12 @@ import org.ntqqrev.acidify.internal.service.system.*
 import org.ntqqrev.acidify.struct.*
 
 /**
- * 发起二维码登录请求。过程中会触发事件：
- * - [QRCodeGeneratedEvent]：当二维码生成时触发，包含二维码链接和 PNG 图片数据
- * - [QRCodeStateQueryEvent]：每次查询二维码状态时触发，包含当前二维码状态（例如未扫码、已扫码未确认、已确认等）
- * @param queryInterval 查询间隔（单位 ms），不能小于 `1000`
- * @param preloadContacts 是否在登录成功后预加载好友和群信息以初始化内存缓存
- * @throws org.ntqqrev.acidify.exception.WtLoginException 当二维码扫描成功，但后续登录失败时抛出
- * @throws IllegalStateException 当二维码过期或用户取消登录时抛出
- * @see QRCodeState
- */
-suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
-    require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
-
-    // Step 1: query QR code
-    val qrCode = client.callService(WtLogin.TransEmp.FetchQRCode)
-    client.sessionStore.qrSig = qrCode.qrSig
-    logger.i { "二维码 URL：${qrCode.qrCodeUrl}" }
-    sharedEventFlow.emit(QRCodeGeneratedEvent(qrCode.qrCodeUrl, qrCode.qrCodePng))
-
-    // Step 2: poll QR code state until confirmed / error
-    while (true) {
-        val result = client.callService(WtLogin.TransEmp.QueryQRCodeState)
-        val state = result.state
-        logger.d { "二维码状态：${state.name} (${state.value})" }
-        sharedEventFlow.emit(QRCodeStateQueryEvent(state))
-        when (result) {
-            is WtLogin.TransEmp.QueryQRCodeState.Result.Success -> {
-                logger.i { "二维码已确认，登录用户：${result.uin}" }
-                client.sessionStore.apply {
-                    uin = result.uin
-                    tgtgt = result.tgtgt
-                    encryptedA1 = result.encryptedA1
-                    noPicSig = result.noPicSig
-                }
-                break
-            }
-            is WtLogin.TransEmp.QueryQRCodeState.Result.Other -> {
-                when (state) {
-                    QRCodeState.CODE_EXPIRED -> throw IllegalStateException("二维码已过期")
-                    QRCodeState.CANCELLED -> throw IllegalStateException("用户取消了登录")
-                    QRCodeState.UNKNOWN -> throw IllegalStateException("未知的二维码状态")
-                    else -> {} // pass
-                }
-            }
-        }
-        delay(queryInterval)
-    }
-
-    // Step 3: get login credentials and complete login
-    val result = client.callService(WtLogin.PCLogin)
-    client.sessionStore.apply {
-        uid = result.uid
-        a2 = result.a2
-        d2 = result.d2
-        d2Key = result.d2Key
-        encryptedA1 = result.encryptedA1
-    }
-    sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
-    online(preloadContacts)
-}
-
-/**
  * 尝试使用现有的 Session 信息上线。
  * 请优先调用 [login]，该方法会在现有 Session 失效时自动调用 [qrCodeLogin]。
  * 若确定 Session 有效且不希望进行二维码登录，可调用此方法。
  * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
  */
-suspend fun Bot.online(preloadContacts: Boolean = false) {
+suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
     client.sendOnlinePacket()
     isLoggedIn = true
     logger.i { "用户 $uin 已上线" }
@@ -118,7 +54,7 @@ suspend fun Bot.online(preloadContacts: Boolean = false) {
 /**
  * 下线 Bot，释放资源。
  */
-suspend fun Bot.offline() {
+suspend fun AbstractBot.offline() {
     client.doPreOfflineLogic()
     eventCollectJob?.cancel()
     eventCollectJob = null
@@ -128,42 +64,14 @@ suspend fun Bot.offline() {
 }
 
 /**
- * 如果 Session 为空则调用 [qrCodeLogin] 进行登录。
- * 如果 Session 不为空则尝试使用现有的 Session 信息登录，若失败则调用 [qrCodeLogin] 重新登录。
- * @param queryInterval 查询间隔（单位 ms），不能小于 `1000`
- * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
- */
-suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
-    if (sessionStore.a2.isEmpty()) {
-        logger.i { "Session 为空，尝试二维码登录" }
-        qrCodeLogin(queryInterval, preloadContacts)
-    } else {
-        try {
-            try {
-                online(preloadContacts)
-            } catch (e: Exception) {
-                logger.w(e) { "使用现有 Session 登录失败，尝试刷新 DeviceGuid 后重新登录" }
-                sessionStore.refreshDeviceGuid()
-                online(preloadContacts)
-            }
-        } catch (e: Exception) {
-            logger.w(e) { "使用现有 Session 登录失败，尝试二维码登录" }
-            sessionStore.clear()
-            // sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
-            qrCodeLogin(queryInterval, preloadContacts)
-        }
-    }
-}
-
-/**
  * 通过 QQ 号获取用户信息。
  */
-suspend fun Bot.fetchUserInfoByUin(uin: Long) = client.callService(FetchUserInfo.ByUin, uin)
+suspend fun AbstractBot.fetchUserInfoByUin(uin: Long) = client.callService(FetchUserInfo.ByUin, uin)
 
 /**
  * 通过 uid 获取用户信息。
  */
-suspend fun Bot.fetchUserInfoByUid(uid: String): BotUserInfo {
+suspend fun AbstractBot.fetchUserInfoByUid(uid: String): BotUserInfo {
     val userInfo = client.callService(FetchUserInfo.ByUid, uid)
     idMapQueryMutex.withLock {
         uin2uidMap[userInfo.uin] = uid
@@ -175,7 +83,7 @@ suspend fun Bot.fetchUserInfoByUid(uid: String): BotUserInfo {
 /**
  * 拉取好友与好友分组信息。此操作不会被缓存。
  */
-suspend fun Bot.fetchFriends(): List<BotFriendData> {
+suspend fun AbstractBot.fetchFriends(): List<BotFriendData> {
     var nextUin: Long? = null
     val friendDataResult = mutableListOf<BotFriendData>()
     do {
@@ -195,14 +103,14 @@ suspend fun Bot.fetchFriends(): List<BotFriendData> {
 /**
  * 拉取群信息。此操作不会被缓存。
  */
-suspend fun Bot.fetchGroups(): List<BotGroupData> {
+suspend fun AbstractBot.fetchGroups(): List<BotGroupData> {
     return client.callService(FetchGroups)
 }
 
 /**
  * 拉取指定群的成员信息。此操作不会被缓存。
  */
-suspend fun Bot.fetchGroupMembers(groupUin: Long): List<BotGroupMemberData> {
+suspend fun AbstractBot.fetchGroupMembers(groupUin: Long): List<BotGroupMemberData> {
     var cookie: ByteArray? = null
     val memberDataResult = mutableListOf<BotGroupMemberData>()
     do {
@@ -223,34 +131,34 @@ suspend fun Bot.fetchGroupMembers(groupUin: Long): List<BotGroupMemberData> {
  * 获取所有好友实体。
  * @param forceUpdate 是否强制更新缓存
  */
-suspend fun Bot.getFriends(forceUpdate: Boolean = false) = friendCache.getAll(forceUpdate)
+suspend fun AbstractBot.getFriends(forceUpdate: Boolean = false) = friendCache.getAll(forceUpdate)
 
 /**
  * 根据 uin 获取好友实体。
  * @param uin 好友的 QQ 号
  * @param forceUpdate 是否强制更新缓存
  */
-suspend fun Bot.getFriend(uin: Long, forceUpdate: Boolean = false) = friendCache.get(uin, forceUpdate)
+suspend fun AbstractBot.getFriend(uin: Long, forceUpdate: Boolean = false) = friendCache.get(uin, forceUpdate)
 
 /**
  * 获取所有群实体。
  * @param forceUpdate 是否强制更新缓存
  */
-suspend fun Bot.getGroups(forceUpdate: Boolean = false) = groupCache.getAll(forceUpdate)
+suspend fun AbstractBot.getGroups(forceUpdate: Boolean = false) = groupCache.getAll(forceUpdate)
 
 /**
  * 根据 uin 获取群实体。
  * @param uin 群号
  * @param forceUpdate 是否强制更新缓存
  */
-suspend fun Bot.getGroup(uin: Long, forceUpdate: Boolean = false) = groupCache.get(uin, forceUpdate)
+suspend fun AbstractBot.getGroup(uin: Long, forceUpdate: Boolean = false) = groupCache.get(uin, forceUpdate)
 
 /**
  * 获取指定群的所有群成员实体。
  * @param groupUin 群号
  * @param forceUpdate 是否强制更新缓存
  */
-suspend fun Bot.getGroupMembers(groupUin: Long, forceUpdate: Boolean = false) =
+suspend fun AbstractBot.getGroupMembers(groupUin: Long, forceUpdate: Boolean = false) =
     getGroup(groupUin)?.getMembers(forceUpdate)
 
 /**
@@ -258,14 +166,14 @@ suspend fun Bot.getGroupMembers(groupUin: Long, forceUpdate: Boolean = false) =
  * @param groupUin 群号
  * @param memberUin 群成员的 QQ 号
  */
-suspend fun Bot.getGroupMember(groupUin: Long, memberUin: Long, forceUpdate: Boolean = false) =
+suspend fun AbstractBot.getGroupMember(groupUin: Long, memberUin: Long, forceUpdate: Boolean = false) =
     getGroup(groupUin)?.getMember(memberUin, forceUpdate)
 
 /**
  * 解析 uid 到 QQ 号。
  * 如果之前未解析过该 uid，会发起网络请求获取用户信息。
  */
-suspend fun Bot.getUinByUid(uid: String): Long =
+suspend fun AbstractBot.getUinByUid(uid: String): Long =
     idMapQueryMutex.withLock { uid2uinMap[uid] } ?: run {
         fetchUserInfoByUid(uid)
         idMapQueryMutex.withLock { uid2uinMap[uid]!! }
@@ -276,7 +184,7 @@ suspend fun Bot.getUinByUid(uid: String): Long =
  * 若 [mayComeFromGroupUin] 非空且在缓存中未找到对应 uid，会尝试从该群的成员列表中查找；
  * 否则，会尝试从好友列表中查找。
  */
-suspend fun Bot.getUidByUin(uin: Long, mayComeFromGroupUin: Long? = null) =
+suspend fun AbstractBot.getUidByUin(uin: Long, mayComeFromGroupUin: Long? = null) =
     idMapQueryMutex.withLock { uin2uidMap[uin] } ?: run {
         if (mayComeFromGroupUin != null) {
             fetchGroupMembers(mayComeFromGroupUin)
@@ -289,12 +197,12 @@ suspend fun Bot.getUidByUin(uin: Long, mayComeFromGroupUin: Long? = null) =
 /**
  * 获取收藏表情的直链 URL 列表
  */
-suspend fun Bot.getCustomFaceUrl(): List<String> = client.callService(FetchCustomFace)
+suspend fun AbstractBot.getCustomFaceUrl(): List<String> = client.callService(FetchCustomFace)
 
 /**
  * 获取当前置顶的好友与群聊
  */
-suspend fun Bot.getPins(): BotPinnedChats {
+suspend fun AbstractBot.getPins(): BotPinnedChats {
     val resp = client.callService(FetchPins)
     val friendUins = resp.friendUids.map {
         async { runCatching { getUinByUid(it) } }
@@ -310,7 +218,7 @@ suspend fun Bot.getPins(): BotPinnedChats {
  * @param friendUin 好友 QQ 号
  * @param isPinned 是否置顶
  */
-suspend fun Bot.setFriendPin(friendUin: Long, isPinned: Boolean) =
+suspend fun AbstractBot.setFriendPin(friendUin: Long, isPinned: Boolean) =
     client.callService(SetFriendPin, SetFriendPin.Req(getUidByUin(friendUin), isPinned))
 
 /**
@@ -318,19 +226,19 @@ suspend fun Bot.setFriendPin(friendUin: Long, isPinned: Boolean) =
  * @param groupUin 群号
  * @param isPinned 是否置顶
  */
-suspend fun Bot.setGroupPin(groupUin: Long, isPinned: Boolean) =
+suspend fun AbstractBot.setGroupPin(groupUin: Long, isPinned: Boolean) =
     client.callService(SetGroupPin, SetGroupPin.Req(groupUin, isPinned))
 
 /**
  * 设置账号头像
  * @param imageData 头像原始字节数据
  */
-suspend fun Bot.setAvatar(imageData: ByteArray) = client.highwayContext.uploadAvatar(imageData)
+suspend fun AbstractBot.setAvatar(imageData: ByteArray) = client.highwayContext.uploadAvatar(imageData)
 
 /**
  * 设置账号昵称
  */
-suspend fun Bot.setNickname(nickname: String) =
+suspend fun AbstractBot.setNickname(nickname: String) =
     client.callService(
         SetUserProfile, SetUserProfile.Req(
             stringProps = mapOf(
@@ -342,7 +250,7 @@ suspend fun Bot.setNickname(nickname: String) =
 /**
  * 设置账号个性签名
  */
-suspend fun Bot.setBio(bio: String) =
+suspend fun AbstractBot.setBio(bio: String) =
     client.callService(
         SetUserProfile, SetUserProfile.Req(
             stringProps = mapOf(
@@ -354,17 +262,17 @@ suspend fun Bot.setBio(bio: String) =
 /**
  * 获取 s_key，用于组成 Cookie。
  */
-suspend fun Bot.getSKey() = client.ticketContext.getSKey()
+suspend fun AbstractBot.getSKey() = client.ticketContext.getSKey()
 
 /**
  * 获取给定域名的 p_skey，用于组成 Cookie。
  */
-suspend fun Bot.getPSKey(domain: String) = client.ticketContext.getPSKey(domain)
+suspend fun AbstractBot.getPSKey(domain: String) = client.ticketContext.getPSKey(domain)
 
 /**
  * 获取指定域名的 Cookie 键值对。
  */
-suspend fun Bot.getCookies(domain: String) = mapOf(
+suspend fun AbstractBot.getCookies(domain: String) = mapOf(
     "p_uin" to "o$uin",
     "p_skey" to getPSKey(domain),
     "skey" to getSKey(),
@@ -374,4 +282,4 @@ suspend fun Bot.getCookies(domain: String) = mapOf(
 /**
  * 获取 CSRF Token。
  */
-suspend fun Bot.getCsrfToken() = client.ticketContext.getCsrfToken()
+suspend fun AbstractBot.getCsrfToken() = client.ticketContext.getCsrfToken()

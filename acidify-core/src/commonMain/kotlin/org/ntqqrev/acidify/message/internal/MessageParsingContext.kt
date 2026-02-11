@@ -1,13 +1,13 @@
 package org.ntqqrev.acidify.message.internal
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.internal.proto.message.Elem
 import org.ntqqrev.acidify.message.MessageScene
 
 internal class MessageParsingContext(
     val scene: MessageScene,
     val elems: List<Elem>,
-    val bot: Bot,
+    val bot: AbstractBot,
 ) {
     var currentIndex = 0
 

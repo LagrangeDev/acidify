@@ -26,7 +26,7 @@ import org.ntqqrev.acidify.struct.internal.parseNotification
  * @param groupUin 群号
  * @param groupName 新的群名称
  */
-suspend fun Bot.setGroupName(
+suspend fun AbstractBot.setGroupName(
     groupUin: Long,
     groupName: String
 ) = client.callService(
@@ -39,7 +39,7 @@ suspend fun Bot.setGroupName(
  * @param groupUin 群号
  * @param imageData 图片数据（字节数组）
  */
-suspend fun Bot.setGroupAvatar(
+suspend fun AbstractBot.setGroupAvatar(
     groupUin: Long,
     imageData: ByteArray
 ) = client.highwayContext.uploadGroupAvatar(groupUin, imageData)
@@ -50,7 +50,7 @@ suspend fun Bot.setGroupAvatar(
  * @param memberUin 成员 QQ 号
  * @param card 新的群名片
  */
-suspend fun Bot.setGroupMemberCard(
+suspend fun AbstractBot.setGroupMemberCard(
     groupUin: Long,
     memberUin: Long,
     card: String
@@ -69,7 +69,7 @@ suspend fun Bot.setGroupMemberCard(
  * @param memberUin 成员 QQ 号
  * @param specialTitle 专属头衔内容，长度不能超过 18 个字节（通常为 6 个汉字或 18 个英文字符）
  */
-suspend fun Bot.setGroupMemberSpecialTitle(
+suspend fun AbstractBot.setGroupMemberSpecialTitle(
     groupUin: Long,
     memberUin: Long,
     specialTitle: String
@@ -90,7 +90,7 @@ suspend fun Bot.setGroupMemberSpecialTitle(
  * @param memberUin 成员 QQ 号
  * @param isAdmin 是否设置为管理员，`false` 表示取消管理员
  */
-suspend fun Bot.setGroupMemberAdmin(
+suspend fun AbstractBot.setGroupMemberAdmin(
     groupUin: Long,
     memberUin: Long,
     isAdmin: Boolean
@@ -109,7 +109,7 @@ suspend fun Bot.setGroupMemberAdmin(
  * @param memberUin 成员 QQ 号
  * @param duration 禁言时长（秒），设为 `0` 表示取消禁言
  */
-suspend fun Bot.setGroupMemberMute(
+suspend fun AbstractBot.setGroupMemberMute(
     groupUin: Long,
     memberUin: Long,
     duration: Int
@@ -127,7 +127,7 @@ suspend fun Bot.setGroupMemberMute(
  * @param groupUin 群号
  * @param isMute 是否开启全员禁言，`false` 表示取消全员禁言
  */
-suspend fun Bot.setGroupWholeMute(
+suspend fun AbstractBot.setGroupWholeMute(
     groupUin: Long,
     isMute: Boolean
 ) = client.callService(
@@ -145,7 +145,7 @@ suspend fun Bot.setGroupWholeMute(
  * @param rejectAddRequest 是否拒绝再次加群申请
  * @param reason 踢出原因（可选）
  */
-suspend fun Bot.kickGroupMember(
+suspend fun AbstractBot.kickGroupMember(
     groupUin: Long,
     memberUin: Long,
     rejectAddRequest: Boolean = false,
@@ -165,7 +165,7 @@ suspend fun Bot.kickGroupMember(
  * @param groupUin 群号
  * @return 群公告列表
  */
-suspend fun Bot.getGroupAnnouncements(groupUin: Long): List<BotGroupAnnouncement> {
+suspend fun AbstractBot.getGroupAnnouncements(groupUin: Long): List<BotGroupAnnouncement> {
     val response = httpClient.get("https://web.qun.qq.com/cgi-bin/announce/get_t_list") {
         withBkn()
         parameter("qid", groupUin)
@@ -210,7 +210,7 @@ suspend fun Bot.getGroupAnnouncements(groupUin: Long): List<BotGroupAnnouncement
  * @param isPinned 是否置顶
  * @return 公告 ID
  */
-suspend fun Bot.sendGroupAnnouncement(
+suspend fun AbstractBot.sendGroupAnnouncement(
     groupUin: Long,
     content: String,
     imageData: ByteArray? = null,
@@ -265,7 +265,7 @@ suspend fun Bot.sendGroupAnnouncement(
  * @param groupUin 群号
  * @param announcementId 公告 ID
  */
-suspend fun Bot.deleteGroupAnnouncement(
+suspend fun AbstractBot.deleteGroupAnnouncement(
     groupUin: Long,
     announcementId: String
 ) {
@@ -290,7 +290,7 @@ suspend fun Bot.deleteGroupAnnouncement(
  * @param pageSize 每页包含的精华消息数量
  * @return 精华消息列表
  */
-suspend fun Bot.getGroupEssenceMessages(
+suspend fun AbstractBot.getGroupEssenceMessages(
     groupUin: Long,
     pageIndex: Int,
     pageSize: Int
@@ -324,7 +324,7 @@ suspend fun Bot.getGroupEssenceMessages(
  * @param sequence 消息序列号
  * @param isSet 是否设置为精华消息，`false` 表示取消精华
  */
-suspend fun Bot.setGroupEssenceMessage(
+suspend fun AbstractBot.setGroupEssenceMessage(
     groupUin: Long,
     sequence: Long,
     isSet: Boolean
@@ -344,7 +344,7 @@ suspend fun Bot.setGroupEssenceMessage(
  * 退出群聊
  * @param groupUin 群号
  */
-suspend fun Bot.quitGroup(groupUin: Long) = client.callService(
+suspend fun AbstractBot.quitGroup(groupUin: Long) = client.callService(
     QuitGroup,
     QuitGroup.Req(groupUin)
 )
@@ -356,7 +356,7 @@ suspend fun Bot.quitGroup(groupUin: Long) = client.callService(
  * @param code 表情代码
  * @param isAdd 是否添加表情回应，`false` 表示取消回应
  */
-suspend fun Bot.setGroupMessageReaction(
+suspend fun AbstractBot.setGroupMessageReaction(
     groupUin: Long,
     sequence: Long,
     code: String,
@@ -376,7 +376,7 @@ suspend fun Bot.setGroupMessageReaction(
  * @param groupUin 群号
  * @param targetUin 被戳的成员 QQ 号
  */
-suspend fun Bot.sendGroupNudge(
+suspend fun AbstractBot.sendGroupNudge(
     groupUin: Long,
     targetUin: Long
 ) = client.callService(
@@ -391,7 +391,7 @@ suspend fun Bot.sendGroupNudge(
  * @param count 获取的最大通知数量
  * @return 群通知列表和下一页起始序列号
  */
-suspend fun Bot.getGroupNotifications(
+suspend fun AbstractBot.getGroupNotifications(
     startSequence: Long? = null,
     isFiltered: Boolean = false,
     count: Int = 20
@@ -415,7 +415,7 @@ suspend fun Bot.getGroupNotifications(
  * @param isFiltered 是否是被过滤的请求
  * @param reason 拒绝理由（仅在拒绝时使用）
  */
-suspend fun Bot.setGroupRequest(
+suspend fun AbstractBot.setGroupRequest(
     groupUin: Long,
     sequence: Long,
     eventType: Int,
@@ -441,7 +441,7 @@ suspend fun Bot.setGroupRequest(
  * @param invitationSeq 邀请序列号
  * @param accept 是否同意
  */
-suspend fun Bot.setGroupInvitation(
+suspend fun AbstractBot.setGroupInvitation(
     groupUin: Long,
     invitationSeq: Long,
     accept: Boolean

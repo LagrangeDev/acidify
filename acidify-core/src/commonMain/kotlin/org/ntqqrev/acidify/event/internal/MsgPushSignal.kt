@@ -25,7 +25,7 @@ import kotlin.time.Clock
 
 @Suppress("duplicatedCode")
 internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.MsgPush") {
-    override suspend fun parse(bot: Bot, payload: ByteArray): List<AcidifyEvent> {
+    override suspend fun parse(bot: AbstractBot, payload: ByteArray): List<AcidifyEvent> {
         val commonMsg = payload.pbDecode<PushMsg>().message
         val contentHead = commonMsg.contentHead
         val routingHead = commonMsg.routingHead
@@ -61,7 +61,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         }
     }
 
-    private fun parseMessage(bot: Bot, commonMsg: CommonMessage): List<AcidifyEvent> {
+    private fun parseMessage(bot: AbstractBot, commonMsg: CommonMessage): List<AcidifyEvent> {
         val msg = bot.parseMessage(commonMsg) ?: return emptyList()
 
         // 根据 extraInfo 刷新群成员信息
@@ -132,7 +132,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         return mutList
     }
 
-    private suspend fun parseGroupJoinRequest(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupJoinRequest(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val content = msgContent.pbDecode<GroupJoinRequest>()
         val groupUin = content.groupUin
         val memberUid = content.memberUid
@@ -164,7 +164,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             ?: emptyList()
     }
 
-    private suspend fun parseGroupInvitedJoinRequest(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupInvitedJoinRequest(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val content = msgContent.pbDecode<GroupInvitedJoinRequest>()
         if (content.command == 87) {
             val info = content.info ?: return emptyList()
@@ -205,7 +205,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         }
     }
 
-    private suspend fun parseGroupAdminChange(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupAdminChange(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val content = msgContent.pbDecode<GroupAdminChange>()
         val groupUin = content.groupUin
         val group = bot.getGroup(groupUin) ?: return emptyList()
@@ -231,7 +231,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         )
     }
 
-    private suspend fun parseGroupMemberIncrease(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupMemberIncrease(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val content = msgContent.pbDecode<GroupMemberChange>()
         val groupUin = content.groupUin
         val memberUid = content.memberUid
@@ -269,7 +269,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         }
     }
 
-    private suspend fun parseGroupMemberDecrease(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupMemberDecrease(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val content = msgContent.pbDecode<GroupMemberChange>()
         val groupUin = content.groupUin
         val memberUid = content.memberUid
@@ -311,7 +311,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseEvent0x210(
-        bot: Bot,
+        bot: AbstractBot,
         routingHead: RoutingHead,
         subType: Int,
         msgContent: ByteArray
@@ -324,7 +324,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseFriendNudge(
-        bot: Bot,
+        bot: AbstractBot,
         routingHead: RoutingHead,
         msgContent: ByteArray
     ): List<AcidifyEvent> {
@@ -352,7 +352,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseFriendRecall(
-        bot: Bot,
+        bot: AbstractBot,
         subType: Int,
         msgContent: ByteArray
     ): List<AcidifyEvent> {
@@ -380,7 +380,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseFriendDeleteOrPinChanged(
-        bot: Bot,
+        bot: AbstractBot,
         msgContent: ByteArray
     ): List<AcidifyEvent> {
         val content = msgContent.pbDecode<FriendDeleteOrPinChanged>()
@@ -407,7 +407,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseEvent0x2DC(
-        bot: Bot,
+        bot: AbstractBot,
         subType: Int,
         msgContent: ByteArray
     ): List<AcidifyEvent> = when (subType) {
@@ -419,7 +419,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         else -> emptyList()
     }
 
-    private suspend fun parseGroupMute(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupMute(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val content = msgContent.pbDecode<GroupMute>()
         val groupUin = content.groupUin
         val operatorUid = content.operatorUid
@@ -459,7 +459,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         }
     }
 
-    private suspend fun parseGroupGrayTip(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupGrayTip(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val wrapper = GroupGeneral0x2DC(msgContent)
         val body = wrapper.body
         val content = body.generalGrayTip ?: return emptyList()
@@ -507,7 +507,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
         )
     }
 
-    private suspend fun parseGroupRecall(bot: Bot, msgContent: ByteArray): List<AcidifyEvent> {
+    private suspend fun parseGroupRecall(bot: AbstractBot, msgContent: ByteArray): List<AcidifyEvent> {
         val wrapper = GroupGeneral0x2DC(msgContent)
         val body = wrapper.body
         val content = body.recall ?: return emptyList()
@@ -535,7 +535,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseGroupSubType16(
-        bot: Bot,
+        bot: AbstractBot,
         msgContent: ByteArray
     ): List<AcidifyEvent> {
         val wrapper = GroupGeneral0x2DC(msgContent)
@@ -548,7 +548,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseGroupReaction(
-        bot: Bot,
+        bot: AbstractBot,
         wrapper: GroupGeneral0x2DC,
         body: GroupGeneral0x2DC.Body
     ): List<AcidifyEvent> {
@@ -578,7 +578,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
     }
 
     private suspend fun parseGroupNameChange(
-        bot: Bot,
+        bot: AbstractBot,
         wrapper: GroupGeneral0x2DC,
         body: GroupGeneral0x2DC.Body
     ): List<AcidifyEvent> {

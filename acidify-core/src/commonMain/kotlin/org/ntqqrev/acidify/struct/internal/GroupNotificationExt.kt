@@ -1,13 +1,13 @@
 package org.ntqqrev.acidify.struct.internal
 
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.getUinByUid
 import org.ntqqrev.acidify.internal.proto.oidb.GroupNotification
 import org.ntqqrev.acidify.struct.BotGroupNotification
 import org.ntqqrev.acidify.struct.BotGroupNotification.*
 import org.ntqqrev.acidify.struct.RequestState
 
-internal suspend fun Bot.parseNotification(
+internal suspend fun AbstractBot.parseNotification(
     raw: GroupNotification,
     isFiltered: Boolean
 ): BotGroupNotification? {

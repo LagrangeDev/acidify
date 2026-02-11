@@ -17,7 +17,7 @@ import org.ntqqrev.acidify.struct.BotGroupFolderEntry
  * @param parentFolderId 父文件夹 ID，默认为根目录 "/"
  * @return 文件 ID
  */
-suspend fun Bot.uploadGroupFile(
+suspend fun AbstractBot.uploadGroupFile(
     groupUin: Long,
     fileName: String,
     fileData: ByteArray,
@@ -65,7 +65,7 @@ suspend fun Bot.uploadGroupFile(
  * @param fileData 文件数据
  * @return 文件 ID
  */
-suspend fun Bot.uploadPrivateFile(
+suspend fun AbstractBot.uploadPrivateFile(
     friendUin: Long,
     fileName: String,
     fileData: ByteArray
@@ -128,7 +128,7 @@ suspend fun Bot.uploadPrivateFile(
  * @param fileHash 文件的 TriSHA1 哈希值
  * @return 文件下载链接
  */
-suspend fun Bot.getPrivateFileDownloadUrl(
+suspend fun AbstractBot.getPrivateFileDownloadUrl(
     friendUin: Long,
     fileId: String,
     fileHash: String
@@ -147,7 +147,7 @@ suspend fun Bot.getPrivateFileDownloadUrl(
  * @param fileId 文件 ID
  * @return 文件下载链接
  */
-suspend fun Bot.getGroupFileDownloadUrl(
+suspend fun AbstractBot.getGroupFileDownloadUrl(
     groupUin: Long,
     fileId: String
 ): String = client.callService(
@@ -162,7 +162,7 @@ suspend fun Bot.getGroupFileDownloadUrl(
  * @param startIndex 起始索引，用于分页，默认为 0
  * @return 文件系统列表，包含文件列表、文件夹列表和是否到达末尾的标志
  */
-suspend fun Bot.getGroupFileList(
+suspend fun AbstractBot.getGroupFileList(
     groupUin: Long,
     targetDirectory: String = "/",
     startIndex: Int = 0
@@ -200,7 +200,7 @@ suspend fun Bot.getGroupFileList(
  * @param parentFolderId 父文件夹 ID
  * @param newFileName 新文件名
  */
-suspend fun Bot.renameGroupFile(
+suspend fun AbstractBot.renameGroupFile(
     groupUin: Long,
     fileId: String,
     parentFolderId: String,
@@ -222,7 +222,7 @@ suspend fun Bot.renameGroupFile(
  * @param parentFolderId 父文件夹 ID
  * @param targetFolderId 目标文件夹 ID
  */
-suspend fun Bot.moveGroupFile(
+suspend fun AbstractBot.moveGroupFile(
     groupUin: Long,
     fileId: String,
     parentFolderId: String,
@@ -242,7 +242,7 @@ suspend fun Bot.moveGroupFile(
  * @param groupUin 群号
  * @param fileId 文件 ID
  */
-suspend fun Bot.deleteGroupFile(
+suspend fun AbstractBot.deleteGroupFile(
     groupUin: Long,
     fileId: String
 ) = client.callService(
@@ -256,7 +256,7 @@ suspend fun Bot.deleteGroupFile(
  * @param folderName 文件夹名称
  * @return 文件夹 ID
  */
-suspend fun Bot.createGroupFolder(
+suspend fun AbstractBot.createGroupFolder(
     groupUin: Long,
     folderName: String
 ): String = client.callService(
@@ -270,7 +270,7 @@ suspend fun Bot.createGroupFolder(
  * @param folderId 文件夹 ID
  * @param newFolderName 新文件夹名称
  */
-suspend fun Bot.renameGroupFolder(
+suspend fun AbstractBot.renameGroupFolder(
     groupUin: Long,
     folderId: String,
     newFolderName: String
@@ -284,7 +284,7 @@ suspend fun Bot.renameGroupFolder(
  * @param groupUin 群号
  * @param folderId 文件夹 ID
  */
-suspend fun Bot.deleteGroupFolder(
+suspend fun AbstractBot.deleteGroupFolder(
     groupUin: Long,
     folderId: String
 ) = client.callService(

@@ -20,7 +20,7 @@ import kotlin.random.Random
  * @param random 消息随机数，默认随机生成，可用于 IM 开发
  * @param segments 消息段列表
  */
-suspend fun Bot.sendFriendMessage(
+suspend fun AbstractBot.sendFriendMessage(
     friendUin: Long,
     clientSequence: Long = Random.nextLong(),
     random: Int = Random.nextInt(),
@@ -57,7 +57,7 @@ suspend fun Bot.sendFriendMessage(
  * @param random 消息随机数，默认随机生成，可用于 IM 开发
  * @param builderAction 消息段构建器
  */
-suspend inline fun Bot.sendFriendMessage(
+suspend inline fun AbstractBot.sendFriendMessage(
     friendUin: Long,
     clientSequence: Long = Random.nextLong(),
     random: Int = Random.nextInt(),
@@ -76,7 +76,7 @@ suspend inline fun Bot.sendFriendMessage(
  * @param random 消息随机数，默认随机生成，可用于 IM 开发
  * @param segments 消息段列表
  */
-suspend fun Bot.sendGroupMessage(
+suspend fun AbstractBot.sendGroupMessage(
     groupUin: Long,
     clientSequence: Long = Random.nextLong(),
     random: Int = Random.nextInt(),
@@ -111,7 +111,7 @@ suspend fun Bot.sendGroupMessage(
  * @param random 消息随机数，默认随机生成，可用于 IM 开发
  * @param builderAction 消息段构建器
  */
-suspend inline fun Bot.sendGroupMessage(
+suspend inline fun AbstractBot.sendGroupMessage(
     groupUin: Long,
     clientSequence: Long = Random.nextLong(),
     random: Int = Random.nextInt(),
@@ -128,7 +128,7 @@ suspend inline fun Bot.sendGroupMessage(
  * @param friendUin 好友 QQ 号
  * @param sequence 消息序列号
  */
-suspend fun Bot.recallFriendMessage(
+suspend fun AbstractBot.recallFriendMessage(
     friendUin: Long,
     sequence: Long
 ) {
@@ -166,7 +166,7 @@ suspend fun Bot.recallFriendMessage(
  * @param groupUin 群号
  * @param sequence 消息序列号
  */
-suspend fun Bot.recallGroupMessage(groupUin: Long, sequence: Long) = client.callService(
+suspend fun AbstractBot.recallGroupMessage(groupUin: Long, sequence: Long) = client.callService(
     RecallGroupMessage,
     RecallGroupMessage.Req(
         groupUin = groupUin, sequence = sequence
@@ -179,7 +179,7 @@ suspend fun Bot.recallGroupMessage(groupUin: Long, sequence: Long) = client.call
  * @param limit 最多获取的消息数量，最大值为 30
  * @param startSequence 起始消息序列号（包含该序列号），为 `null` 则从最新消息开始获取
  */
-suspend fun Bot.getFriendHistoryMessages(
+suspend fun AbstractBot.getFriendHistoryMessages(
     friendUin: Long,
     limit: Int,
     startSequence: Long? = null
@@ -206,7 +206,7 @@ suspend fun Bot.getFriendHistoryMessages(
  * @param limit 最多获取的消息数量，最大值为 30
  * @param startSequence 起始消息序列号（包含该序列号），为 `null` 则从最新消息开始获取
  */
-suspend fun Bot.getGroupHistoryMessages(
+suspend fun AbstractBot.getGroupHistoryMessages(
     groupUin: Long,
     limit: Int,
     startSequence: Long? = null
@@ -229,7 +229,7 @@ suspend fun Bot.getGroupHistoryMessages(
 /**
  * 获取给定资源 ID 的下载链接，支持图片、语音、视频。
  */
-suspend fun Bot.getDownloadUrl(resourceId: String): String {
+suspend fun AbstractBot.getDownloadUrl(resourceId: String): String {
     if (resourceId.startsWith("http://") || resourceId.startsWith("https://"))
         return resourceId // direct URL
 
@@ -268,7 +268,7 @@ suspend fun Bot.getDownloadUrl(resourceId: String): String {
  * @param resId 合并转发消息的 resId
  * @return 转发消息列表
  */
-suspend fun Bot.getForwardedMessages(resId: String): List<BotForwardedMessage> {
+suspend fun AbstractBot.getForwardedMessages(resId: String): List<BotForwardedMessage> {
     return client.callService(RecvLongMsg, RecvLongMsg.Req(resId))
         .mapNotNull { parseForwardedMessage(it) }
 }
@@ -279,7 +279,7 @@ suspend fun Bot.getForwardedMessages(resId: String): List<BotForwardedMessage> {
  * @param startSequence 消息序列号，标记该序列号及之前的消息为已读
  * @param startTime 消息的 Unix 时间戳（秒）
  */
-suspend fun Bot.markFriendMessagesAsRead(
+suspend fun AbstractBot.markFriendMessagesAsRead(
     friendUin: Long,
     startSequence: Long,
     startTime: Long
@@ -298,7 +298,7 @@ suspend fun Bot.markFriendMessagesAsRead(
  * @param groupUin 群号
  * @param startSequence 消息序列号，标记该序列号及之前的消息为已读
  */
-suspend fun Bot.markGroupMessagesAsRead(
+suspend fun AbstractBot.markGroupMessagesAsRead(
     groupUin: Long,
     startSequence: Long
 ) = client.callService(

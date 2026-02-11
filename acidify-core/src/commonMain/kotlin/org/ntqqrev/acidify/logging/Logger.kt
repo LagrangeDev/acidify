@@ -2,7 +2,7 @@ package org.ntqqrev.acidify.logging
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import kotlin.js.JsName
 
 typealias MessageSupplier = suspend () -> String
@@ -12,7 +12,7 @@ typealias MessageSupplier = suspend () -> String
  * @property bot 关联的 Bot 实例
  * @property tag 日志标签，通常为完整类名
  */
-class Logger internal constructor(private val bot: Bot, val tag: String) {
+class Logger internal constructor(private val bot: AbstractBot, val tag: String) {
     private fun MutableSharedFlow<LogMessage>.emitAsync(message: LogMessage) {
         bot.launch {
             emit(message)

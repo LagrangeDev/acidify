@@ -2,22 +2,17 @@ package org.ntqqrev.acidify.message.internal
 
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
-import org.ntqqrev.acidify.Bot
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.internal.json.GroupEssenceMsgItem
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import org.ntqqrev.acidify.internal.proto.message.Elem
 import org.ntqqrev.acidify.internal.proto.message.PushMsgType
 import org.ntqqrev.acidify.internal.proto.message.extra.PrivateFileExtra
 import org.ntqqrev.acidify.internal.util.pbDecode
-import org.ntqqrev.acidify.message.BotEssenceMessage
-import org.ntqqrev.acidify.message.BotEssenceSegment
-import org.ntqqrev.acidify.message.BotForwardedMessage
-import org.ntqqrev.acidify.message.BotIncomingMessage
+import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.message.BotIncomingMessage.ExtraInfo
-import org.ntqqrev.acidify.message.BotIncomingSegment
-import org.ntqqrev.acidify.message.MessageScene
 
-internal fun Bot.parseMessage(raw: CommonMessage): BotIncomingMessage? {
+internal fun AbstractBot.parseMessage(raw: CommonMessage): BotIncomingMessage? {
     val contentHead = raw.contentHead
     val pushMsgType = PushMsgType.from(contentHead.type) ?: return null
     val draftMsg = buildDraftMessage(raw, pushMsgType) ?: return null
@@ -46,7 +41,7 @@ internal fun Bot.parseMessage(raw: CommonMessage): BotIncomingMessage? {
     ).apply { this.raw = raw }
 }
 
-private fun Bot.buildDraftMessage(raw: CommonMessage, pushMsgType: PushMsgType): BotIncomingMessage? {
+private fun AbstractBot.buildDraftMessage(raw: CommonMessage, pushMsgType: PushMsgType): BotIncomingMessage? {
     val routingHead = raw.routingHead
     val contentHead = raw.contentHead
 
@@ -88,7 +83,7 @@ private fun Bot.buildDraftMessage(raw: CommonMessage, pushMsgType: PushMsgType):
     }
 }
 
-internal inline fun Bot.buildSegments(
+internal inline fun AbstractBot.buildSegments(
     elems: List<Elem>,
     scene: MessageScene,
     onExtraInfo: ((ExtraInfo) -> Unit) = {}
@@ -123,7 +118,7 @@ internal inline fun Bot.buildSegments(
     return segments
 }
 
-internal fun Bot.parseForwardedMessage(raw: CommonMessage): BotForwardedMessage? {
+internal fun AbstractBot.parseForwardedMessage(raw: CommonMessage): BotForwardedMessage? {
     val routingHead = raw.routingHead
     val contentHead = raw.contentHead
     val senderName = routingHead.commonC2C.name.takeIf { it.isNotEmpty() }
