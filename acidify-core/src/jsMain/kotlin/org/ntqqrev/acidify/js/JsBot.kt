@@ -12,6 +12,7 @@ import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.message.BotForwardedMessage
 import org.ntqqrev.acidify.message.BotHistoryMessages
 import org.ntqqrev.acidify.message.BotOutgoingMessageResult
+import org.ntqqrev.acidify.message.BotOutgoingSegment
 import org.ntqqrev.acidify.struct.*
 import kotlin.js.Promise
 
@@ -152,6 +153,15 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
         }
     }
 
+    fun sendFriendMessageBySegments(
+        friendUin: Long,
+        clientSequence: Long,
+        random: Int,
+        segments: Array<BotOutgoingSegment>
+    ): Promise<BotOutgoingMessageResult> = promise {
+        bot.sendFriendMessage(friendUin, clientSequence, random, segments.toList())
+    }
+
     fun sendGroupMessage(
         groupUin: Long,
         build: (JsBotOutgoingMessageBuilder) -> Unit
@@ -172,6 +182,15 @@ class JsBot internal constructor(private val bot: Bot) : CoroutineScope by bot {
             val b = JsBotOutgoingMessageBuilder(this)
             build(b)
         }
+    }
+
+    fun sendGroupMessageBySegments(
+        groupUin: Long,
+        clientSequence: Long,
+        random: Int,
+        segments: Array<BotOutgoingSegment>
+    ): Promise<BotOutgoingMessageResult> = promise {
+        bot.sendGroupMessage(groupUin, clientSequence, random, segments.toList())
     }
 
     fun recallFriendMessage(friendUin: Long, sequence: Long) = promise {
