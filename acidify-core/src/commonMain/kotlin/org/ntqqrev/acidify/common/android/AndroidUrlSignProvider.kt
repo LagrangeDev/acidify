@@ -37,7 +37,7 @@ class AndroidUrlSignProvider(val url: String, val httpProxy: String? = null) : A
         version: String,
         qua: String
     ): SignResult {
-        val data = client.post(url) {
+        val data = client.post("$url/sign") {
             contentType(ContentType.Application.Json)
             setBody(
                 AndroidUrlSignRequest(
