@@ -216,5 +216,5 @@ suspend fun AndroidBot.login(
         }
     }
     sharedEventFlow.emit(AndroidSessionStoreUpdatedEvent(sessionStore))
-    // TODO: send online packet
+    online(preloadContacts)
 }

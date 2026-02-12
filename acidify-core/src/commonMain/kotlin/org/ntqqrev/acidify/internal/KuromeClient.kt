@@ -7,6 +7,8 @@ import org.ntqqrev.acidify.common.android.AndroidSignProvider
 import org.ntqqrev.acidify.exception.ServiceException
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.Service
+import org.ntqqrev.acidify.internal.service.system.AndroidHeartbeat
+import org.ntqqrev.acidify.internal.service.system.AndroidInfoSync
 import org.ntqqrev.acidify.logging.Logger
 
 internal class KuromeClient(
@@ -511,11 +513,7 @@ internal class KuromeClient(
         return service.parse(this, resp.response)
     }
 
-    override suspend fun sendHeartbeat() {
-        TODO("Not yet implemented")
-    }
+    override suspend fun sendHeartbeat() = callService(AndroidHeartbeat)
 
-    override suspend fun sendOnlinePacket() {
-        TODO("Not yet implemented")
-    }
+    override suspend fun sendOnlinePacket() = callService(AndroidInfoSync)
 }
