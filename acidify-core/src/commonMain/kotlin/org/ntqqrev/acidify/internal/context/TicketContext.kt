@@ -8,6 +8,9 @@ import io.ktor.client.request.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.ntqqrev.acidify.internal.AbstractClient
+import org.ntqqrev.acidify.internal.KuromeClient
+import org.ntqqrev.acidify.internal.LagrangeClient
+import org.ntqqrev.acidify.internal.service.system.AndroidFetchClientKey
 import org.ntqqrev.acidify.internal.service.system.FetchClientKey
 import org.ntqqrev.acidify.internal.service.system.FetchPSKey
 import kotlin.time.Clock
@@ -49,7 +52,10 @@ internal class TicketContext(client: AbstractClient) : AbstractContext(client) {
         if (currentSKey.isValid()) {
             return currentSKey.value
         }
-        val clientKey = client.callService(FetchClientKey)
+        val clientKey = when (client) {
+            is LagrangeClient -> client.callService(FetchClientKey)
+            is KuromeClient -> client.callService(AndroidFetchClientKey)
+        }
         val jump =
             "https%3A%2F%2Fh5.qzone.qq.com%2Fqqnt%2Fqzoneinpcqq%2Ffriend%3Frefresh%3D0%26clientuin%3D0%26darkMode%3D0&keyindex=19&random=2599"
         val urlString = "https://ssl.ptlogin2.qq.com/jump" +
