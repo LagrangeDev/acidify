@@ -119,6 +119,7 @@ bin/
 ### Acidify ###
 config.json
 session-store.json
+session-store-*.json
 qrcode.png
 logs/
 yogurt*/scripts/
