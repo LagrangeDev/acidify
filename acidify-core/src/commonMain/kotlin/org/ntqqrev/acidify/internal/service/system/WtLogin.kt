@@ -22,19 +22,17 @@ internal abstract class WtLogin<T, R>(
     private val secp192k1BobPublicKey =
         "04928D8850673088B343264E0C6BACB8496D697799F37211DEB25BB73906CB089FEA9639B4E0260498B51A992D50813DA8".hexToByteArray()
     private val secp192k1 = Ecdh.generateKeyPair(Ecdh.Secp192K1)
+    private val shareKey = Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
 
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
     override fun build(client: AbstractClient, payload: T): ByteArray {
-        val encrypted = TEA.encrypt(
-            data = buildWtLoginPayload(client, payload),
-            key = Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
-        )
+        val encrypted = TEA.encrypt(buildWtLoginPayload(client, payload), shareKey)
         val packet = Buffer()
         packet.writeByte(2)
         packet.barrier(Prefix.UINT_16 or Prefix.INCLUDE_PREFIX, 1) {
             writeShort(8001)
-            writeShort(short = wtLoginSubCmd)
+            writeShort(wtLoginSubCmd)
             writeShort(0) // sequence
             writeUInt(client.uin.toUInt()) // uin
             writeByte(3) // extVer
@@ -63,10 +61,7 @@ internal abstract class WtLogin<T, R>(
         if (header != 0x02.toByte()) throw Exception("Invalid Header")
         reader.skip(15) // internalLength(2) + ver(2) + cmd(2) + sequence(2) + uin(4) + flag(1) + retryTime(2)
         val encrypted = reader.readByteArray(reader.remaining - 1)
-        val decrypted = TEA.decrypt(
-            encrypted,
-            Ecdh.keyExchange(secp192k1, secp192k1BobPublicKey, true)
-        )
+        val decrypted = TEA.decrypt(encrypted, shareKey)
         if (reader.readByte() != 0x03.toByte()) throw Exception("Packet end not found")
         return parseWtLoginPayload(
             client = client,
@@ -326,9 +321,9 @@ internal abstract class WtLogin<T, R>(
                 tlv18()
                 tlv1()
                 tlv106Pwd()
+                tlv116()
                 tlv100()
                 tlv107()
-                tlv116()
                 tlv142()
                 tlv144Report()
                 tlv145()

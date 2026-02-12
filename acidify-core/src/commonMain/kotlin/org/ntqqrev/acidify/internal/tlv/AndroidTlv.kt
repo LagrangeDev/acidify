@@ -20,7 +20,7 @@ internal class AndroidTlv(val client: KuromeClient) : TlvBuilder() {
 
     fun tlv8() = writeTlv(0x8u) {
         writeUShort(0u)
-        writeUShort(2052u) // locale_id
+        writeInt(2052) // locale_id
         writeUShort(0u)
     }
 
