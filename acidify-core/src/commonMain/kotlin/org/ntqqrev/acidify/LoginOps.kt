@@ -7,6 +7,7 @@ import org.ntqqrev.acidify.event.QRCodeStateQueryEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.crypto.pow.POW
+import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.proto.system.AndroidThirdPartyLoginResponse
 import org.ntqqrev.acidify.internal.service.system.WtLogin
 import org.ntqqrev.acidify.internal.util.*
@@ -178,34 +179,41 @@ suspend fun AndroidBot.login(
         throw WtLoginException(result.state.toInt(), "", "")
     }
 
+    val internalTlvPack = TEA.decrypt(result.tlvPack[0x119u]!!, client.sessionStore.wloginSigs.tgtgtKey)
+        .parseTlv()
+
     sessionStore.apply {
-        wloginSigs.stWeb = result.tlvPack[0x103u]!!
-        wloginSigs.d2 = result.tlvPack[0x143u]!!
-        wloginSigs.ksid = result.tlvPack[0x108u]!!
-        wloginSigs.a2 = result.tlvPack[0x10Au]!!
-        wloginSigs.a1Key = result.tlvPack[0x10Cu]!!
-        wloginSigs.a2Key = result.tlvPack[0x10Du]!!
-        wloginSigs.stKey = result.tlvPack[0x10Eu]!!
-        wloginSigs.st = result.tlvPack[0x114u]!!
-        // result.tlvPack[0x11Au]!!let { /* save age, gender, nickname */ }
-        wloginSigs.sKey = result.tlvPack[0x120u]!!
-        wloginSigs.wtSessionTicket = result.tlvPack[0x133u]!!
-        wloginSigs.wtSessionTicketKey = result.tlvPack[0x134u]!!
-        wloginSigs.d2Key = result.tlvPack[0x305u]!!
-        wloginSigs.a1 = result.tlvPack[0x106u]!!
-        wloginSigs.noPicSig = result.tlvPack[0x16Au]!!
-        wloginSigs.superKey = result.tlvPack[0x16Du]!!
-        wloginSigs.psKey = mutableMapOf<String, String>().apply {
-            val tlv512Reader = result.tlvPack[0x512u]!!.reader()
-            val domainCount = tlv512Reader.readUShort()
-            repeat(domainCount.toInt()) {
-                val domain = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
-                val key = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
-                val pt4Token = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
-                this[domain] = key
+        internalTlvPack[0x103u]?.let { wloginSigs.stWeb = it }
+        internalTlvPack[0x143u]?.let { wloginSigs.d2 = it }
+        internalTlvPack[0x108u]?.let { wloginSigs.ksid = it }
+        internalTlvPack[0x10Au]?.let { wloginSigs.a2 = it }
+        internalTlvPack[0x10Cu]?.let { wloginSigs.a1Key = it }
+        internalTlvPack[0x10Du]?.let { wloginSigs.a2Key = it }
+        internalTlvPack[0x10Eu]?.let { wloginSigs.stKey = it }
+        internalTlvPack[0x114u]?.let { wloginSigs.st = it }
+        // internalTlvPack[0x11Au]?.let { /* save age, gender, nickname */ }
+        internalTlvPack[0x120u]?.let { wloginSigs.sKey = it }
+        internalTlvPack[0x133u]?.let { wloginSigs.wtSessionTicket = it }
+        internalTlvPack[0x134u]?.let { wloginSigs.wtSessionTicketKey = it }
+        internalTlvPack[0x305u]?.let { wloginSigs.d2Key = it }
+        internalTlvPack[0x106u]?.let { wloginSigs.a1 = it }
+        internalTlvPack[0x16Au]?.let { wloginSigs.noPicSig = it }
+        internalTlvPack[0x16Du]?.let { wloginSigs.superKey = it }
+        internalTlvPack[0x512u]?.let {
+            wloginSigs.psKey = mutableMapOf<String, String>().apply {
+                val tlv512Reader = it.reader()
+                val domainCount = tlv512Reader.readUShort()
+                repeat(domainCount.toInt()) {
+                    val domain = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                    val key = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                    val pt4Token = tlv512Reader.readPrefixedString(Prefix.UINT_16 or Prefix.LENGTH_ONLY)
+                    this[domain] = key
+                }
             }
         }
-        uid = result.tlvPack[0x543u]!!.pbDecode<AndroidThirdPartyLoginResponse>().commonInfo.rspNT.uid
+        internalTlvPack[0x543u]?.let {
+            uid = it.pbDecode<AndroidThirdPartyLoginResponse>().commonInfo.rspNT.uid
+        }
     }
     sharedEventFlow.emit(AndroidSessionStoreUpdatedEvent(sessionStore))
     // TODO: send online packet
