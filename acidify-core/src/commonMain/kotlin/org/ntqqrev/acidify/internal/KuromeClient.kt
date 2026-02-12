@@ -513,7 +513,5 @@ internal class KuromeClient(
         return service.parse(this, resp.response)
     }
 
-    override suspend fun sendHeartbeat() = callService(AndroidHeartbeat)
-
     override suspend fun sendOnlinePacket() = callService(AndroidInfoSync)
 }

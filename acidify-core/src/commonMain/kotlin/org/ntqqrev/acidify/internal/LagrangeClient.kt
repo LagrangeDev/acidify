@@ -100,7 +100,5 @@ internal class LagrangeClient(
         return service.parse(this, resp.response)
     }
 
-    override suspend fun sendHeartbeat() = callService(Heartbeat)
-
     override suspend fun sendOnlinePacket() = callService(BotOnline)
 }
