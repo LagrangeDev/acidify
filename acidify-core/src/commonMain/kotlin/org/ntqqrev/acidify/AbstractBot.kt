@@ -26,7 +26,7 @@ import org.ntqqrev.acidify.logging.loggingTag
 import org.ntqqrev.acidify.struct.BotFaceDetail
 import kotlin.js.JsName
 
-abstract class AbstractBot(scope: CoroutineScope) : CoroutineScope by scope {
+sealed class AbstractBot(scope: CoroutineScope) : CoroutineScope by scope {
     internal abstract val client: AbstractClient
 
     internal val logger = this.createLogger(this)
