@@ -8,6 +8,7 @@ plugins {
     id("buildsrc.convention.kotlin-multiplatform")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.build.konfig)
+    alias(libs.plugins.kotlinx.atomicfu)
 }
 
 version = "0.1.0"
