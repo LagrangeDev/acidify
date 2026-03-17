@@ -11,7 +11,7 @@ kx-datetime = "0.7.1-0.6.x-compat"
 kx-atomicfu = "0.31.0"
 ktor = "3.4.1"
 
-milky = "1.2.0-RC2"
+milky = "1.2.0-RC3.1"
 acidify-codec = "0.1.0"
 kompress = "1.3.1"
 qr-matrix = "0.1.0"
