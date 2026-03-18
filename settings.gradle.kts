@@ -18,6 +18,7 @@ plugins {
 
 include(
     ":acidify-core",
+    ":acidify-core-lagrange-sign-provider",
     ":acidify-core-runner",
     ":yogurt",
     ":yogurt-jvm",

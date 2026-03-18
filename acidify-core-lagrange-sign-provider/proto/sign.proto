@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+option csharp_namespace = "Lagrange.Core.Server";
+
+package org.ntqqrev.acidify.lagrange.sign;
+
+// Sign provides QQ protocol security signing operations.
+//
+// All RPCs require a bearer token with the Sign permission.
+service Sign {
+  // GetSecSign generates a security signature for a QQ protocol command.
+  rpc GetSecSign(GetSecSignRequest) returns (GetSecSignResponse);
+}
+
+// Request payload for GetSecSign.
+message GetSecSignRequest {
+  // QQ account UIN.
+  int64 uin = 1;
+
+  // Protocol command name.
+  string command = 2;
+
+  // Packet sequence number.
+  int32 seq = 3;
+
+  // Raw packet body.
+  bytes body = 4;
+
+  // Device GUID.
+  bytes guid = 5;
+
+  // QUA (QQ User Agent) string.
+  string qua = 6;
+}
+
+// Response payload for GetSecSign.
+message GetSecSignResponse {
+  // Generated security signature.
+  bytes sec_sign = 1;
+
+  // Security token. This is currently empty in the documented server behavior.
+  bytes sec_token = 2;
+
+  // Serialized SecExtra protobuf payload.
+  bytes sec_extra = 3;
+}
+
+// Additional metadata serialized into GetSecSignResponse.sec_extra.
+message SecExtra {
+  // UUID extracted from the payload.
+  bytes sec_uuid = 1;
+
+  // QUA string.
+  string qua = 2;
+
+  // Device token.
+  string device_token = 3;
+}

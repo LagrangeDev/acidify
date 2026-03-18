@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+option csharp_namespace = "Lagrange.Core.Server";
+
+package org.ntqqrev.acidify.lagrange.channel;
+
+// Channel provides secure channel operations backed by an established share key.
+//
+// All RPCs require a bearer token with the Channel permission.
+service Channel {
+  // EstablishShareKey performs ECDH key exchange and encrypts the payload
+  // with the negotiated shared key.
+  rpc EstablishShareKey(EstablishShareKeyRequest) returns (EstablishShareKeyResponse);
+
+  // ParseEstablishShareKey decrypts a payload produced by EstablishShareKey.
+  rpc ParseEstablishShareKey(ParseEstablishShareKeyRequest) returns (ParseEstablishShareKeyResponse);
+
+  // SecureAccess encrypts a payload with an already established shared key.
+  rpc SecureAccess(SecureAccessRequest) returns (SecureAccessResponse);
+
+  // ParseSecureAccess decrypts a payload produced by SecureAccess.
+  rpc ParseSecureAccess(ParseSecureAccessRequest) returns (ParseSecureAccessResponse);
+}
+
+// Request payload for EstablishShareKey.
+message EstablishShareKeyRequest {
+  // QQ account UIN.
+  int64 uin = 1;
+
+  // Protocol command name.
+  string command = 2;
+
+  // Raw payload to encrypt.
+  bytes payload = 3;
+}
+
+// Response payload for EstablishShareKey.
+message EstablishShareKeyResponse {
+  // Echo of request command.
+  string command = 1;
+
+  // Server ECDH public key in compressed form.
+  bytes public_key = 2;
+
+  // Derived shared data represented as a hexadecimal string.
+  string sec_shared_data = 4;
+
+  // AES-GCM encrypted payload.
+  bytes payload = 5;
+
+  // Random 32-byte UUID for the session.
+  bytes sec_uuid = 6;
+
+  // Protocol version. The documented value is always 3.
+  int32 version = 8;
+}
+
+// Request payload for SecureAccess.
+message SecureAccessRequest {
+  // QQ account UIN.
+  int64 uin = 1;
+
+  // Protocol command name.
+  string command = 2;
+
+  // Raw payload to encrypt.
+  bytes payload = 3;
+}
+
+// Response payload for SecureAccess.
+message SecureAccessResponse {
+  // Echo of request command.
+  string command = 1;
+
+  // AES-GCM encrypted payload.
+  bytes payload = 2;
+
+  // Session UUID.
+  bytes sec_uuid = 3;
+}
+
+// Request payload for ParseEstablishShareKey.
+message ParseEstablishShareKeyRequest {
+  // QQ account UIN.
+  int64 uin = 1;
+
+  // AES-GCM encrypted payload to decrypt.
+  bytes payload = 2;
+}
+
+// Response payload for ParseEstablishShareKey.
+message ParseEstablishShareKeyResponse {
+  // Decrypted payload.
+  bytes payload = 1;
+}
+
+// Request payload for ParseSecureAccess.
+message ParseSecureAccessRequest {
+  // QQ account UIN.
+  int64 uin = 1;
+
+  // AES-GCM encrypted payload to decrypt.
+  bytes payload = 2;
+}
+
+// Response payload for ParseSecureAccess.
+message ParseSecureAccessResponse {
+  // Decrypted payload.
+  bytes payload = 1;
+}
