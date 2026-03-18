@@ -56,6 +56,24 @@ data class AppInfo(
             ntLoginType = 1
         )
 
+        val Linux_46494 = AppInfo(
+            os = "Linux",
+            kernel = "Linux",
+            vendorOs = "linux",
+            currentVersion = "3.2.26-46494",
+            miscBitmap = 32764,
+            ptVersion = "2.0.0",
+            ssoVersion = 19,
+            packageName = "com.tencent.qq",
+            wtLoginSdk = "nt.wtlogin.0.0.1",
+            appId = 1600001615,
+            subAppId = 537345891,
+            appClientVersion = 46494,
+            mainSigMap = 169742560,
+            subSigMap = 0,
+            ntLoginType = 1,
+        )
+
         val Linux = Linux_39038
     }
 }
