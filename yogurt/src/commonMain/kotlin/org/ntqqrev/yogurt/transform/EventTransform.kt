@@ -21,7 +21,7 @@ suspend fun Application.transformAcidifyEvent(event: AcidifyEvent): Event? {
         )
 
         is MessageReceiveEvent -> {
-            if (config.reportSelfMessage || event.message.senderUin != bot.uin) {
+            if (config.milky.reportSelfMessage || event.message.senderUin != bot.uin) {
                 Event.MessageReceive(
                     time = Clock.System.now().epochSeconds,
                     selfId = bot.uin,

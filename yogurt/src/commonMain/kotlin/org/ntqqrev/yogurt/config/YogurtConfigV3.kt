@@ -1,0 +1,72 @@
+package org.ntqqrev.yogurt.config
+
+import com.github.ajalt.mordant.rendering.AnsiLevel
+import kotlinx.serialization.Serializable
+import org.ntqqrev.acidify.logging.LogLevel
+
+@Serializable
+data class YogurtConfigV3(
+    val configVersion: Int = 3,
+    val protocol: ProtocolConfig = ProtocolConfig(),
+    val milky: MilkyConfig = MilkyConfig(),
+    val logging: LoggingConfig = LoggingConfig(),
+    val security: SecurityConfig = SecurityConfig(),
+) {
+    @Serializable
+    data class ProtocolConfig(
+        val os: String = "Linux",
+        val version: String = "fetched",
+        val signApiUrl: String = "",
+
+        // PC specific fields
+        val pcUseLagrangeSign: Boolean = false,
+
+        // Android specific fields
+        val androidCredentials: AndroidCredentials = AndroidCredentials(),
+        val androidUseLegacySign: Boolean = false,
+    ) {
+        @Serializable
+        data class AndroidCredentials(
+            val uin: Long = 0L,
+            val password: String = "",
+        )
+    }
+
+    @Serializable
+    data class MilkyConfig(
+        val http: HttpConfig = HttpConfig(),
+        val webhook: WebhookConfig = WebhookConfig(),
+        val reportSelfMessage: Boolean = true,
+        val preloadContacts: Boolean = false,
+    ) {
+        @Serializable
+        data class HttpConfig(
+            val host: String = "127.0.0.1",
+            val port: Int = 3000,
+            val accessToken: String = "",
+            val corsOrigins: List<String> = listOf(),
+        )
+
+        @Serializable
+        data class WebhookConfig(
+            val endpoints: List<Endpoint> = emptyList(),
+        ) {
+            @Serializable
+            data class Endpoint(
+                val url: String = "",
+                val accessToken: String = "",
+            )
+        }
+    }
+
+    @Serializable
+    data class LoggingConfig(
+        val ansiLevel: AnsiLevel = AnsiLevel.ANSI256,
+        val coreLogLevel: LogLevel = LogLevel.DEBUG,
+    )
+
+    @Serializable
+    data class SecurityConfig(
+        val skipOnLaunchListenAddressCheck: Boolean = false,
+    )
+}

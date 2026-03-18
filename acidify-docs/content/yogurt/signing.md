@@ -6,7 +6,7 @@
 
 ## PC 签名
 
-设配置文件中填写的 Sign API URL 为 `$BASE`。
+设配置文件中的 `protocol.signApiUrl` 为 `$BASE`。
 
 ### POST `$BASE`
 
@@ -78,7 +78,7 @@ Content-Type: application/json
 
 ## Android 签名
 
-设配置文件中填写的 Sign API URL 为 `$BASE`。
+设配置文件中的 `protocol.signApiUrl` 为 `$BASE`。
 
 ### POST `$BASE/sign`
 
@@ -188,9 +188,9 @@ Content-Type: application/json
 
 > [!note]
 > 
-> 此节介绍的是已成为另一种既定标准的 Android 签名 API 规范，仍有部分用户在使用，且 Yogurt 仍然支持此种规范的签名 API，因此在此保留相关说明。在使用 Legacy 签名 API 时，请将 `config.json` 中的 `androidUseLegacySign` 设为 `true`。
+> 此节介绍的是已成为另一种既定标准的 Android 签名 API 规范，仍有部分用户在使用，且 Yogurt 仍然支持此种规范的签名 API，因此在此保留相关说明。在使用 Legacy 签名 API 时，请将 `config.json` 中的 `protocol.androidUseLegacySign` 设为 `true`。
 
-设配置文件中填写的 Sign API URL 为 `$BASE`。
+设配置文件中的 `protocol.signApiUrl` 为 `$BASE`。
 
 ### POST `$BASE/sign`
 

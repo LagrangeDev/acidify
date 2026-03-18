@@ -23,7 +23,7 @@ import org.ntqqrev.yogurt.transform.transformAcidifyEvent
 import org.ntqqrev.yogurt.util.logHandler
 
 suspend fun Application.initializePC(): Bot {
-    val signProvider = UrlSignProvider(config.signApiUrl)
+    val signProvider = UrlSignProvider(config.protocol.signApiUrl)
     val sessionStore: SessionStore = if (SystemFileSystem.exists(sessionStorePath)) {
         SystemFileSystem.source(sessionStorePath).buffered().use {
             SessionStore.fromJson(it.readString())
@@ -69,39 +69,39 @@ suspend fun Application.initializePC(): Bot {
 }
 
 suspend fun Application.initializeAndroid(): AndroidBot {
-    require(config.androidCredentials.uin != 0L && config.androidCredentials.password.isNotEmpty()) {
+    require(config.protocol.androidCredentials.uin != 0L && config.protocol.androidCredentials.password.isNotEmpty()) {
         "请在配置文件中填写 androidCredentials 的 uin 和 password 字段"
     }
     val sessionStore: AndroidSessionStore = if (SystemFileSystem.exists(androidSessionStorePath)) {
         SystemFileSystem.source(androidSessionStorePath).buffered().use {
             AndroidSessionStore.fromJson(it.readString())
         }.takeIf {
-            it.uin == config.androidCredentials.uin && it.password == config.androidCredentials.password
+            it.uin == config.protocol.androidCredentials.uin && it.password == config.protocol.androidCredentials.password
         } ?: run {
             t.println("找到的 SessionStore 与配置的 uin 不匹配，正在创建新的 SessionStore...")
             AndroidSessionStore.empty(
-                uin = config.androidCredentials.uin,
-                password = config.androidCredentials.password
+                uin = config.protocol.androidCredentials.uin,
+                password = config.protocol.androidCredentials.password
             )
         }
     } else AndroidSessionStore.empty(
-        uin = config.androidCredentials.uin,
-        password = config.androidCredentials.password
+        uin = config.protocol.androidCredentials.uin,
+        password = config.protocol.androidCredentials.password
     ).also {
         t.println("未找到 Android SessionStore，正在创建新的 SessionStore 并保存到文件...")
         SystemFileSystem.sink(androidSessionStorePath).buffered().use { sink ->
             sink.writeString(it.toJson())
         }
     }
-    val signProvider: AndroidSignProvider = if (!config.androidUseLegacySign) {
-        AndroidUrlSignProvider(config.signApiUrl)
+    val signProvider: AndroidSignProvider = if (!config.protocol.androidUseLegacySign) {
+        AndroidUrlSignProvider(config.protocol.signApiUrl)
     } else {
         val (fullVersion, fekitVersion) = bundledAndroidLegacyAppInfo[config.protocol.version]
             ?: throw IllegalStateException(
                 "未找到协议版本 ${config.protocol.version} 对应的 fullVersion 和 fekitVersion，请检查配置或联系开发者添加支持"
             )
         AndroidLegacyUrlSignProvider(
-            url = config.signApiUrl,
+            url = config.protocol.signApiUrl,
             fullVersion = fullVersion,
             fekitVersion = fekitVersion,
             androidId = sessionStore.androidId,
@@ -148,7 +148,7 @@ suspend fun Application.initializeAndroid(): AndroidBot {
 
 suspend fun Application.botLogin() {
     when (val bot = dependencies.resolve<AbstractBot>()) {
-        is Bot -> bot.login(preloadContacts = config.preloadContacts)
+        is Bot -> bot.login(preloadContacts = config.milky.preloadContacts)
         is AndroidBot -> {
             fun onRequireCaptchaTicket(captchaUrl: String): String {
                 val queryParams = captchaUrl.split("?")[1].replace("uin=0", "uin=${bot.uin}")
@@ -168,7 +168,7 @@ suspend fun Application.botLogin() {
                 bot.login(
                     ::onRequireCaptchaTicket,
                     ::onRequireSmsCode,
-                    preloadContacts = config.preloadContacts,
+                    preloadContacts = config.milky.preloadContacts,
                 )
             } catch (e: UnstableNetworkException) {
                 t.println("发生 code=237 错误，可能是 Ticket 验证失败或网络环境不稳定，请更换网络环境后重试登录；")

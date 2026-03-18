@@ -4,32 +4,38 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
 
 ```json
 {
-  "configVersion": 2,
-  "signApiUrl": "...",
+  "configVersion": 3,
   "protocol": {
     "os": "Linux",
-    "version": "fetched"
+    "version": "fetched",
+    "signApiUrl": "...",
+    "pcUseLagrangeSign": false,
+    "androidCredentials": {
+      "uin": 0,
+      "password": ""
+    },
+    "androidUseLegacySign": false
   },
-  "androidCredentials": {
-    "uin": 0,
-    "password": ""
+  "milky": {
+    "http": {
+      "host": "127.0.0.1",
+      "port": 3000,
+      "accessToken": "",
+      "corsOrigins": []
+    },
+    "webhook": {
+      "endpoints": []
+    },
+    "reportSelfMessage": true,
+    "preloadContacts": false
   },
-  "androidUseLegacySign": false,
-  "reportSelfMessage": true,
-  "preloadContacts": false,
-  "transformIncomingMFaceToImage": false,
-  "httpConfig": {
-    "host": "127.0.0.1",
-    "port": 3000,
-    "accessToken": "",
-    "corsOrigins": []
-  },
-  "webhookConfig": [],
   "logging": {
     "ansiLevel": "ANSI256",
     "coreLogLevel": "DEBUG"
   },
-  "skipSecurityCheck": false
+  "security": {
+    "skipOnLaunchListenAddressCheck": false
+  }
 }
 ```
 
@@ -37,15 +43,15 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
 
 ### `configVersion`
 
-配置文件版本号。当前版本为 `2`。
+配置文件版本号。当前版本为 `3`。
 
-如果读取到没有该字段的旧版配置文件，Yogurt 会将其视为 V1 配置，并在启动时自动迁移到 V2 格式后重写回 `config.json`。
+如果读取到没有该字段的旧版配置文件，Yogurt 会将其视为 V1 配置；读取到 `configVersion = 2` 的配置文件时，则会将其视为 V2 配置。两者都会在启动时自动迁移到 V3 格式后重写回 `config.json`。
 
-### `signApiUrl`
+### `protocol.signApiUrl`
 
 签名服务地址。这是 Yogurt 赖以运行的关键配置项。Yogurt 本身并不处理数据包的签名，而是将这些工作交给一个单独的签名服务来完成。
 
-在 `androidUseLegacySign` 设置为 `true` 时，可以在 URL 中使用 Basic Auth 进行身份验证，并且添加自定义的 Query Parameter，例如 `https://username:password@example.com/?key=1`。
+在 `protocol.androidUseLegacySign` 设置为 `true` 时，可以在 URL 中使用 Basic Auth 进行身份验证，并且添加自定义的 Query Parameter，例如 `https://username:password@example.com/?key=1`。
 
 ### `protocol.os`
 
@@ -57,7 +63,7 @@ Yogurt 使用的协议类型。可选值有：
 - `AndroidPhone`
 - `AndroidPad`
 
-请注意并非所有协议类型都一定可用，需要与提供的 `signApiUrl` 对应的签名服务相匹配。
+请注意并非所有协议类型都一定可用，需要与提供的 `protocol.signApiUrl` 对应的签名服务相匹配。
 
 ### `protocol.version`
 
@@ -77,7 +83,13 @@ Yogurt 使用的协议类型。可选值有：
 > 
 > 如果你认为某个协议版本缺失，或者希望添加对某个新版本的支持，可以提交 Pull Request 或 Issue 以添加。
 
-### `androidCredentials`
+### `protocol.pcUseLagrangeSign`
+
+是否使用的是新版 Lagrange Sign API。如果你不确定是否使用的是新版 API，请保持默认值 `false`。
+
+设为 `true` 时，将不能使用 `fetched` 版本，必须指定具体的协议版本号。
+
+### `protocol.androidCredentials`
 
 在使用 `AndroidPhone` 或 `AndroidPad` 协议时，需要提供的登录凭据，包含 `uin`（QQ 号）和 `password`（密码）。
 
@@ -85,68 +97,25 @@ Yogurt 使用的协议类型。可选值有：
 > 
 > 由于密码在 `config.json` 中以明文形式保存，请务必妥善保管该文件，避免泄露。此外，也要谨防 `session-store.json` 和 `session-store-android.json` 文件泄露。
 
-### `androidUseLegacySign`
+### `protocol.androidUseLegacySign`
 
 是否使用的是旧版的 Android Sign API（需要进行设备 Register 操作，不支持 `/get_tlv553` 端点）。
 
 如果你在使用兼容 ICQQ 的签名服务时遇到登录问题，可以尝试将该选项设置为 `true`。如果你不确定使用的是否为旧版 API，请保持默认值 `false`，出现登录问题时再尝试将其设置为 `true`。
 
-### `reportSelfMessage`
+### `milky.reportSelfMessage`
 
 是否上报自己发送的消息。
 
-### `preloadContacts`
+### `milky.preloadContacts`
 
 是否在启动时预加载联系人列表。预加载联系人列表可以提升部分操作的响应速度，同时修复部分情况下无法解析 uid 的问题，但会显著增加启动时间和内存占用。
 
-### `transformIncomingMFaceToImage`
-
-> [!note]
->
-> 这一配置项为兼容 Milky 1.0 而保留。在 Milky 1.1+ 版本中，市场表情（`market_face`）消息段已包含完整的元信息。
-
-是否将接收的市场表情消息段转换成普通的图片消息段。如果为 `true`，则转换的具体格式如下：
-
-```json
-{
-  "type": "image",
-  "data": {
-    "resource_id": "市场表情的 URL",
-    "temp_url": "市场表情的 URL",
-    "width": 300,
-    "height": 300,
-    "summary": "市场表情的描述文本",
-    "sub_type": "sticker"
-  }
-}
-```
-
-### `httpConfig` 和 `webhookConfig`
+### `milky.http` 和 `milky.webhook.endpoints`
 
 Milky 协议服务的有关配置，参考 [Milky 文档的“通信”部分](https://milky.ntqqrev.org/guide/communication)。
 
-`webhookConfig` 在当前版本中是一个数组，数组中的每个元素都表示一个独立的 Webhook 目标，包含 `url` 和 `accessToken` 两个字段。例如：
-
-```json
-{
-  "webhookConfig": [
-    {
-      "url": "https://example.com/webhook-a",
-      "accessToken": "token-a"
-    },
-    {
-      "url": "https://example.com/webhook-b",
-      "accessToken": ""
-    }
-  ]
-}
-```
-
-> [!note]
-> 
-> 旧版 V1 配置仍然兼容。若读取到旧格式的 `webhookConfig`，Yogurt 会在启动时自动将其转换并重写为当前的 V2 格式。
-
-### `httpConfig.corsOrigins`
+### `milky.http.corsOrigins`
 
 允许跨域请求的来源列表。若为空数组，则允许所有来源。
 
@@ -156,10 +125,11 @@ Milky 协议服务的有关配置，参考 [Milky 文档的“通信”部分](h
 
 Yogurt 日志中 ANSI 颜色的输出级别。可选值有 `NONE`, `ANSI16`, `ANSI256` 和 `TRUECOLOR`。如果不设置该配置项，则默认使用 `ANSI256`。如果你的终端不支持 ANSI 颜色，可以将该配置项设置为 `NONE` 来禁用颜色输出，或降级到 `ANSI16`。更详细的说明请参考 [Mordant 文档中的 AnsiLevel](https://ajalt.github.io/mordant/api/mordant/com.github.ajalt.mordant.rendering/-ansi-level/index.html)。
 
-### `skipSecurityCheck`
+### `security.skipOnLaunchListenAddressCheck`
 
-是否跳过安全检查。安全检查的内容目前有：
-- 检测是否在非 Docker 环境下将 HTTP 服务绑定到 `0.0.0.0` 并且未设置访问令牌。
+是否跳过检测是否在非 Docker 环境下将 HTTP 服务绑定到 `0.0.0.0` 并且未设置访问令牌。
+
+设为 `false` 时，如果符合上述条件，Yogurt 会在启动时打印一条警告信息并延迟 10 秒，以提醒用户注意安全风险。为 `true` 时，则会跳过检查和警告。
 
 ## 日志配置
 

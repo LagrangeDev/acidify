@@ -5,14 +5,14 @@ import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.ntqqrev.acidify.AbstractBot
-import org.ntqqrev.acidify.codec.*
+import org.ntqqrev.acidify.codec.ImageInfo
+import org.ntqqrev.acidify.codec.calculatePcmDuration
+import org.ntqqrev.acidify.codec.getImageInfo
 import org.ntqqrev.acidify.getDownloadUrl
 import org.ntqqrev.acidify.getFriend
 import org.ntqqrev.acidify.getGroup
 import org.ntqqrev.acidify.message.*
-import org.ntqqrev.acidify.message.ImageFormat
 import org.ntqqrev.milky.*
-import org.ntqqrev.yogurt.YogurtApp
 import org.ntqqrev.yogurt.util.FFMpegCodec
 import org.ntqqrev.yogurt.util.resolveUri
 
@@ -153,28 +153,15 @@ suspend fun Application.transformSegment(segment: BotIncomingSegment): IncomingS
             )
         )
 
-        is BotIncomingSegment.MarketFace -> if (YogurtApp.config.transformIncomingMFaceToImage) {
-            IncomingSegment.Image(
-                data = IncomingSegment.Image.Data(
-                    resourceId = segment.url,
-                    tempUrl = segment.url,
-                    width = 300,
-                    height = 300,
-                    summary = segment.summary,
-                    subType = "sticker"
-                )
+        is BotIncomingSegment.MarketFace -> IncomingSegment.MarketFace(
+            data = IncomingSegment.MarketFace.Data(
+                emojiPackageId = segment.emojiPackageId,
+                emojiId = segment.emojiId,
+                key = segment.key,
+                summary = segment.summary,
+                url = segment.url,
             )
-        } else {
-            IncomingSegment.MarketFace(
-                data = IncomingSegment.MarketFace.Data(
-                    emojiPackageId = segment.emojiPackageId,
-                    emojiId = segment.emojiId,
-                    key = segment.key,
-                    summary = segment.summary,
-                    url = segment.url,
-                )
-            )
-        }
+        )
 
         is BotIncomingSegment.LightApp -> IncomingSegment.LightApp(
             data = IncomingSegment.LightApp.Data(

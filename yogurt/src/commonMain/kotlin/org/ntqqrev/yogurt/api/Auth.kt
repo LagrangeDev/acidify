@@ -8,7 +8,7 @@ import org.ntqqrev.yogurt.YogurtApp.config
 
 fun Route.configureMilkyApiAuth() = install(createRouteScopedPlugin("ApiAuth") {
     onCall { call ->
-        if (call.request.headers["Authorization"] != "Bearer ${config.httpConfig.accessToken}") {
+        if (call.request.headers["Authorization"] != "Bearer ${config.milky.http.accessToken}") {
             call.respond(HttpStatusCode.Unauthorized)
             return@onCall
         }
