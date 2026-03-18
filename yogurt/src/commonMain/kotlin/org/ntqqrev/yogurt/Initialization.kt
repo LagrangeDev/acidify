@@ -1,6 +1,7 @@
 package org.ntqqrev.yogurt
 
 import com.github.ajalt.mordant.rendering.TextColors
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.flow.*
@@ -12,10 +13,12 @@ import kotlinx.io.writeString
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.common.SessionStore
+import org.ntqqrev.acidify.common.SignProvider
 import org.ntqqrev.acidify.common.UrlSignProvider
 import org.ntqqrev.acidify.common.android.*
 import org.ntqqrev.acidify.exception.UnstableNetworkException
 import org.ntqqrev.acidify.exception.WtLoginException
+import org.ntqqrev.acidify.lagrange.LagrangeSignProvider
 import org.ntqqrev.milky.Event
 import org.ntqqrev.yogurt.YogurtApp.config
 import org.ntqqrev.yogurt.YogurtApp.t
@@ -23,27 +26,64 @@ import org.ntqqrev.yogurt.transform.transformAcidifyEvent
 import org.ntqqrev.yogurt.util.logHandler
 
 suspend fun Application.initializePC(): Bot {
-    val signProvider = UrlSignProvider(config.protocol.signApiUrl)
     val sessionStore: SessionStore = if (SystemFileSystem.exists(sessionStorePath)) {
         SystemFileSystem.source(sessionStorePath).buffered().use {
             SessionStore.fromJson(it.readString())
         }
     } else SessionStore.empty()
-    val appInfo: AppInfo = when (config.protocol.version) {
-        "fetched" -> signProvider.getAppInfo()
-            ?: throw IllegalStateException("通过 Sign API 获取 AppInfo 失败，请检查地址是否正确并且支持获取 AppInfo 功能")
 
-        "custom" -> if (SystemFileSystem.exists(customAppInfoPath)) {
+    var signProvider: SignProvider
+    var appInfo: AppInfo
+
+    fun readCustomAppInfo(): AppInfo {
+        return if (SystemFileSystem.exists(customAppInfoPath)) {
             SystemFileSystem.source(customAppInfoPath).buffered().use {
                 AppInfo.fromJson(it.readString())
             }
         } else {
             throw IllegalStateException("未在 $customAppInfoPath 下找到自定义 AppInfo 文件")
         }
+    }
 
-        else -> bundledPCAppInfo["${config.protocol.os}/${config.protocol.version}"]
+    fun readBundledAppInfo(): AppInfo {
+        return bundledPCAppInfo["${config.protocol.os}/${config.protocol.version}"]
             ?: throw IllegalStateException("未找到匹配的内置 AppInfo，请检查配置的 OS 和 Version 是否正确")
     }
+
+    if (config.protocol.pcUseLagrangeSign) {
+        appInfo = when (config.protocol.version) {
+            "fetched" -> throw IllegalStateException("在使用 Lagrange Sign API 时，必须显式指定 AppInfo 版本或自行提供 AppInfo 文件，无法使用 fetched 版本")
+            "custom" -> readCustomAppInfo()
+            else -> readBundledAppInfo()
+        }
+        val url = Url(config.protocol.signApiUrl)
+        signProvider = LagrangeSignProvider(
+            address = url.host,
+            port = url.port,
+            useHttps = url.protocol == URLProtocol.HTTPS,
+            uinProvider = { sessionStore.uin },
+            guid = sessionStore.guid,
+            qua = "V1_${
+                when (config.protocol.os) {
+                    "Windows" -> "WIN"
+                    "Mac" -> "MAC"
+                    "Linux" -> "LNX"
+                    else -> throw IllegalStateException()
+                }
+            }_NQ_${appInfo.currentVersion.replace('-', '_')}_GW_B",
+        )
+    } else {
+        signProvider = UrlSignProvider(config.protocol.signApiUrl)
+        appInfo = when (config.protocol.version) {
+            "fetched" -> signProvider.getAppInfo()
+                ?: throw IllegalStateException("通过 Sign API 获取 AppInfo 失败，请检查地址是否正确并且支持获取 AppInfo 功能")
+
+            "custom" -> readCustomAppInfo()
+            else -> readBundledAppInfo()
+        }
+    }
+
+
     t.println("使用协议 ${appInfo.os} ${appInfo.currentVersion} (AppId: ${appInfo.subAppId})")
     val bot = Bot(
         appInfo = appInfo,
