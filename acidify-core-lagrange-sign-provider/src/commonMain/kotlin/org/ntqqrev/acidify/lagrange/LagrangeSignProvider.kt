@@ -8,7 +8,7 @@ class LagrangeSignProvider(
     address: String,
     port: Int,
     useHttps: Boolean,
-    val uin: Long,
+    val uinProvider: () -> Long,
     val guid: ByteArray,
     val qua: String,
 ) : SignProvider {
@@ -29,7 +29,7 @@ class LagrangeSignProvider(
     ): SignResult {
         val response = signStub.getSecSign(
             Sign.GetSecSignRequest(
-                uin = uin,
+                uin = uinProvider(),
                 command = cmd,
                 seq = seq,
                 body = src,
