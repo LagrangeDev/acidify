@@ -17,7 +17,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":acidify-core"))
-            implementation(project(":acidify-core-lagrange-sign-provider"))
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
             implementation(libs.bundles.ktor.server)

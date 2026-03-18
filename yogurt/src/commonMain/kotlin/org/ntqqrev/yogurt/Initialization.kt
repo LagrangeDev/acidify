@@ -1,7 +1,6 @@
 package org.ntqqrev.yogurt
 
 import com.github.ajalt.mordant.rendering.TextColors
-import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.flow.*
@@ -11,14 +10,10 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.io.writeString
 import org.ntqqrev.acidify.*
-import org.ntqqrev.acidify.common.AppInfo
-import org.ntqqrev.acidify.common.SessionStore
-import org.ntqqrev.acidify.common.SignProvider
-import org.ntqqrev.acidify.common.UrlSignProvider
+import org.ntqqrev.acidify.common.*
 import org.ntqqrev.acidify.common.android.*
 import org.ntqqrev.acidify.exception.UnstableNetworkException
 import org.ntqqrev.acidify.exception.WtLoginException
-import org.ntqqrev.acidify.lagrange.LagrangeSignProvider
 import org.ntqqrev.milky.Event
 import org.ntqqrev.yogurt.YogurtApp.config
 import org.ntqqrev.yogurt.YogurtApp.t
@@ -56,13 +51,10 @@ suspend fun Application.initializePC(): Bot {
             "custom" -> readCustomAppInfo()
             else -> readBundledAppInfo()
         }
-        val url = Url(config.protocol.signApiUrl)
-        signProvider = LagrangeSignProvider(
-            address = url.host,
-            port = url.port,
-            useHttps = url.protocol == URLProtocol.HTTPS,
+        signProvider = LagrangeUrlSignProvider(
+            url = config.protocol.signApiUrl,
             uinProvider = { sessionStore.uin },
-            guid = sessionStore.guid,
+            guid = sessionStore.guid.toHexString(),
             qua = "V1_${
                 when (config.protocol.os) {
                     "Windows" -> "WIN"
