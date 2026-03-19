@@ -6,14 +6,12 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
 {
   "configVersion": 3,
   "protocol": {
+    "uin": 0,
+    "password": "",
     "os": "Linux",
     "version": "fetched",
     "signApiUrl": "...",
     "pcLagrangeSignToken": "",
-    "androidCredentials": {
-      "uin": 0,
-      "password": ""
-    },
     "androidUseLegacySign": false
   },
   "milky": {
@@ -47,11 +45,17 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
 
 如果读取到没有该字段的旧版配置文件，Yogurt 会将其视为 V1 配置；读取到 `configVersion = 2` 的配置文件时，则会将其视为 V2 配置。两者都会在启动时自动迁移到 V3 格式后重写回 `config.json`。
 
-### `protocol.signApiUrl`
+### `protocol.uin` 和 `protocol.password`
 
-签名服务地址。这是 Yogurt 赖以运行的关键配置项。Yogurt 本身并不处理数据包的签名，而是将这些工作交给一个单独的签名服务来完成。
+登录凭据，包含 `uin`（QQ 号）和 `password`（密码）。
 
-在 `protocol.androidUseLegacySign` 设置为 `true` 时，可以在 URL 中使用 Basic Auth 进行身份验证，并且添加自定义的 Query Parameter，例如 `https://username:password@example.com/?key=1`。
+在使用 `AndroidPhone` 或 `AndroidPad` 协议时，需要同时提供 `uin` 和 `password` 来登录。
+
+在使用 `Windows`、`Mac` 或 `Linux` 协议，并且 `pcLagrangeSignToken` 不为空时，也需要提供 `uin`。`password` 可以留空。
+
+> [!warning]
+>
+> 由于密码在 `config.json` 中以明文形式保存，请务必妥善保管该文件，避免泄露。此外，也要谨防 `session-store.json` 和 `session-store-android.json` 文件泄露。
 
 ### `protocol.os`
 
@@ -83,21 +87,19 @@ Yogurt 使用的协议类型。可选值有：
 > 
 > 如果你认为某个协议版本缺失，或者希望添加对某个新版本的支持，可以提交 Pull Request 或 Issue 以添加。
 
+### `protocol.signApiUrl`
+
+签名服务地址。这是 Yogurt 赖以运行的关键配置项。Yogurt 本身并不处理数据包的签名，而是将这些工作交给一个单独的签名服务来完成。
+
+在 `protocol.androidUseLegacySign` 设置为 `true` 时，可以在 URL 中使用 Basic Auth 进行身份验证，并且添加自定义的 Query Parameter，例如 `https://username:password@example.com/?key=1`。
+
 ### `protocol.pcLagrangeSignToken`
 
 默认为空。若填写该字段，则 Yogurt 会在使用 `Windows`、`Mac` 或 `Linux` 协议时，使用新版 Lagrange Sign API 来获取签名。如果你不确定是否使用的是新版 API，请保持该字段为空。
 
 > [!important]
 >
-> 使用新版 Lagrange Sign API 时，将不能使用 `fetched` 版本，必须指定具体的协议版本号，或者使用 `custom` 版本并提供 `app-info.json` 文件。
-
-### `protocol.androidCredentials`
-
-在使用 `AndroidPhone` 或 `AndroidPad` 协议时，需要提供的登录凭据，包含 `uin`（QQ 号）和 `password`（密码）。
-
-> [!warning]
-> 
-> 由于密码在 `config.json` 中以明文形式保存，请务必妥善保管该文件，避免泄露。此外，也要谨防 `session-store.json` 和 `session-store-android.json` 文件泄露。
+> 使用新版 Lagrange Sign API 时，将不能使用 `fetched` 版本，必须指定具体的协议版本号，或者使用 `custom` 版本并提供 `app-info.json` 文件。此外，还需要填写 `uin` 字段，且 `uin` 需要与实际登录的 QQ 号一致。`password` 字段可以留空。
 
 ### `protocol.androidUseLegacySign`
 

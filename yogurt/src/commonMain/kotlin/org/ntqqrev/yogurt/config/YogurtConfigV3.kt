@@ -14,23 +14,14 @@ data class YogurtConfigV3(
 ) {
     @Serializable
     data class ProtocolConfig(
+        val uin: Long = 0L,
+        val password: String = "",
         val os: String = "Linux",
         val version: String = "fetched",
         val signApiUrl: String = "",
-
-        // PC specific fields
         val pcLagrangeSignToken: String = "",
-
-        // Android specific fields
-        val androidCredentials: AndroidCredentials = AndroidCredentials(),
         val androidUseLegacySign: Boolean = false,
-    ) {
-        @Serializable
-        data class AndroidCredentials(
-            val uin: Long = 0L,
-            val password: String = "",
-        )
-    }
+    )
 
     @Serializable
     data class MilkyConfig(

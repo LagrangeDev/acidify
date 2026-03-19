@@ -31,13 +31,11 @@ fun YogurtConfig.toV2() = YogurtConfigV2(
 
 fun YogurtConfigV2.toV3() = YogurtConfigV3(
     protocol = YogurtConfigV3.ProtocolConfig(
+        uin = androidCredentials.uin,
+        password = androidCredentials.password,
         os = protocol.os,
         version = protocol.version,
         signApiUrl = signApiUrl,
-        androidCredentials = YogurtConfigV3.ProtocolConfig.AndroidCredentials(
-            uin = androidCredentials.uin,
-            password = androidCredentials.password,
-        ),
         androidUseLegacySign = androidUseLegacySign,
     ),
     milky = YogurtConfigV3.MilkyConfig(

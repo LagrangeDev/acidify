@@ -46,6 +46,9 @@ suspend fun Application.initializePC(): Bot {
     }
 
     if (config.protocol.pcLagrangeSignToken.isNotEmpty()) {
+        require(config.protocol.uin != 0L) {
+            "使用 Lagrange Sign API 时，请在配置文件中填写 uin 字段"
+        }
         appInfo = when (config.protocol.version) {
             "fetched" -> throw IllegalStateException("在使用 Lagrange Sign API 时，必须显式指定 AppInfo 版本或自行提供 AppInfo 文件，无法使用 fetched 版本")
             "custom" -> readCustomAppInfo()
@@ -54,7 +57,7 @@ suspend fun Application.initializePC(): Bot {
         signProvider = LagrangeUrlSignProvider(
             url = config.protocol.signApiUrl,
             token = config.protocol.pcLagrangeSignToken,
-            uinProvider = { sessionStore.uin },
+            uin = config.protocol.uin,
             guid = sessionStore.guid.toHexString(),
             qua = "V1_${
                 when (config.protocol.os) {
@@ -75,7 +78,6 @@ suspend fun Application.initializePC(): Bot {
             else -> readBundledAppInfo()
         }
     }
-
 
     t.println("使用协议 ${appInfo.os} ${appInfo.currentVersion} (AppId: ${appInfo.subAppId})")
     val bot = Bot(
@@ -102,24 +104,24 @@ suspend fun Application.initializePC(): Bot {
 }
 
 suspend fun Application.initializeAndroid(): AndroidBot {
-    require(config.protocol.androidCredentials.uin != 0L && config.protocol.androidCredentials.password.isNotEmpty()) {
-        "请在配置文件中填写 androidCredentials 的 uin 和 password 字段"
+    require(config.protocol.uin != 0L && config.protocol.password.isNotEmpty()) {
+        "使用 Android 协议登录时，请在配置文件中填写 uin 和 password 字段"
     }
     val sessionStore: AndroidSessionStore = if (SystemFileSystem.exists(androidSessionStorePath)) {
         SystemFileSystem.source(androidSessionStorePath).buffered().use {
             AndroidSessionStore.fromJson(it.readString())
         }.takeIf {
-            it.uin == config.protocol.androidCredentials.uin && it.password == config.protocol.androidCredentials.password
+            it.uin == config.protocol.uin && it.password == config.protocol.password
         } ?: run {
             t.println("找到的 SessionStore 与配置的 uin 不匹配，正在创建新的 SessionStore...")
             AndroidSessionStore.empty(
-                uin = config.protocol.androidCredentials.uin,
-                password = config.protocol.androidCredentials.password
+                uin = config.protocol.uin,
+                password = config.protocol.password
             )
         }
     } else AndroidSessionStore.empty(
-        uin = config.protocol.androidCredentials.uin,
-        password = config.protocol.androidCredentials.password
+        uin = config.protocol.uin,
+        password = config.protocol.password
     ).also {
         t.println("未找到 Android SessionStore，正在创建新的 SessionStore 并保存到文件...")
         SystemFileSystem.sink(androidSessionStorePath).buffered().use { sink ->
@@ -180,7 +182,8 @@ suspend fun Application.initializeAndroid(): AndroidBot {
 }
 
 suspend fun Application.botLogin() {
-    when (val bot = dependencies.resolve<AbstractBot>()) {
+    val bot = dependencies.resolve<AbstractBot>()
+    when (bot) {
         is Bot -> bot.login(preloadContacts = config.milky.preloadContacts)
         is AndroidBot -> {
             fun onRequireCaptchaTicket(captchaUrl: String): String {
@@ -211,7 +214,13 @@ suspend fun Application.botLogin() {
                 botLogin()
             } catch (e: WtLoginException) {
                 t.println(TextColors.red("${e.tag} (code=${e.code})：${e.msg}"))
+                throw e
             }
         }
+    }
+    if (bot.uin != config.protocol.uin) {
+        throw IllegalStateException(
+            "实际登录的 uin ${bot.uin} 与配置文件中指定的 uin ${config.protocol.uin} 不匹配，请检查配置文件或重新登录。"
+        )
     }
 }

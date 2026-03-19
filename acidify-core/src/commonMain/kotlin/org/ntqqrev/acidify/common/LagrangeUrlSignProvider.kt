@@ -19,7 +19,7 @@ import org.ntqqrev.acidify.exception.UrlSignException
  * 要对接普通的 Sign API，请使用 [UrlSignProvider]。
  * @param url 签名服务的 URL 地址
  * @param token 访问签名服务所需的 Token
- * @param uinProvider 获取当前登录账号的 UIN 的函数
+ * @param uin 访问签名服务所用的 uin（QQ 号）
  * @param guid 当前登录设备的 GUID
  * @param qua 当前使用的 AppInfo 的 QUA 字符串，形如 `V1_LNX_NQ_3.2.**_*****_GW_B`
  * @param httpProxy 可选的 HTTP 代理地址，例如 `http://127.0.0.1:7890`
@@ -27,7 +27,7 @@ import org.ntqqrev.acidify.exception.UrlSignException
 class LagrangeUrlSignProvider(
     val url: String,
     val token: String,
-    val uinProvider: () -> Long,
+    val uin: Long,
     val guid: String,
     val qua: String,
     val httpProxy: String? = null,
@@ -71,7 +71,7 @@ class LagrangeUrlSignProvider(
                     command = cmd,
                     seq = seq,
                     body = src.toHexString(),
-                    uin = uinProvider(),
+                    uin = uin,
                     guid = guid,
                     qua = qua,
                 )
@@ -82,7 +82,7 @@ class LagrangeUrlSignProvider(
         }
         val respBody = resp.body<LagrangeUrlSignResponse>()
         if (respBody.code != 0 || respBody.value == null) {
-            throw UrlSignException(respBody.message, respBody.code)
+            throw UrlSignException(respBody.message ?: "", respBody.code)
         }
         val value = respBody.value
         return SignResult(
@@ -106,7 +106,7 @@ private class LagrangeUrlSignRequest(
 @Serializable
 private class LagrangeUrlSignResponse(
     val code: Int = 0,
-    val message: String = "",
+    val message: String? = null,
     val value: LagrangeUrlSignValue? = null,
 )
 
