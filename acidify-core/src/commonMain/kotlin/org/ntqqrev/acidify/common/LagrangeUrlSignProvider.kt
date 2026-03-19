@@ -3,6 +3,8 @@ package org.ntqqrev.acidify.common
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.*
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -16,6 +18,7 @@ import org.ntqqrev.acidify.exception.UrlSignException
  * 通过 HTTP 接口进行签名的 [SignProvider] 实现，用于对接 Lagrange V2 Sign API。
  * 要对接普通的 Sign API，请使用 [UrlSignProvider]。
  * @param url 签名服务的 URL 地址
+ * @param token 访问签名服务所需的 Token
  * @param uinProvider 获取当前登录账号的 UIN 的函数
  * @param guid 当前登录设备的 GUID
  * @param qua 当前使用的 AppInfo 的 QUA 字符串，形如 `V1_LNX_NQ_3.2.**_*****_GW_B`
@@ -23,6 +26,7 @@ import org.ntqqrev.acidify.exception.UrlSignException
  */
 class LagrangeUrlSignProvider(
     val url: String,
+    val token: String,
     val uinProvider: () -> Long,
     val guid: String,
     val qua: String,
@@ -36,6 +40,13 @@ class LagrangeUrlSignProvider(
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(jsonModule)
+        }
+        install(Auth) {
+            bearer {
+                loadTokens {
+                    BearerTokens(token, null)
+                }
+            }
         }
         engine {
             if (!httpProxy.isNullOrEmpty()) {

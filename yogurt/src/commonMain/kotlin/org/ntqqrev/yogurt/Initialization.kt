@@ -45,7 +45,7 @@ suspend fun Application.initializePC(): Bot {
             ?: throw IllegalStateException("未找到匹配的内置 AppInfo，请检查配置的 OS 和 Version 是否正确")
     }
 
-    if (config.protocol.pcUseLagrangeSign) {
+    if (config.protocol.pcLagrangeSignToken.isNotEmpty()) {
         appInfo = when (config.protocol.version) {
             "fetched" -> throw IllegalStateException("在使用 Lagrange Sign API 时，必须显式指定 AppInfo 版本或自行提供 AppInfo 文件，无法使用 fetched 版本")
             "custom" -> readCustomAppInfo()
@@ -53,6 +53,7 @@ suspend fun Application.initializePC(): Bot {
         }
         signProvider = LagrangeUrlSignProvider(
             url = config.protocol.signApiUrl,
+            token = config.protocol.pcLagrangeSignToken,
             uinProvider = { sessionStore.uin },
             guid = sessionStore.guid.toHexString(),
             qua = "V1_${

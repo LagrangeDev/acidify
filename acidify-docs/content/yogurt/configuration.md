@@ -9,7 +9,7 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
     "os": "Linux",
     "version": "fetched",
     "signApiUrl": "...",
-    "pcUseLagrangeSign": false,
+    "pcLagrangeSignToken": "",
     "androidCredentials": {
       "uin": 0,
       "password": ""
@@ -83,11 +83,13 @@ Yogurt 使用的协议类型。可选值有：
 > 
 > 如果你认为某个协议版本缺失，或者希望添加对某个新版本的支持，可以提交 Pull Request 或 Issue 以添加。
 
-### `protocol.pcUseLagrangeSign`
+### `protocol.pcLagrangeSignToken`
 
-是否使用的是新版 Lagrange Sign API。如果你不确定是否使用的是新版 API，请保持默认值 `false`。
+默认为空。若填写该字段，则 Yogurt 会在使用 `Windows`、`Mac` 或 `Linux` 协议时，使用新版 Lagrange Sign API 来获取签名。如果你不确定是否使用的是新版 API，请保持该字段为空。
 
-设为 `true` 时，将不能使用 `fetched` 版本，必须指定具体的协议版本号。
+> [!important]
+>
+> 使用新版 Lagrange Sign API 时，将不能使用 `fetched` 版本，必须指定具体的协议版本号，或者使用 `custom` 版本并提供 `app-info.json` 文件。
 
 ### `protocol.androidCredentials`
 

@@ -19,7 +19,7 @@ data class YogurtConfigV3(
         val signApiUrl: String = "",
 
         // PC specific fields
-        val pcUseLagrangeSign: Boolean = false,
+        val pcLagrangeSignToken: String = "",
 
         // Android specific fields
         val androidCredentials: AndroidCredentials = AndroidCredentials(),
