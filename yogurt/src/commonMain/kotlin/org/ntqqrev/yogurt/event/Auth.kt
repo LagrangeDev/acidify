@@ -9,8 +9,8 @@ import org.ntqqrev.yogurt.YogurtApp.config
 fun Route.configureMilkyEventAuth() = install(createRouteScopedPlugin("EventAuth") {
     onCall { call ->
         if (
-            call.request.headers["Authorization"] != "Bearer ${config.httpConfig.accessToken}" &&
-            call.request.queryParameters["access_token"] != config.httpConfig.accessToken
+            call.request.headers["Authorization"] != "Bearer ${config.milky.http.accessToken}" &&
+            call.request.queryParameters["access_token"] != config.milky.http.accessToken
         ) {
             call.respond(HttpStatusCode.Unauthorized)
             return@onCall

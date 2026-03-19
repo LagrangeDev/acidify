@@ -25,7 +25,7 @@ import org.ntqqrev.milky.milkyVersion
 import org.ntqqrev.yogurt.api.configureMilkyApiAuth
 import org.ntqqrev.yogurt.api.configureMilkyApiHttpRoutes
 import org.ntqqrev.yogurt.api.configureMilkyApiLoginProtect
-import org.ntqqrev.yogurt.config.YogurtConfigV2
+import org.ntqqrev.yogurt.config.loadConfigAndUpdate
 import org.ntqqrev.yogurt.event.configureMilkyEventAuth
 import org.ntqqrev.yogurt.event.configureMilkyEventSse
 import org.ntqqrev.yogurt.event.configureMilkyEventWebSocket
@@ -40,10 +40,10 @@ object YogurtApp {
 
     fun createServer() = embeddedServer(
         factory = CIO,
-        port = config.httpConfig.port,
-        host = config.httpConfig.host
+        port = config.milky.http.port,
+        host = config.milky.http.host
     ) {
-        if (config.signApiUrl.isEmpty()) {
+        if (config.protocol.signApiUrl.isEmpty()) {
             t.println(
                 TextColors.brightRed(
                     """
@@ -76,9 +76,9 @@ object YogurtApp {
         )
 
         if (
-            !config.skipSecurityCheck &&
-            config.httpConfig.host == "0.0.0.0" &&
-            config.httpConfig.accessToken.isEmpty() &&
+            !config.security.skipOnLaunchListenAddressCheck &&
+            config.milky.http.host == "0.0.0.0" &&
+            config.milky.http.accessToken.isEmpty() &&
             !isDockerEnv
         ) {
             t.println(
@@ -87,7 +87,7 @@ object YogurtApp {
                         警告：你可能正在将 Yogurt 的 Milky 服务暴露在公网环境下，且未设置 accessToken。
                         这可能导致你的 QQ 账号被他人恶意使用，造成损失。
                         请在设置中配置 accessToken，或将 host 设置为 127.0.0.1 或其他内网 IP 地址。
-                        如果你明确知道自己在做什么，可以在配置文件中将 skipSecurityCheck 设置为 true 以跳过此检查。
+                        如果你明确知道自己在做什么，可以在配置文件中将 skipOnLaunchListenAddressCheck 设置为 true 以跳过此检查。
                         程序将在 10 秒后继续运行...
                     """.trimIndent()
                 )
@@ -111,10 +111,10 @@ object YogurtApp {
         }
         install(SSE)
         install(CORS) {
-            if (config.httpConfig.corsOrigins.isEmpty()) {
+            if (config.milky.http.corsOrigins.isEmpty()) {
                 anyHost()
             } else {
-                config.httpConfig.corsOrigins.forEach { allowHost(it) }
+                config.milky.http.corsOrigins.forEach { allowHost(it) }
             }
             allowHeader(HttpHeaders.ContentType)
             allowHeader(HttpHeaders.Authorization)
@@ -127,14 +127,14 @@ object YogurtApp {
 
         routing {
             route("/api") {
-                if (config.httpConfig.accessToken.isNotEmpty()) {
+                if (config.milky.http.accessToken.isNotEmpty()) {
                     configureMilkyApiAuth()
                 }
                 configureMilkyApiLoginProtect()
                 configureMilkyApiHttpRoutes()
             }
             route("/event") {
-                if (config.httpConfig.accessToken.isNotEmpty()) {
+                if (config.milky.http.accessToken.isNotEmpty()) {
                     configureMilkyEventAuth()
                 }
                 configureMilkyEventWebSocket()
@@ -147,7 +147,7 @@ object YogurtApp {
         }
 
         monitor.subscribe(ApplicationStarted) {
-            if (config.webhookConfig.isNotEmpty()) {
+            if (config.milky.webhook.endpoints.isNotEmpty()) {
                 configureMilkyEventWebhook()
             }
             configureQRCodeDisplay()

@@ -6,6 +6,7 @@ import org.ntqqrev.acidify.common.android.AndroidLegacyAppInfo
 
 val bundledPCAppInfo = mapOf(
     "Linux/39038" to AppInfo.Bundled.Linux_39038,
+    "Linux/46494" to AppInfo.Bundled.Linux_46494,
 )
 
 val bundledAndroidAppInfo = mapOf(

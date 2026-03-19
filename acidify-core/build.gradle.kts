@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.DeploymentValidation
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -11,7 +12,7 @@ plugins {
 }
 
 group = "org.ntqqrev"
-version = "1.2.2"
+version = "1.3.0"
 
 kotlin {
     js(IR) {
@@ -58,7 +59,10 @@ kotlin {
 }
 
 mavenPublishing {
-    publishToMavenCentral()
+    publishToMavenCentral(
+        automaticRelease = true,
+        validateDeployment = DeploymentValidation.NONE,
+    )
     signAllPublications()
     coordinates(
         groupId = project.group.toString(),

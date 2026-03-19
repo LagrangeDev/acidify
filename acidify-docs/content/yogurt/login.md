@@ -10,7 +10,7 @@
 
 ## Android 协议登录
 
-使用 Android (Android Phone / Android Pad) 协议登录需要提供 QQ 号和密码。在配置文件中填写 `androidCredentials` 字段后，Yogurt 会在启动时自动尝试登录。用新设备登录时，通常需要进行一些额外的验证步骤。
+使用 Android (Android Phone / Android Pad) 协议登录需要提供 QQ 号和密码。在配置文件中填写 `protocol.uin` 和 `protocol.password` 字段后，Yogurt 会在启动时自动尝试登录。用新设备登录时，通常需要进行一些额外的验证步骤。
 
 ### 短信验证
 

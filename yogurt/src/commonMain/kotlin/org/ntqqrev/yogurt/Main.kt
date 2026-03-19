@@ -25,7 +25,7 @@ fun main() {
             t.println(
                 TextColors.red(
                     """
-                        无法启动服务器，可能是 ${config.httpConfig.host}:${config.httpConfig.port} 已被占用。
+                        无法启动服务器，可能是 ${config.milky.http.host}:${config.milky.http.port} 已被占用。
                         请检查是否有其他程序正在使用该地址，或者修改配置文件中的 host 和 port 后重试。
                     """.trimIndent()
                 )

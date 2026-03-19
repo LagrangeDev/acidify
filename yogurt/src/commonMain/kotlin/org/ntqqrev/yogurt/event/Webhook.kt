@@ -25,7 +25,7 @@ fun Application.configureMilkyEventWebhook() = launch {
     val flow = dependencies.resolve<SharedFlow<Event>>()
     val logger = bot.createLogger("WebhookModule")
     flow.collect {
-        config.webhookConfig.forEach { webhook ->
+        config.milky.webhook.endpoints.forEach { webhook ->
             launch {
                 try {
                     webhookClient.post(webhook.url) {

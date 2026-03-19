@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package org.ntqqrev.yogurt.util
+package org.ntqqrev.yogurt.config
 
 import kotlinx.io.buffered
 import kotlinx.io.files.SystemFileSystem
@@ -8,8 +8,6 @@ import kotlinx.io.readString
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import kotlinx.serialization.json.io.encodeToSink
-import org.ntqqrev.yogurt.config.YogurtConfig
-import org.ntqqrev.yogurt.config.YogurtConfigV2
 import org.ntqqrev.yogurt.configPath
 
 fun YogurtConfig.toV2() = YogurtConfigV2(
@@ -31,6 +29,42 @@ fun YogurtConfig.toV2() = YogurtConfigV2(
     skipSecurityCheck = skipSecurityCheck,
 )
 
+fun YogurtConfigV2.toV3() = YogurtConfigV3(
+    protocol = YogurtConfigV3.ProtocolConfig(
+        uin = androidCredentials.uin,
+        password = androidCredentials.password,
+        os = protocol.os,
+        version = protocol.version,
+        signApiUrl = signApiUrl,
+        androidUseLegacySign = androidUseLegacySign,
+    ),
+    milky = YogurtConfigV3.MilkyConfig(
+        http = YogurtConfigV3.MilkyConfig.HttpConfig(
+            host = httpConfig.host,
+            port = httpConfig.port,
+            accessToken = httpConfig.accessToken,
+            corsOrigins = httpConfig.corsOrigins,
+        ),
+        webhook = YogurtConfigV3.MilkyConfig.WebhookConfig(
+            endpoints = webhookConfig.map {
+                YogurtConfigV3.MilkyConfig.WebhookConfig.Endpoint(
+                    url = it.url,
+                    accessToken = it.accessToken,
+                )
+            }
+        ),
+        reportSelfMessage = reportSelfMessage,
+        preloadContacts = preloadContacts,
+    ),
+    logging = YogurtConfigV3.LoggingConfig(
+        coreLogLevel = logging.coreLogLevel,
+        ansiLevel = logging.ansiLevel,
+    ),
+    security = YogurtConfigV3.SecurityConfig(
+        skipOnLaunchListenAddressCheck = skipSecurityCheck,
+    ),
+)
+
 fun detectConfigVersion(configJson: JsonElement): Int {
     return configJson.jsonObject["configVersion"]?.jsonPrimitive?.intOrNull ?: 1
 }
@@ -43,9 +77,9 @@ val jsonModule = Json {
     ignoreUnknownKeys = true
 }
 
-fun loadConfigAndUpdate(): YogurtConfigV2 {
+fun loadConfigAndUpdate(): YogurtConfigV3 {
     if (!SystemFileSystem.exists(configPath)) {
-        val defaultConfig = YogurtConfigV2()
+        val defaultConfig = YogurtConfigV3()
         SystemFileSystem.sink(configPath).buffered().use {
             jsonModule.encodeToSink(defaultConfig, it)
         }
@@ -60,9 +94,10 @@ fun loadConfigAndUpdate(): YogurtConfigV2 {
         }
     )
     val config = when (val configVersion = detectConfigVersion(configJson)) {
-        1 -> jsonModule.decodeFromJsonElement<YogurtConfig>(configJson).toV2()
-        2 -> jsonModule.decodeFromJsonElement<YogurtConfigV2>(configJson)
-        else -> error("不支持的配置版本 $configVersion，当前仅支持 V1 和 V${2}")
+        1 -> jsonModule.decodeFromJsonElement<YogurtConfig>(configJson).toV2().toV3()
+        2 -> jsonModule.decodeFromJsonElement<YogurtConfigV2>(configJson).toV3()
+        3 -> jsonModule.decodeFromJsonElement<YogurtConfigV3>(configJson)
+        else -> error("不支持的配置版本 $configVersion")
     }
 
     SystemFileSystem.sink(configPath).buffered().use { sink ->
