@@ -9,11 +9,11 @@ import org.ntqqrev.acidify.internal.proto.message.elem.SourceMsg
 import org.ntqqrev.acidify.internal.proto.message.extra.GroupFileExtra
 import org.ntqqrev.acidify.internal.proto.message.extra.QBigFaceExtra
 import org.ntqqrev.acidify.internal.proto.message.extra.QSmallFaceExtra
+import org.ntqqrev.acidify.internal.proto.message.extra.TextResvAttr
 import org.ntqqrev.acidify.internal.proto.message.media.MsgInfo
 import org.ntqqrev.acidify.internal.util.BinaryReader
 import org.ntqqrev.acidify.internal.util.Prefix
 import org.ntqqrev.acidify.internal.util.pbDecode
-import org.ntqqrev.acidify.internal.util.readUInt32BE
 import org.ntqqrev.acidify.message.BotIncomingSegment
 import org.ntqqrev.acidify.message.ImageSubType
 import org.ntqqrev.acidify.message.MessageScene
@@ -53,12 +53,12 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Mention : IncomingSegmentFactory<BotIncomingSegment.Mention> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Mention? {
             val at = ctx.tryPeekType { text }
-                ?.takeIf { it.attr6Buf.size >= 11 }
+                ?.takeIf { it.attr6Buf.size >= 11 && it.pbReserve.isNotEmpty() }
                 ?: return null
             ctx.consume()
-            val attr6 = at.attr6Buf
+            val attr = at.pbReserve.pbDecode<TextResvAttr>()
             return BotIncomingSegment.Mention(
-                uin = attr6.readUInt32BE(7).takeIf { it > 0 },
+                uin = attr.atMemberUin,
                 name = at.textMsg
             )
         }
