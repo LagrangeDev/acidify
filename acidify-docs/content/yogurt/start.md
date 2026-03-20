@@ -59,3 +59,59 @@ java -jar yogurt-jvm-all.jar
 > [!important]
 >
 > 构建产物发布在 SaltifyDev/yogurt-releases，并非原仓库 LagrangeDev/acidify；后者用于记录 `acidify-core` 的版本迭代，并不包含 Yogurt 的构建产物。
+
+### 通过 Docker 部署（第三方社区实现）
+
+> [!warning]
+>
+> 以下 Docker 部署方案由第三方社区项目维护，并非 Acidify / Yogurt 官方提供或支持的发行方式。使用前请自行审查镜像、Dockerfile 和部署配置。
+
+> [!tip]
+>
+> 项目地址：[`shoucandanghehe/yogurt-docker`](https://github.com/shoucandanghehe/yogurt-docker)
+
+#### 使用 Docker Compose 部署
+
+```yaml
+services:
+  yogurt:
+    image: ghcr.io/shoucandanghehe/yogurt-docker:latest
+    container_name: yogurt
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config.json:/app/config.json
+      - data:/app/data
+
+volumes:
+  data:
+```
+
+首次运行前先创建空配置文件，避免 Docker 将挂载目标创建为目录：
+
+```bash
+touch config.json
+docker compose up
+# 看到 Yogurt 生成默认配置后按 Ctrl+C 停止
+```
+
+随后编辑 `config.json`，补全 QQ 号、签名 API 地址等必要配置，再重新启动容器：
+
+```bash
+docker compose up -d
+```
+
+#### 使用 Docker 部署
+
+```bash
+docker run -d \
+  --name yogurt \
+  --restart unless-stopped \
+  -v $(pwd)/config.json:/app/config.json \
+  -v $(pwd)/data:/app/data \
+  -p 3000:3000 \
+  ghcr.io/shoucandanghehe/yogurt-docker:latest
+```
+
+详细使用方法、镜像细节和最新说明请查看 [README](https://github.com/shoucandanghehe/yogurt-docker)。
