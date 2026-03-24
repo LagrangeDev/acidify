@@ -42,6 +42,7 @@ fun YogurtConfigV2.toV3() = YogurtConfigV3(
         http = YogurtConfigV3.MilkyConfig.HttpConfig(
             host = httpConfig.host,
             port = httpConfig.port,
+            prefix = httpConfig.prefix,
             accessToken = httpConfig.accessToken,
             corsOrigins = httpConfig.corsOrigins,
         ),

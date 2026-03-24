@@ -125,14 +125,15 @@ object YogurtApp {
         }
 
         routing {
-            route("/api") {
+            val prefix = config.milky.http.prefix.removeSuffix("/")
+            route("$prefix/api") {
                 if (config.milky.http.accessToken.isNotEmpty()) {
                     configureMilkyApiAuth()
                 }
                 configureMilkyApiLoginProtect()
                 configureMilkyApiHttpRoutes()
             }
-            route("/event") {
+            route("$prefix/event") {
                 if (config.milky.http.accessToken.isNotEmpty()) {
                     configureMilkyEventAuth()
                 }
