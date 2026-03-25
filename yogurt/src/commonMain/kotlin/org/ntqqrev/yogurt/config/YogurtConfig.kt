@@ -40,7 +40,6 @@ class YogurtConfig(
     class MilkyHttpConfig(
         val host: String = "127.0.0.1",
         val port: Int = 3000,
-        val prefix: String = "",
         val accessToken: String = "",
         val corsOrigins: List<String> = listOf(),
     )

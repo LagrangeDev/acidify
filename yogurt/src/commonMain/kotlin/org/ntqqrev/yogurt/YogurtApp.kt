@@ -70,6 +70,7 @@ object YogurtApp {
                 Core Version:   ${BuildKonfig.coreVersion}
                 Milky Version:  ${BuildKonfig.milkyVersion} ($milkyVersion)
                 Build Time:     ${BuildKonfig.buildTime}
+                Listen Address: ${config.milky.http.host}:${config.milky.http.port}${config.milky.http.prefix}
                 Data Directory: ${SystemFileSystem.resolve(Path("."))}
             """.trimIndent()
         )
