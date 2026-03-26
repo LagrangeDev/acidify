@@ -4,6 +4,7 @@ import dev.karmakrafts.kompress.Inflater
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -22,6 +23,7 @@ import org.ntqqrev.acidify.internal.service.RequestType
 import org.ntqqrev.acidify.internal.service.system.Alive
 import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.internal.util.*
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     private val host = "msfwifi.3g.qq.com"
@@ -36,6 +38,8 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     private var startConnectLoopJob: Job? = null
     private var heartbeatJob: Job? = null
     private val recentPushSequenceCache = RecentPushSequenceCache(2048)
+    private val manualCloseRequested = atomic(false)
+    private val reconnectRequested = atomic(false)
 
     private class RecentPushSequenceCache(
         private val capacity: Int
@@ -80,8 +84,11 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                     }
                 } catch (e: Exception) {
                     logger.w(e) { "心跳包发送失败" }
+                    if (reconnectRequested.value) {
+                        break
+                    }
                 }
-                delay(10_000L) // 10s
+                delay(10_000L.milliseconds) // 10s
             }
         }
     }
@@ -97,6 +104,7 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         client.launch {
             var isReconnect = false
             while (isActive) {
+                var disconnectCause: Throwable? = null
                 try {
                     if (isReconnect) {
                         client.launch(CoroutineExceptionHandler { _, t ->
@@ -108,24 +116,44 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                         }
                     }
                     handleReceiveLoop()
-                } catch (_: ClosedByteChannelException) {
-                    break
                 } catch (_: kotlinx.coroutines.CancellationException) {
                     break
+                } catch (e: ClosedByteChannelException) {
+                    disconnectCause = e
+                    if (manualCloseRequested.value) {
+                        break
+                    }
+                    logger.w { "连接已关闭，5s 后尝试重新连接" }
                 } catch (e: Exception) {
+                    disconnectCause = e
+                    if (manualCloseRequested.value) {
+                        break
+                    }
                     logger.e(e) { "接收数据包时出现错误，5s 后尝试重新连接" }
-                    cleanupPendingRequests(e)
-                    client.doPreOfflineLogic()
-                    closeConnection()
-                    delay(5000)
-                    isReconnect = true
-                    connect()
                 }
+
+                if (manualCloseRequested.value) {
+                    break
+                }
+
+                reconnectRequested.value = true
+                recoverConnection(disconnectCause ?: IOException("连接已断开"))
+                isReconnect = true
             }
         }
     }
 
-    suspend fun closeConnection() {
+    suspend fun closeConnection(reconnect: Boolean = false) {
+        if (reconnect) {
+            reconnectRequested.value = true
+        } else {
+            manualCloseRequested.value = true
+            reconnectRequested.value = false
+        }
+        closeTransport()
+    }
+
+    private suspend fun closeTransport() {
         try {
             input.cancel()
             output.flushAndClose()
@@ -144,6 +172,8 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         currentSocket = newSocket
         input = newSocket.openReadChannel()
         output = newSocket.openWriteChannel(autoFlush = true)
+        manualCloseRequested.value = false
+        reconnectRequested.value = false
         logger.d { "已连接到 $host:$port" }
     }
 
@@ -179,12 +209,23 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         }
         val deferred = CompletableDeferred<SsoResponse>()
         mapQueryMutex.withLock { pending[sequence] = deferred }
-        sendPacketMutex.withLock { output.writePacket(packet) }
-        logger.v { "[seq=$sequence] -> $command" }
-        return try {
-            withTimeout(timeoutMillis) { deferred.await() }
+        try {
+            sendPacketMutex.withLock { output.writePacket(packet) }
         } catch (e: Exception) {
             mapQueryMutex.withLock { pending.remove(sequence) }
+            if (shouldTriggerReconnect(command, e)) {
+                requestReconnect(e, "发送数据包 $command 失败")
+            }
+            throw e
+        }
+        logger.v { "[seq=$sequence] -> $command" }
+        return try {
+            withTimeout(timeoutMillis.milliseconds) { deferred.await() }
+        } catch (e: Exception) {
+            mapQueryMutex.withLock { pending.remove(sequence) }
+            if (shouldTriggerReconnect(command, e)) {
+                requestReconnect(e, "等待数据包 $command 响应失败")
+            }
             throw e
         }
     }
@@ -223,6 +264,36 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                 pending.clear()
             }
         }
+    }
+
+    private fun shouldTriggerReconnect(command: String, error: Throwable): Boolean {
+        if (manualCloseRequested.value) {
+            return false
+        }
+        return when (error) {
+            is ClosedByteChannelException,
+            is ClosedWriteChannelException,
+            is IOException -> true
+
+            is TimeoutCancellationException -> command == Alive.cmd || command == Heartbeat.cmd
+            else -> false
+        }
+    }
+
+    private suspend fun requestReconnect(error: Throwable, message: String) {
+        if (manualCloseRequested.value || !reconnectRequested.compareAndSet(expect = false, update = true)) {
+            return
+        }
+        logger.w(error) { "$message，关闭当前连接以触发重连" }
+        closeTransport()
+    }
+
+    private suspend fun recoverConnection(error: Throwable) {
+        cleanupPendingRequests(error)
+        client.doPreOfflineLogic()
+        closeConnection(reconnect = true)
+        delay(5000.milliseconds)
+        connect()
     }
 
     // Packet building
