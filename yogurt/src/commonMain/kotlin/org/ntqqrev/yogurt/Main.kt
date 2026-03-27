@@ -9,6 +9,7 @@ import org.ntqqrev.yogurt.YogurtApp.config
 import org.ntqqrev.yogurt.YogurtApp.t
 import org.ntqqrev.yogurt.util.isCausedByAddrInUse
 import kotlin.jvm.JvmName
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main() {
     val server = YogurtApp.createServer()
@@ -18,7 +19,7 @@ fun main() {
             server.stop(gracePeriodMillis = 2000L, timeoutMillis = 5000L)
         }
         runBlocking {
-            delay(Long.MAX_VALUE)
+            delay(Long.MAX_VALUE.milliseconds)
         }
     } catch (e: Throwable) {
         if (e.isCausedByAddrInUse()) {

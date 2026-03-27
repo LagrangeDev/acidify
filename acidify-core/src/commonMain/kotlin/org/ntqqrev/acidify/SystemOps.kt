@@ -37,9 +37,7 @@ suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
         }
     }
 
-    faceDetailMapMut.putAll(
-        client.callService(FetchFaceDetails).associateBy { it.qSid }
-    ).also { logger.d { "加载了 ${faceDetailMapMut.size} 条表情信息" } }
+    refreshFaceDetailsMap()
 
     if (preloadContacts) {
         // Preload friends, groups and group members to initialize in-memory cache
@@ -195,6 +193,14 @@ suspend fun AbstractBot.getUidByUin(uin: Long, mayComeFromGroupUin: Long? = null
         }
         idMapQueryMutex.withLock { uin2uidMap[uin] }
     } ?: throw NoSuchElementException("无法解析 uin $uin 对应的 uid")
+
+/**
+ * 刷新 [faceDetailMap]，从服务器获取最新的表情信息并更新内存缓存
+ */
+suspend fun AbstractBot.refreshFaceDetailsMap() {
+    faceDetailMapMut = client.callService(FetchFaceDetails).associateBy { it.qSid }
+    logger.d { "加载了 ${faceDetailMap.size} 条表情信息" }
+}
 
 /**
  * 获取收藏表情的直链 URL 列表

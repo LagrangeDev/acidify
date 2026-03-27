@@ -8,7 +8,7 @@ import nl.adaptivity.xmlutil.serialization.XmlValue
 
 @Serializable
 @SerialName("msg")
-internal data class IncomingForwardBody(
+internal data class ForwardXmlPayload(
     @SerialName("serviceID") val serviceId: String,
     @SerialName("templateID") val templateId: String,
     val action: String,

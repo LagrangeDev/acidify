@@ -33,11 +33,7 @@
 
 - [Milky](https://milky.ntqqrev.org/) - 基于 HTTP / WebSocket 通信的新时代 QQ 机器人应用接口标准
 - [Saltify](https://saltify.ntqqrev.org/) - 跨平台、可扩展的 QQ Bot 框架 & Milky SDK
-- [yogurt-pmhq](https://github.com/LLOneBot/yogurt-pmhq) - Yogurt 的 Fork，使用 PMHQ 实现登录，无需签名 API
-- [acidify-codec](https://github.com/SaltifyDev/acidify-codec) - LagrangeCodec 的 Kotlin 绑定
-- [acidify-codec-js](https://github.com/SaltifyDev/acidify-codec-js) - LagrangeCodec 的 JavaScript 绑定
-- [Cecilia](https://github.com/Wesley-Young/Cecilia) - 实验性的基于 Compose 的即时聊天软件
-- [yogurt-captcha-solver](https://github.com/SaltifyDev/yogurt-captcha-solver) - QQ 图形验证码 Ticket 抓取辅助工具
+- [yogurt-docker](https://github.com/shoucandanghehe/yogurt-docker) - 社区提供的 Yogurt Docker 部署方案
 
 ## Special Thanks
 

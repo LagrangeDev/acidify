@@ -18,6 +18,7 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
     "http": {
       "host": "127.0.0.1",
       "port": 3000,
+      "prefix": "",
       "accessToken": "",
       "corsOrigins": []
     },
@@ -75,7 +76,9 @@ Yogurt 使用的协议类型。可选值有：
 
 - `fetched`：启动时从签名服务获取最新版本。只有在使用 `Windows`、`Mac`、`Linux` 协议时可用。
 - 指定具体的协议版本号，例如 `39038`、`9.1.60`。目前仅有如下几种内置的协议版本可用：
-  - `Linux` 的 `39038` 版本
+  - `Linux` 的：
+    - `39038` 版本
+    - `46494` 版本
   - `AndroidPhone` 和 `AndroidPad` 的：
     - `9.1.60` 版本
     - `9.1.70` 版本
@@ -107,6 +110,22 @@ Yogurt 使用的协议类型。可选值有：
 
 如果你在使用兼容 ICQQ 的签名服务时遇到登录问题，可以尝试将该选项设置为 `true`。如果你不确定使用的是否为旧版 API，请保持默认值 `false`，出现登录问题时再尝试将其设置为 `true`。
 
+### `milky.http` 和 `milky.webhook.endpoints`
+
+Milky 协议服务的有关配置，参考 [Milky 文档的“通信”部分](https://milky.ntqqrev.org/guide/communication)。
+
+### `milky.http.prefix`
+
+Milky 协议服务所在路由的路径前缀。默认为空字符串。
+
+如果设置了该项，例如设置为 `/mybot`，那么所有的 API 都会被挂载到 `/mybot/api` 下，所有的事件流都会被挂载到 `/mybot/event` 下。
+
+### `milky.http.corsOrigins`
+
+允许跨域请求的来源列表。若为空数组，则允许所有来源。
+
+在允许所有来源时，依然可以通过 Authorization 头携带访问令牌，因为 `Access-Control-Allow-Headers` 头会包含 `Authorization`。
+
 ### `milky.reportSelfMessage`
 
 是否上报自己发送的消息。
@@ -114,16 +133,6 @@ Yogurt 使用的协议类型。可选值有：
 ### `milky.preloadContacts`
 
 是否在启动时预加载联系人列表。预加载联系人列表可以提升部分操作的响应速度，同时修复部分情况下无法解析 uid 的问题，但会显著增加启动时间和内存占用。
-
-### `milky.http` 和 `milky.webhook.endpoints`
-
-Milky 协议服务的有关配置，参考 [Milky 文档的“通信”部分](https://milky.ntqqrev.org/guide/communication)。
-
-### `milky.http.corsOrigins`
-
-允许跨域请求的来源列表。若为空数组，则允许所有来源。
-
-在允许所有来源时，依然可以通过 Authorization 头携带访问令牌，因为 `Access-Control-Allow-Headers` 头会包含 `Authorization`。
 
 ### `logging.ansiLevel`
 

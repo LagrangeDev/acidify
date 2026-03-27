@@ -12,6 +12,7 @@ import org.ntqqrev.acidify.internal.proto.system.AndroidThirdPartyLoginResponse
 import org.ntqqrev.acidify.internal.service.system.WtLogin
 import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 发起二维码登录请求。过程中会触发事件：
@@ -59,7 +60,7 @@ suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolea
                 }
             }
         }
-        delay(queryInterval)
+        delay(queryInterval.milliseconds)
     }
 
     // Step 3: get login credentials and complete login

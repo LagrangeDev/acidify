@@ -12,7 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "GPL-3.0-only",
-  "packageManager": "pnpm@10.26.0",
+  "packageManager": "pnpm@10.32.1",
   "dependencies": {
     "@theguild/remark-mermaid": "^0.3.0",
     "next": "^16.1.6",

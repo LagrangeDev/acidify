@@ -14,8 +14,9 @@ import org.ntqqrev.acidify.common.android.AndroidUrlSignProvider
 import org.ntqqrev.acidify.event.AndroidSessionStoreUpdatedEvent
 import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.logging.SimpleLogHandler
-import org.ntqqrev.acidify.passwordLogin
 import org.ntqqrev.acidify.online
+import org.ntqqrev.acidify.passwordLogin
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main(): Unit = runBlocking {
     val bot = AndroidBot(
@@ -65,5 +66,5 @@ fun main(): Unit = runBlocking {
     } else {
         bot.online()
     }
-    delay(Long.MAX_VALUE)
+    delay(Long.MAX_VALUE.milliseconds)
 }

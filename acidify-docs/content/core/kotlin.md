@@ -54,6 +54,8 @@ val sessionStore = if (File("session-store.json").exists()) {
     SessionStore.empty()
 }
 
+// 创建一个 UrlSignProvider 实例，参数为签名服务的 URL
+// 如果要对接新版 Lagrange V2 Sign API，请使用 LagrangeUrlSignProvider
 val signProvider = UrlSignProvider("...")
 val scope = CoroutineScope(SupervisorJob())
 

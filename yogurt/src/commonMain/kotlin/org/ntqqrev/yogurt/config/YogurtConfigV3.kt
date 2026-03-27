@@ -11,6 +11,7 @@ data class YogurtConfigV3(
     val milky: MilkyConfig = MilkyConfig(),
     val logging: LoggingConfig = LoggingConfig(),
     val security: SecurityConfig = SecurityConfig(),
+    val debug: DebugConfig = DebugConfig(),
 ) {
     @Serializable
     data class ProtocolConfig(
@@ -34,6 +35,7 @@ data class YogurtConfigV3(
         data class HttpConfig(
             val host: String = "127.0.0.1",
             val port: Int = 3000,
+            val prefix: String = "",
             val accessToken: String = "",
             val corsOrigins: List<String> = listOf(),
         )
@@ -59,5 +61,10 @@ data class YogurtConfigV3(
     @Serializable
     data class SecurityConfig(
         val skipOnLaunchListenAddressCheck: Boolean = false,
+    )
+
+    @Serializable
+    data class DebugConfig(
+        val enableFaceDetailsApi: Boolean = false,
     )
 }

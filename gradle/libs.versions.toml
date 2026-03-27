@@ -8,7 +8,7 @@ kx-serialization = "1.10.0"
 kx-coroutines = "1.10.2"
 kx-io = "0.9.0"
 kx-datetime = "0.7.1-0.6.x-compat"
-kx-atomicfu = "0.31.0"
+kx-atomicfu = "0.32.1"
 ktor = "3.4.1"
 
 milky = "1.2.0-RC4"

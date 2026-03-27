@@ -86,8 +86,8 @@ internal class FetchGroupsResp(
             @ProtoNumber(3) val memberMax: Int = 0,
             @ProtoNumber(4) val memberCount: Int = 0,
             @ProtoNumber(5) val groupName: String = "",
-            @ProtoNumber(18) val description: String = "",
             @ProtoNumber(19) val question: String = "",
+            @ProtoNumber(21) val description: String = "",
             @ProtoNumber(30) val announcement: String = "",
         ) {
             @Serializable

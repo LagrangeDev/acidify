@@ -14,6 +14,7 @@ import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.internal.util.toIpString
 import org.ntqqrev.acidify.message.MessageScene
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class HighwayContext(client: AbstractClient) : AbstractContext(client) {
     private var highwayHost: String = ""
@@ -42,7 +43,7 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
         timeout: Long = 1200_000L // 1200 seconds
     ) {
         try {
-            withTimeout(timeout) {
+            withTimeout(timeout.milliseconds) {
                 val session = HttpSession(
                     client = client,
                     httpClient = httpClient,

@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           title: 'acidify-core KDoc',
         }
       ]}
-      docsRepositoryBase="https://github.com/LagrangeDev/acidify/tree/main/docs"
+      docsRepositoryBase="https://github.com/LagrangeDev/acidify/tree/main/acidify-docs"
       search={
         <Search
           placeholder="搜索内容..."

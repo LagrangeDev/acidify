@@ -19,7 +19,7 @@ import org.ntqqrev.acidify.internal.proto.system.SsoReservedFields
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.EncryptType
 import org.ntqqrev.acidify.internal.service.RequestType
-import org.ntqqrev.acidify.internal.service.system.AndroidHeartbeat
+import org.ntqqrev.acidify.internal.service.system.Alive
 import org.ntqqrev.acidify.internal.service.system.Heartbeat
 import org.ntqqrev.acidify.internal.util.*
 
@@ -35,6 +35,30 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     private val mapQueryMutex = Mutex()
     private var startConnectLoopJob: Job? = null
     private var heartbeatJob: Job? = null
+    private val recentPushSequenceCache = RecentPushSequenceCache(2048)
+
+    private class RecentPushSequenceCache(
+        private val capacity: Int
+    ) {
+        private val queue = ArrayDeque<Int>(capacity)
+        private val seen = mutableSetOf<Int>()
+
+        fun clear() {
+            queue.clear()
+            seen.clear()
+        }
+
+        fun isDuplicate(seq: Int): Boolean {
+            if (!seen.add(seq)) {
+                return true
+            }
+            queue.addLast(seq)
+            if (queue.size > capacity) {
+                seen.remove(queue.removeFirst())
+            }
+            return false
+        }
+    }
 
     init {
         startConnectLoopJob = client.launch {
@@ -43,33 +67,21 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     }
 
     override suspend fun postOnline() {
-        heartbeatJob = when (client) {
-            is LagrangeClient -> client.launch {
-                while (isActive) {
-                    try {
-                        client.callService(Heartbeat)
-                    } catch (e: Exception) {
-                        logger.w(e) { "心跳包发送失败" }
+        recentPushSequenceCache.clear()
+        heartbeatJob = client.launch {
+            var aliveCount = 0
+            while (isActive) {
+                aliveCount++
+                try {
+                    client.callService(Alive)
+                    if (aliveCount % 27 == 0) {
+                        client.callService(Heartbeat) // 270s per Heartbeat
+                        aliveCount = 0
                     }
-                    delay(270_000L) // 4.5min
+                } catch (e: Exception) {
+                    logger.w(e) { "心跳包发送失败" }
                 }
-            }
-
-            is KuromeClient -> client.launch {
-                var aliveCount = 0
-                while (isActive) {
-                    aliveCount++
-                    try {
-                        client.callService(AndroidHeartbeat)
-                        if (aliveCount % 27 == 0) {
-                            client.callService(Heartbeat) // 270s per Heartbeat
-                            aliveCount = 0
-                        }
-                    } catch (e: Exception) {
-                        logger.w(e) { "心跳包发送失败" }
-                    }
-                    delay(10_000L) // 10s
-                }
+                delay(10_000L) // 10s
             }
         }
     }
@@ -77,6 +89,7 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     override suspend fun preOffline() {
         heartbeatJob?.cancel()
         heartbeatJob = null
+        recentPushSequenceCache.clear()
     }
 
     suspend fun startConnectLoop() {
@@ -187,6 +200,10 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                 if (it != null) {
                     it.complete(sso)
                 } else {
+                    if (recentPushSequenceCache.isDuplicate(sso.sequence)) {
+                        logger.v { "忽略重复推送包 [seq=${sso.sequence}] <- ${sso.command}" }
+                        return@also
+                    }
                     client.pushChannel.send(sso)
                 }
             }

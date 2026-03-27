@@ -1,5 +1,6 @@
 package org.ntqqrev.acidify.struct
 
+import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 /**
@@ -8,6 +9,7 @@ import kotlin.js.JsExport
  * @property qDes 表情描述
  */
 @JsExport
+@Serializable
 data class BotFaceDetail internal constructor(
     val qSid: String,
     val qDes: String,
@@ -16,7 +18,8 @@ data class BotFaceDetail internal constructor(
     val aniStickerType: Int,
     val aniStickerPackId: Int,
     val aniStickerId: Int,
-    val url: String,
+    val baseUrl: String,
+    val advUrl: String,
     val emojiNameAlias: List<String>,
     val aniStickerWidth: Int,
     val aniStickerHeight: Int,

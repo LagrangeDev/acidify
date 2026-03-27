@@ -77,9 +77,6 @@ class LagrangeUrlSignProvider(
                 )
             )
         }
-        if (resp.status != HttpStatusCode.OK) {
-            throw UrlSignException(resp.status.description, resp.status.value)
-        }
         val respBody = resp.body<LagrangeUrlSignResponse>()
         if (respBody.code != 0 || respBody.value == null) {
             throw UrlSignException(respBody.message ?: "", respBody.code)

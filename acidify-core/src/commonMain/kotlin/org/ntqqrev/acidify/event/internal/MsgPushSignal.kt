@@ -5,7 +5,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.ntqqrev.acidify.*
@@ -84,7 +83,7 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             .firstOrNull()
             ?.takeIf { it.appName == "com.tencent.qun.invite" || it.appName == "com.tencent.tuwen.lua" }
             ?.let {
-                Json.decodeFromString<JsonElement>(it.jsonPayload)
+                Json.parseToJsonElement(it.jsonPayload)
                     .jsonObject
                     .takeIf { obj -> obj["bizsrc"]?.jsonPrimitive?.content == "qun.invite" }
                     ?.get("meta")

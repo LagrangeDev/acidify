@@ -34,6 +34,9 @@ if (existsSync('session-store.json')) {
 }
 
 const scope = new CoroutineScope(true);
+
+// 创建一个 UrlSignProvider 实例，参数为签名服务的 URL
+// 如果要对接新版 Lagrange V2 Sign API，请使用 LagrangeUrlSignProvider
 const signProvider = new UrlSignProvider(scope, '...');
 
 // 创建 Bot 实例

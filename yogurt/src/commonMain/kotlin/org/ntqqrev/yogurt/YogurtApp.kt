@@ -1,7 +1,6 @@
 package org.ntqqrev.yogurt
 
 import com.dokar.quickjs.QuickJs
-import com.github.ajalt.mordant.platform.MultiplatformSystem.exitProcess
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.http.*
@@ -26,6 +25,7 @@ import org.ntqqrev.yogurt.api.configureMilkyApiAuth
 import org.ntqqrev.yogurt.api.configureMilkyApiHttpRoutes
 import org.ntqqrev.yogurt.api.configureMilkyApiLoginProtect
 import org.ntqqrev.yogurt.config.loadConfigAndUpdate
+import org.ntqqrev.yogurt.debug.configureDebugFaceDetailsApi
 import org.ntqqrev.yogurt.event.configureMilkyEventAuth
 import org.ntqqrev.yogurt.event.configureMilkyEventSse
 import org.ntqqrev.yogurt.event.configureMilkyEventWebSocket
@@ -33,6 +33,7 @@ import org.ntqqrev.yogurt.event.configureMilkyEventWebhook
 import org.ntqqrev.yogurt.script.createScriptEnvironment
 import org.ntqqrev.yogurt.script.loadScripts
 import org.ntqqrev.yogurt.util.*
+import kotlin.time.Duration.Companion.milliseconds
 
 object YogurtApp {
     val config = loadConfigAndUpdate()
@@ -52,7 +53,7 @@ object YogurtApp {
                     """.trimIndent()
                 )
             )
-            exitProcess(1)
+            halt(1)
         }
 
         t.println(
@@ -71,6 +72,7 @@ object YogurtApp {
                 Core Version:   ${BuildKonfig.coreVersion}
                 Milky Version:  ${BuildKonfig.milkyVersion} ($milkyVersion)
                 Build Time:     ${BuildKonfig.buildTime}
+                Listen Address: ${config.milky.http.host}:${config.milky.http.port}${config.milky.http.prefix}
                 Data Directory: ${SystemFileSystem.resolve(Path("."))}
             """.trimIndent()
         )
@@ -92,7 +94,7 @@ object YogurtApp {
                     """.trimIndent()
                 )
             )
-            delay(10_000)
+            delay(10_000.milliseconds)
         }
 
         when {
@@ -126,19 +128,25 @@ object YogurtApp {
         }
 
         routing {
-            route("/api") {
+            val prefix = config.milky.http.prefix.removeSuffix("/")
+            route("$prefix/api") {
                 if (config.milky.http.accessToken.isNotEmpty()) {
                     configureMilkyApiAuth()
                 }
                 configureMilkyApiLoginProtect()
                 configureMilkyApiHttpRoutes()
             }
-            route("/event") {
+            route("$prefix/event") {
                 if (config.milky.http.accessToken.isNotEmpty()) {
                     configureMilkyEventAuth()
                 }
                 configureMilkyEventWebSocket()
                 configureMilkyEventSse()
+            }
+            route("$prefix/debug") {
+                if (config.debug.enableFaceDetailsApi) {
+                    configureDebugFaceDetailsApi()
+                }
             }
         }
 
