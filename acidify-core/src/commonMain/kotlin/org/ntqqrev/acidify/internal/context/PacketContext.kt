@@ -28,6 +28,8 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     private val host = "msfwifi.3g.qq.com"
     private val port = 8080
+    private val connectRetryInitialDelay = 1_000L.milliseconds
+    private val connectRetryMaxDelay = 30_000L.milliseconds
     private val selectorManager = SelectorManager(client.coroutineContext)
     private var currentSocket: Socket? = null
     private lateinit var input: ByteReadChannel
@@ -123,13 +125,13 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                     if (manualCloseRequested.value) {
                         break
                     }
-                    logger.w { "连接已关闭，5s 后尝试重新连接" }
+                    logger.w { "连接已关闭，准备重新连接" }
                 } catch (e: Exception) {
                     disconnectCause = e
                     if (manualCloseRequested.value) {
                         break
                     }
-                    logger.e(e) { "接收数据包时出现错误，5s 后尝试重新连接" }
+                    logger.e(e) { "接收数据包时出现错误，准备重新连接" }
                 }
 
                 if (manualCloseRequested.value) {
@@ -166,10 +168,27 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     }
 
     private suspend fun connect() {
-        val newSocket = aSocket(selectorManager).tcp().connect(host, port) {
-            keepAlive = true
+        var newSocket: Socket? = null
+        var retryDelay = connectRetryInitialDelay
+        var attempt = 0
+        while (currentCoroutineContext().isActive) {
+            try {
+                newSocket = aSocket(selectorManager).tcp().connect(host, port) {
+                    keepAlive = true
+                }
+                break
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                attempt++
+                logger.e(e) {
+                    "连接到 $host:$port 失败，第 $attempt 次重试将在 ${retryDelay.inWholeMilliseconds}ms 后进行"
+                }
+                delay(retryDelay)
+                retryDelay = (retryDelay * 2).coerceAtMost(connectRetryMaxDelay)
+            }
         }
-        currentSocket = newSocket
+        currentSocket = newSocket!!
         input = newSocket.openReadChannel()
         output = newSocket.openWriteChannel(autoFlush = true)
         manualCloseRequested.value = false
@@ -292,7 +311,6 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         cleanupPendingRequests(error)
         client.doPreOfflineLogic()
         closeConnection(reconnect = true)
-        delay(5000.milliseconds)
         connect()
     }
 
