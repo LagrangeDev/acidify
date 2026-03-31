@@ -44,7 +44,7 @@ sealed class AbstractBot(
         MsgPushSignal,
         KickSignal
     ).associateBy { it.cmd }
-    internal val faceDetailMapMut = mutableMapOf<String, BotFaceDetail>()
+    internal lateinit var faceDetailMapMut: Map<String, BotFaceDetail>
     internal var eventCollectJob: Job? = null
     internal val friendCache = CacheUtility(
         bot = this,

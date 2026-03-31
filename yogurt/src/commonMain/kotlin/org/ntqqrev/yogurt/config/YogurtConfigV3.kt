@@ -11,6 +11,7 @@ data class YogurtConfigV3(
     val milky: MilkyConfig = MilkyConfig(),
     val logging: LoggingConfig = LoggingConfig(),
     val security: SecurityConfig = SecurityConfig(),
+    val debug: DebugConfig = DebugConfig(),
 ) {
     @Serializable
     data class ProtocolConfig(
@@ -29,6 +30,7 @@ data class YogurtConfigV3(
         val webhook: WebhookConfig = WebhookConfig(),
         val reportSelfMessage: Boolean = true,
         val preloadContacts: Boolean = false,
+        val ffmpegPath: String = "",
     ) {
         @Serializable
         data class HttpConfig(
@@ -60,5 +62,10 @@ data class YogurtConfigV3(
     @Serializable
     data class SecurityConfig(
         val skipOnLaunchListenAddressCheck: Boolean = false,
+    )
+
+    @Serializable
+    data class DebugConfig(
+        val enableFaceDetailsApi: Boolean = false,
     )
 }

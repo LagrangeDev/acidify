@@ -96,6 +96,10 @@ internal class FlashTransferContext(client: AbstractClient) : AbstractContext(cl
                 setBody(payload)
             }
             val responseBytes = response.readRawBytes()
+            if (!response.status.isSuccess()) {
+                logger.e { "FlashTransfer 上传块 $start 失败: ${response.status}, ${responseBytes.toHexString()}" }
+                return@async false
+            }
             val resp = responseBytes.pbDecode<FlashTransferUploadResp>()
             val status = resp.status
             if (status != "success") {

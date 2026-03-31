@@ -28,7 +28,7 @@ kotlin {
             implementation(libs.mordant)
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.java)
             implementation(libs.logback.classic)
         }
         mingwMain.dependencies {

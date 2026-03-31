@@ -13,7 +13,7 @@ kotlin {
             implementation(libs.mordant)
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.java)
         }
         mingwMain.dependencies {
             implementation(libs.ktor.client.winhttp)

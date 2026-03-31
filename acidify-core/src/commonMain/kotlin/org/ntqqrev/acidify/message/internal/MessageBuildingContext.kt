@@ -70,9 +70,9 @@ internal class MessageBuildingContext(
 
     fun BotOutgoingSegment.Face.build() = addAsync {
         val faceDetail = bot.faceDetailMap[faceId.toString()]
-            ?: throw NoSuchElementException("要发送的表情 ID 不存在: $faceId")
 
         if (isLarge) {
+            requireNotNull(faceDetail) { "要发送的表情 ID 不存在: $faceId" }
             Elem(
                 commonElem = CommonElem(
                     serviceType = 37,
@@ -92,6 +92,7 @@ internal class MessageBuildingContext(
         }
 
         if (faceId >= 260) {
+            requireNotNull(faceDetail) { "要发送的表情 ID 不存在: $faceId" }
             Elem(
                 commonElem = CommonElem(
                     serviceType = 33,
@@ -371,11 +372,14 @@ internal class MessageBuildingContext(
 
         if (uploadResp.uKey.isNotEmpty()) {
             // TODO: fix highway here
-            bot.client.flashTransferContext.uploadFile(
+            val success = bot.client.flashTransferContext.uploadFile(
                 uKey = uploadResp.uKey,
                 appId = if (scene == MessageScene.FRIEND) 1413 else 1415,
                 bodyStream = raw,
             )
+            if (!success) {
+                throw IllegalStateException("视频文件上传失败")
+            }
         } else {
             logger.d { "uKey 为空，服务器可能已存在该视频，跳过上传" }
         }

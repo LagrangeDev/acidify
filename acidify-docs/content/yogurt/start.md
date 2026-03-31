@@ -79,7 +79,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./config.json:/app/config.json
+      - ./config.json:/app/data/config.json
       - data:/app/data
 
 volumes:
@@ -108,7 +108,7 @@ docker compose up -d
 docker run -d \
   --name yogurt \
   --restart unless-stopped \
-  -v $(pwd)/config.json:/app/config.json \
+  -v $(pwd)/config.json:/app/data/config.json \
   -v $(pwd)/data:/app/data \
   -p 3000:3000 \
   ghcr.io/shoucandanghehe/yogurt-docker:latest

@@ -46,10 +46,6 @@ kotlin {
             implementation(libs.xmlutil.core)
             implementation(libs.xmlutil.serialization)
         }
-        commonTest.dependencies {
-            implementation(libs.ktor.client.cio)
-            implementation(kotlin("test"))
-        }
         all {
             languageSettings.optIn("kotlinx.serialization.ExperimentalSerializationApi")
             languageSettings.optIn("kotlin.js.ExperimentalJsExport")
