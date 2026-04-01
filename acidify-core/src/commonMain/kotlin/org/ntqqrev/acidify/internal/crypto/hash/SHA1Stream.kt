@@ -85,8 +85,9 @@ internal class SHA1Stream {
 
     fun update(data: ByteArray, len: Int = data.size) {
         var index = (count[0] ushr 3) and 0x3F
+        val old0 = count[0]
         count[0] += len shl 3
-        if (count[0] < (len shl 3)) count[1]++
+        if (count[0].toUInt() < old0.toUInt()) count[1]++
         count[1] += len ushr 29
 
         val partLen = Sha1BlockSize - index
