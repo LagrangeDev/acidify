@@ -2,8 +2,8 @@ package org.ntqqrev.yogurt.util
 
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
+import org.ntqqrev.yogurt.fs.withFs
 import kotlin.random.Random
 
 data class CommandExecutionResult(
@@ -16,32 +16,34 @@ expect fun executeCommand(vararg args: String): CommandExecutionResult
 
 fun createCommandTempFilePath(kind: String): String {
     while (true) {
-        val candidate = Path(
-            SystemTemporaryDirectory,
-            "yogurt-$kind-${Random.nextLong().toULong().toString(16)}.tmp",
-        )
-        if (SystemFileSystem.exists(candidate)) {
-            continue
-        }
+        withFs {
+            val candidate = Path(
+                SystemTemporaryDirectory,
+                "yogurt-$kind-${Random.nextLong().toULong().toString(16)}.tmp",
+            )
+            if (exists(candidate)) {
+                continue
+            }
 
-        SystemFileSystem.sink(candidate).buffered().use { }
-        return candidate.toString()
+            sink(candidate).buffered().use { }
+            return candidate.toString()
+        }
     }
 }
 
-fun readCommandTempFile(path: String): String {
+fun readCommandTempFile(path: String): String = withFs {
     val file = Path(path)
-    if (!SystemFileSystem.exists(file)) {
+    if (!exists(file)) {
         return ""
     }
 
-    return readByteArrayFromFilePath(path).decodeToString()
+    return Path(path).readText()
 }
 
-fun deleteCommandTempFile(path: String) {
+fun deleteCommandTempFile(path: String) = withFs {
     val file = Path(path)
-    if (SystemFileSystem.exists(file)) {
-        SystemFileSystem.delete(file, mustExist = false)
+    if (exists(file)) {
+        delete(file, mustExist = false)
     }
 }
 

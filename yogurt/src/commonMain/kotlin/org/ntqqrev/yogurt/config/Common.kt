@@ -2,13 +2,10 @@
 
 package org.ntqqrev.yogurt.config
 
-import kotlinx.io.buffered
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
-import kotlinx.serialization.json.io.encodeToSink
 import org.ntqqrev.yogurt.configPath
+import org.ntqqrev.yogurt.fs.withFs
 
 fun YogurtConfig.toV2() = YogurtConfigV2(
     signApiUrl = signApiUrl,
@@ -77,22 +74,16 @@ val jsonModule = Json {
     ignoreUnknownKeys = true
 }
 
-fun loadConfigAndUpdate(): YogurtConfigV3 {
-    if (!SystemFileSystem.exists(configPath)) {
+fun loadConfigAndUpdate(): YogurtConfigV3 = withFs {
+    if (!exists(configPath)) {
         val defaultConfig = YogurtConfigV3()
-        SystemFileSystem.sink(configPath).buffered().use {
-            jsonModule.encodeToSink(defaultConfig, it)
-        }
-        println("配置文件已生成于 ${SystemFileSystem.resolve(configPath)}")
+        configPath.write(jsonModule.encodeToString(defaultConfig))
+        println("配置文件已生成于 ${resolve(configPath)}")
         println("请根据需要进行修改，修改完成后按 Enter 键继续...")
         readln()
     }
 
-    val configJson = jsonModule.parseToJsonElement(
-        SystemFileSystem.source(configPath).buffered().use {
-            it.readString()
-        }
-    )
+    val configJson = jsonModule.parseToJsonElement(configPath.readText())
     val config = when (val configVersion = detectConfigVersion(configJson)) {
         1 -> jsonModule.decodeFromJsonElement<YogurtConfig>(configJson).toV2().toV3()
         2 -> jsonModule.decodeFromJsonElement<YogurtConfigV2>(configJson).toV3()
@@ -100,10 +91,7 @@ fun loadConfigAndUpdate(): YogurtConfigV3 {
         else -> error("不支持的配置版本 $configVersion")
     }
 
-    SystemFileSystem.sink(configPath).buffered().use { sink ->
-        jsonModule.encodeToSink(config, sink)
-        // rewrite it to format, and add new fields if any
-    }
+    configPath.write(jsonModule.encodeToString(config))
 
-    return config
+    return@withFs config
 }

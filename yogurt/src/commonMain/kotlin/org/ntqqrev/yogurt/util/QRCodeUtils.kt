@@ -4,13 +4,12 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
-import kotlinx.io.buffered
-import kotlinx.io.files.SystemFileSystem
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
 import org.ntqqrev.qrmatrix.ErrorCorrectionLevel
 import org.ntqqrev.qrmatrix.generateMatrix
 import org.ntqqrev.yogurt.YogurtApp.t
+import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.qrCodePath
 
 object Palette {
@@ -51,9 +50,9 @@ fun Application.configureQRCodeDisplay() = launch {
                 ${it.url}
             """.trimIndent()
         )
-        SystemFileSystem.sink(qrCodePath).buffered().use { sink ->
-            sink.write(it.png)
+        withFs {
+            qrCodePath.write(it.png)
+            t.println("二维码文件已保存至 ${resolve(qrCodePath)}")
         }
-        t.println("二维码文件已保存至 ${SystemFileSystem.resolve(qrCodePath)}")
     }
 }

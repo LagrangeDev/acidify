@@ -4,10 +4,6 @@ import com.github.ajalt.mordant.rendering.TextColors
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.buffered
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
-import kotlinx.io.writeString
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.common.*
 import org.ntqqrev.acidify.common.android.*
@@ -15,23 +11,20 @@ import org.ntqqrev.acidify.exception.UnstableNetworkException
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.yogurt.YogurtApp.config
 import org.ntqqrev.yogurt.YogurtApp.t
+import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.util.logHandler
 
-suspend fun Application.initializePC(): Bot {
-    val sessionStore: SessionStore = if (SystemFileSystem.exists(sessionStorePath)) {
-        SystemFileSystem.source(sessionStorePath).buffered().use {
-            SessionStore.fromJson(it.readString())
-        }
+suspend fun Application.initializePC(): Bot = withFs {
+    val sessionStore: SessionStore = if (exists(sessionStorePath)) {
+        SessionStore.fromJson(sessionStorePath.readText())
     } else SessionStore.empty()
 
     var signProvider: SignProvider
     var appInfo: AppInfo
 
     fun readCustomAppInfo(): AppInfo {
-        return if (SystemFileSystem.exists(customAppInfoPath)) {
-            SystemFileSystem.source(customAppInfoPath).buffered().use {
-                AppInfo.fromJson(it.readString())
-            }
+        return if (exists(customAppInfoPath)) {
+            AppInfo.fromJson(customAppInfoPath.readText())
         } else {
             throw IllegalStateException("未在 $customAppInfoPath 下找到自定义 AppInfo 文件")
         }
@@ -91,14 +84,12 @@ suspend fun Application.initializePC(): Bot {
     return bot
 }
 
-suspend fun Application.initializeAndroid(): AndroidBot {
+suspend fun Application.initializeAndroid(): AndroidBot = withFs {
     require(config.protocol.uin != 0L && config.protocol.password.isNotEmpty()) {
         "使用 Android 协议登录时，请在配置文件中填写 uin 和 password 字段"
     }
-    val sessionStore: AndroidSessionStore = if (SystemFileSystem.exists(androidSessionStorePath)) {
-        SystemFileSystem.source(androidSessionStorePath).buffered().use {
-            AndroidSessionStore.fromJson(it.readString())
-        }.takeIf {
+    val sessionStore: AndroidSessionStore = if (exists(androidSessionStorePath)) {
+        AndroidSessionStore.fromJson(androidSessionStorePath.readText()).takeIf {
             it.uin == config.protocol.uin && it.password == config.protocol.password
         } ?: run {
             t.println("找到的 SessionStore 与配置的 uin 不匹配，正在创建新的 SessionStore...")
@@ -112,9 +103,7 @@ suspend fun Application.initializeAndroid(): AndroidBot {
         password = config.protocol.password
     ).also {
         t.println("未找到 Android SessionStore，正在创建新的 SessionStore 并保存到文件...")
-        SystemFileSystem.sink(androidSessionStorePath).buffered().use { sink ->
-            sink.writeString(it.toJson())
-        }
+        androidSessionStorePath.write(it.toJson())
     }
     val signProvider: AndroidSignProvider = if (!config.protocol.androidUseLegacySign) {
         AndroidUrlSignProvider(config.protocol.signApiUrl)
@@ -134,10 +123,8 @@ suspend fun Application.initializeAndroid(): AndroidBot {
     val appInfo: AndroidAppInfo = when (config.protocol.version) {
         "fetched" -> throw IllegalStateException("Android 协议不支持通过 Sign API 获取 AppInfo，请使用内置版本或自定义版本")
 
-        "custom" -> if (SystemFileSystem.exists(customAppInfoPath)) {
-            SystemFileSystem.source(customAppInfoPath).buffered().use {
-                AndroidAppInfo.fromJson(it.readString())
-            }
+        "custom" -> if (exists(customAppInfoPath)) {
+            AndroidAppInfo.fromJson(customAppInfoPath.readText())
         } else {
             throw IllegalStateException("未在 $customAppInfoPath 下找到自定义 AppInfo 文件")
         }

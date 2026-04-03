@@ -1,8 +1,8 @@
 package org.ntqqrev.yogurt.util
 
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
+import org.ntqqrev.yogurt.fs.withFs
 
 val isDockerEnv: Boolean by lazy {
-    SystemFileSystem.exists(Path("/.dockerenv"))
+    withFs { exists(Path("/.dockerenv")) }
 }

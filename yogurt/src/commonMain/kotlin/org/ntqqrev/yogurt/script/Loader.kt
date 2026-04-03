@@ -4,34 +4,30 @@ import com.dokar.quickjs.QuickJs
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.*
-import kotlinx.io.buffered
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.milky.milkyJsonModule
+import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.scriptsPath
 
-suspend fun Application.loadScripts() {
+suspend fun Application.loadScripts() = withFs {
     val bot = dependencies.resolve<AbstractBot>()
     val ctx = dependencies.resolve<MilkyContext>()
     val qjs = dependencies.resolve<QuickJs>()
     val logger = bot.createLogger("ScriptLoader")
 
-    if (!SystemFileSystem.exists(scriptsPath)) {
-        SystemFileSystem.createDirectories(scriptsPath)
+    if (!exists(scriptsPath)) {
+        createDirectories(scriptsPath)
     }
 
-    val scripts = SystemFileSystem.list(scriptsPath)
+    val scripts = list(scriptsPath)
         .filter { it.name.endsWith(".yogurtx.js") }
         .map {
             async {
                 Script(
                     name = it.name,
-                    content = SystemFileSystem.source(it).buffered().use { r ->
-                        withContext(Dispatchers.IO) {
-                            r.readString()
-                        }
+                    content = withContext(Dispatchers.IO) {
+                        it.readText()
                     }
                 )
             }

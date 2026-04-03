@@ -5,14 +5,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import org.ntqqrev.acidify.message.ImageFormat
 import org.ntqqrev.acidify.milky.Codec
 import org.ntqqrev.acidify.milky.ImageInfo
 import org.ntqqrev.acidify.milky.VideoInfo
 import org.ntqqrev.yogurt.YogurtApp.config
+import org.ntqqrev.yogurt.fs.FileSystem
+import org.ntqqrev.yogurt.fs.withFs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -96,7 +96,7 @@ object FFmpegCodec : Codec {
                         )
                     }
 
-                    readByteArrayFromFilePath(outputPath)
+                    Path(outputPath).readBytes()
                 } finally {
                     deleteCodecTempFile(outputPath)
                 }
@@ -131,34 +131,32 @@ private fun org.ntqqrev.acidify.codec.VideoInfo.toAcidifyVideoInfo() = VideoInfo
 private inline fun <T> withTempFile(
     data: ByteArray,
     kind: String,
-    block: (String) -> T,
-): T {
+    block: FileSystem.(String) -> T,
+): T = withFs {
     val inputPath = createCodecTempFilePath(kind)
     try {
-        SystemFileSystem.sink(Path(inputPath)).buffered().use { sink ->
-            sink.write(data)
-        }
+        Path(inputPath).write(data)
         return block(inputPath)
     } finally {
         deleteCodecTempFile(inputPath)
     }
 }
 
-private fun createCodecTempFilePath(kind: String, extension: String = ".tmp"): String {
+private fun createCodecTempFilePath(kind: String, extension: String = ".tmp"): String = withFs {
     val basePath = createCommandTempFilePath(kind)
     if (extension == ".tmp") {
         return basePath
     }
 
     val targetPath = basePath.removeSuffix(".tmp") + extension
-    SystemFileSystem.atomicMove(Path(basePath), Path(targetPath))
+    atomicMove(Path(basePath), Path(targetPath))
     return targetPath
 }
 
-private fun deleteCodecTempFile(path: String) {
+private fun deleteCodecTempFile(path: String) = withFs {
     val file = Path(path)
-    if (SystemFileSystem.exists(file)) {
-        SystemFileSystem.delete(file, mustExist = false)
+    if (exists(file)) {
+        delete(file, mustExist = false)
     }
 }
 

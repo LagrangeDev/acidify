@@ -18,13 +18,13 @@ import io.ktor.server.websocket.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.configureMilky
 import org.ntqqrev.milky.milkyJsonModule
 import org.ntqqrev.milky.milkyVersion
 import org.ntqqrev.yogurt.config.loadConfigAndUpdate
 import org.ntqqrev.yogurt.debug.configureDebugFaceDetailsApi
+import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.script.createScriptEnvironment
 import org.ntqqrev.yogurt.script.loadScripts
 import org.ntqqrev.yogurt.util.*
@@ -68,7 +68,7 @@ object YogurtApp {
                 Milky Version:  ${BuildKonfig.milkyVersion} ($milkyVersion)
                 Build Time:     ${BuildKonfig.buildTime}
                 Listen Address: ${config.milky.http.host}:${config.milky.http.port}${config.milky.http.prefix}
-                Data Directory: ${SystemFileSystem.resolve(Path("."))}
+                Data Directory: ${withFs { resolve(Path(".")) }}
             """.trimIndent()
         )
 

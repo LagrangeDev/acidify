@@ -22,6 +22,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":acidify-core"))
             implementation(project(":acidify-milky"))
+            implementation(project(":yogurt-fs"))
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
             implementation(libs.bundles.ktor.server)
