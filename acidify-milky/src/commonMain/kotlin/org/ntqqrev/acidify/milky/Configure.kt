@@ -1,10 +1,6 @@
 package org.ntqqrev.acidify.milky
 
-import io.ktor.server.application.*
-import io.ktor.server.plugins.di.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.launch
-import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.api.apiAuth
 import org.ntqqrev.acidify.milky.api.apiLoginProtect
 import org.ntqqrev.acidify.milky.api.apiRoutes
@@ -31,11 +27,5 @@ fun Route.configureMilky() {
     }
     with(application) {
         eventWebhook()
-        monitor.subscribe(ApplicationStarted) {
-            launch {
-                val bot = dependencies.resolve<AbstractBot>()
-                ctx.pipeBotEventFlow(bot.eventFlow)
-            }
-        }
     }
 }

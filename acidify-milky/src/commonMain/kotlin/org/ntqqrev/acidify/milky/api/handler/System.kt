@@ -21,8 +21,8 @@ val GetImplInfo = ApiEndpoint.GetImplInfo.define {
         implName = implName,
         implVersion = implVersion,
         qqProtocolVersion = when (bot) {
-            is Bot -> bot.appInfo.currentVersion
-            is AndroidBot -> bot.appInfo.ptVersion
+            is Bot -> (bot as Bot).appInfo.currentVersion
+            is AndroidBot -> (bot as AndroidBot).appInfo.ptVersion
         },
         qqProtocolType = when (protocolOs) {
             "Windows" -> "windows"

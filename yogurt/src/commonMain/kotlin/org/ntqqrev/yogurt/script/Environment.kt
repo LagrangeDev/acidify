@@ -10,7 +10,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
-import org.ntqqrev.acidify.milky.api.MilkyApiContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
 import org.ntqqrev.acidify.milky.api.handler.*
 import org.ntqqrev.milky.milkyJsonModule
@@ -163,11 +162,10 @@ inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
             ?: throw IllegalArgumentException("Expected argument to be a JSON string")
         val bot = dependencies.resolve<AbstractBot>()
         val logger = bot.createLogger("Scripting")
-        val context = MilkyApiContext(bot, ctx)
         var resp: R
         try {
             val duration = measureTime {
-                resp = handler.callHandler(context, milkyJsonModule.decodeFromString(payloadString))
+                resp = handler.callHandler(ctx, milkyJsonModule.decodeFromString(payloadString))
             }
             logger.i {
                 "脚本调用 API ${handler.path}（成功 ${duration.toString(DurationUnit.MILLISECONDS)}）"
