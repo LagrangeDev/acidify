@@ -17,7 +17,7 @@ internal abstract class RichMediaUpload<T>(
     val scene: MessageScene,
 ) : OidbService<T, UploadResp>(oidbCommand, oidbService, true) {
     class ImageUploadRequest(
-        val imageSize: Int,
+        val imageSize: Long,
         val imageMd5: String,
         val imageSha1: String,
         val imageExt: String,
@@ -30,7 +30,7 @@ internal abstract class RichMediaUpload<T>(
     )
 
     class RecordUploadRequest(
-        val audioSize: Int,
+        val audioSize: Long,
         val audioMd5: String,
         val audioSha1: String,
         val audioDuration: Int,
@@ -38,13 +38,13 @@ internal abstract class RichMediaUpload<T>(
     )
 
     class VideoUploadRequest(
-        val videoSize: Int,
+        val videoSize: Long,
         val videoMd5: String,
         val videoSha1: String,
         val videoWidth: Int,
         val videoHeight: Int,
         val videoDuration: Int,
-        val thumbnailSize: Int,
+        val thumbnailSize: Long,
         val thumbnailMd5: String,
         val thumbnailSha1: String,
         val thumbnailExt: String,

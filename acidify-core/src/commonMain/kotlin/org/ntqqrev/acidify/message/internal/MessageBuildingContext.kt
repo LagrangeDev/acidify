@@ -161,7 +161,6 @@ internal class MessageBuildingContext(
 
     fun BotOutgoingSegment.Image.build() = addMultipleAsync {
         val metadata = MediaSourceMetadata.from(raw)
-        require(metadata.size <= Int.MAX_VALUE) { "图片大小超过 Int 上限: ${metadata.size}" }
         val imageMd5 = metadata.md5.toHexString()
         val imageSha1 = metadata.sha1.toHexString()
 
@@ -170,7 +169,7 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.PrivateImage,
                     RichMediaUpload.ImageUploadRequest(
-                        imageSize = metadata.size.toInt(),
+                        imageSize = metadata.size,
                         imageMd5 = imageMd5,
                         imageSha1 = imageSha1,
                         imageExt = ".${format.ext}",
@@ -187,7 +186,7 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.GroupImage,
                     RichMediaUpload.ImageUploadRequest(
-                        imageSize = metadata.size.toInt(),
+                        imageSize = metadata.size,
                         imageMd5 = imageMd5,
                         imageSha1 = imageSha1,
                         imageExt = ".${format.ext}",
@@ -255,7 +254,6 @@ internal class MessageBuildingContext(
 
     fun BotOutgoingSegment.Record.build() = addAsync {
         val metadata = MediaSourceMetadata.from(rawSilk)
-        require(metadata.size <= Int.MAX_VALUE) { "语音大小超过 Int 上限: ${metadata.size}" }
         val recordMd5 = metadata.md5.toHexString()
         val recordSha1 = metadata.sha1.toHexString()
 
@@ -264,7 +262,7 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.PrivateRecord,
                     RichMediaUpload.RecordUploadRequest(
-                        audioSize = metadata.size.toInt(),
+                        audioSize = metadata.size,
                         audioMd5 = recordMd5,
                         audioSha1 = recordSha1,
                         audioDuration = duration.toInt()
@@ -276,7 +274,7 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.GroupRecord,
                     RichMediaUpload.RecordUploadRequest(
-                        audioSize = metadata.size.toInt(),
+                        audioSize = metadata.size,
                         audioMd5 = recordMd5,
                         audioSha1 = recordSha1,
                         audioDuration = duration.toInt(),
@@ -320,8 +318,6 @@ internal class MessageBuildingContext(
     fun BotOutgoingSegment.Video.build() = addAsync {
         val videoMetadata = MediaSourceMetadata.from(raw)
         val thumbMetadata = MediaSourceMetadata.from(thumb)
-        require(videoMetadata.size <= Int.MAX_VALUE) { "视频大小超过 Int 上限: ${videoMetadata.size}" }
-        require(thumbMetadata.size <= Int.MAX_VALUE) { "视频缩略图大小超过 Int 上限: ${thumbMetadata.size}" }
         val videoMd5 = videoMetadata.md5.toHexString()
         val videoSha1 = videoMetadata.sha1.toHexString()
 
@@ -333,13 +329,13 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.PrivateVideo,
                     RichMediaUpload.VideoUploadRequest(
-                        videoSize = videoMetadata.size.toInt(),
+                        videoSize = videoMetadata.size,
                         videoMd5 = videoMd5,
                         videoSha1 = videoSha1,
                         videoWidth = width,
                         videoHeight = height,
                         videoDuration = duration.toInt(),
-                        thumbnailSize = thumbMetadata.size.toInt(),
+                        thumbnailSize = thumbMetadata.size,
                         thumbnailMd5 = thumbMd5,
                         thumbnailSha1 = thumbSha1,
                         thumbnailExt = thumbFormat.ext,
@@ -352,13 +348,13 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.GroupVideo,
                     RichMediaUpload.VideoUploadRequest(
-                        videoSize = videoMetadata.size.toInt(),
+                        videoSize = videoMetadata.size,
                         videoMd5 = videoMd5,
                         videoSha1 = videoSha1,
                         videoWidth = width,
                         videoHeight = height,
                         videoDuration = duration.toInt(),
-                        thumbnailSize = thumbMetadata.size.toInt(),
+                        thumbnailSize = thumbMetadata.size,
                         thumbnailMd5 = thumbMd5,
                         thumbnailSha1 = thumbSha1,
                         thumbnailExt = thumbFormat.ext,

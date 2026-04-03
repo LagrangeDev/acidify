@@ -32,7 +32,7 @@ internal class IndexNode(
 
 @Serializable
 internal class FileInfo(
-    @ProtoNumber(1) val fileSize: Int = 0,
+    @ProtoNumber(1) val fileSize: Long = 0L,
     @ProtoNumber(2) val fileHash: String = "",
     @ProtoNumber(3) val fileSha1: String = "",
     @ProtoNumber(4) val fileName: String = "",

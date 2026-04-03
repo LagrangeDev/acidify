@@ -14,7 +14,7 @@ internal object UploadPrivateFile : OidbService<UploadPrivateFile.Req, UploadPri
         val senderUid: String,
         val receiverUid: String,
         val fileName: String,
-        val fileSize: Int,
+        val fileSize: Long,
         val fileMd5: ByteArray,
         val fileSha1: ByteArray,
         val md510M: ByteArray,

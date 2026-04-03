@@ -28,7 +28,7 @@ internal class Oidb0xE37Req(
     internal class UploadBody(
         @ProtoNumber(10) val senderUid: String = "",
         @ProtoNumber(20) val receiverUid: String = "",
-        @ProtoNumber(30) val fileSize: Int = 0,
+        @ProtoNumber(30) val fileSize: Long = 0L,
         @ProtoNumber(40) val fileName: String = "",
         @ProtoNumber(50) val md510MCheckSum: ByteArray = byteArrayOf(),
         @ProtoNumber(60) val sha1CheckSum: ByteArray = byteArrayOf(),

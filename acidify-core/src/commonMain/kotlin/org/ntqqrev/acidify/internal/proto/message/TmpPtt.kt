@@ -9,7 +9,7 @@ internal class TmpPtt(
     @ProtoNumber(2) val fileUuid: ByteArray = byteArrayOf(),
     @ProtoNumber(3) val fileMd5: ByteArray = byteArrayOf(),
     @ProtoNumber(4) val fileName: ByteArray = byteArrayOf(),
-    @ProtoNumber(5) val fileSize: Int = 0,
+    @ProtoNumber(5) val fileSize: Long = 0L,
     @ProtoNumber(6) val pttTimes: Int = 0,
     @ProtoNumber(7) val userType: Int = 0,
     @ProtoNumber(8) val pttTransFlag: Int = 0,

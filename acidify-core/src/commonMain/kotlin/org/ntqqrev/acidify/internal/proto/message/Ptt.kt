@@ -10,7 +10,7 @@ internal class Ptt(
     @ProtoNumber(3) val fileUuid: ByteArray = byteArrayOf(),
     @ProtoNumber(4) val fileMd5: ByteArray = byteArrayOf(),
     @ProtoNumber(5) val fileName: String = "",
-    @ProtoNumber(6) val fileSize: Int = 0,
+    @ProtoNumber(6) val fileSize: Long = 0L,
     @ProtoNumber(7) val reserve: ByteArray = byteArrayOf(),
     @ProtoNumber(8) val fileId: Int = 0,
     @ProtoNumber(9) val serverIp: Int = 0,

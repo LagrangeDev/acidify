@@ -96,7 +96,6 @@ suspend fun AbstractBot.uploadPrivateFile(
 ): String {
     val friendUid = getUidByUin(friendUin)
     val metadata = MediaSourceMetadata.from(fileSource)
-    require(metadata.size <= Int.MAX_VALUE) { "私聊文件大小超过 Int 上限: ${metadata.size}" }
     val md510M = metadata.md510M
 
     val uploadResp = client.callService(
@@ -105,7 +104,7 @@ suspend fun AbstractBot.uploadPrivateFile(
             senderUid = uid,
             receiverUid = friendUid,
             fileName = fileName,
-            fileSize = metadata.size.toInt(),
+            fileSize = metadata.size,
             fileMd5 = metadata.md5,
             fileSha1 = metadata.sha1,
             md510M = md510M,
