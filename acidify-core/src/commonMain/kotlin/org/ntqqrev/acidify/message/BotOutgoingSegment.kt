@@ -1,6 +1,9 @@
 package org.ntqqrev.acidify.message
 
+import org.ntqqrev.acidify.common.MediaSource
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import kotlin.js.JsExport
+import kotlin.js.JsName
 
 /**
  * 发送消息段
@@ -61,13 +64,30 @@ sealed class BotOutgoingSegment {
      * @property summary 图片的文本描述
      */
     data class Image(
-        val raw: ByteArray,
+        val raw: MediaSource,
         val format: ImageFormat,
         val width: Int,
         val height: Int,
         val subType: ImageSubType,
         val summary: String,
     ) : BotOutgoingSegment() {
+        @JsName("fromBytes")
+        constructor(
+            raw: ByteArray,
+            format: ImageFormat,
+            width: Int,
+            height: Int,
+            subType: ImageSubType,
+            summary: String,
+        ) : this(
+            raw = raw.toMediaSource(),
+            format = format,
+            width = width,
+            height = height,
+            subType = subType,
+            summary = summary,
+        )
+
         override fun toString(): String = summary
     }
 
@@ -77,9 +97,18 @@ sealed class BotOutgoingSegment {
      * @property duration 语音时长（秒）
      */
     data class Record(
-        val rawSilk: ByteArray,
+        val rawSilk: MediaSource,
         val duration: Long,
     ) : BotOutgoingSegment() {
+        @JsName("fromBytes")
+        constructor(
+            rawSilk: ByteArray,
+            duration: Long,
+        ) : this(
+            rawSilk = rawSilk.toMediaSource(),
+            duration = duration,
+        )
+
         override fun toString(): String = "[语音 ${duration}s]"
     }
 
@@ -93,13 +122,30 @@ sealed class BotOutgoingSegment {
      * @property thumbFormat 视频缩略图格式
      */
     data class Video(
-        val raw: ByteArray,
+        val raw: MediaSource,
         val width: Int,
         val height: Int,
         val duration: Long,
-        val thumb: ByteArray,
+        val thumb: MediaSource,
         val thumbFormat: ImageFormat,
     ) : BotOutgoingSegment() {
+        @JsName("fromBytes")
+        constructor(
+            raw: ByteArray,
+            width: Int,
+            height: Int,
+            duration: Long,
+            thumb: ByteArray,
+            thumbFormat: ImageFormat,
+        ) : this(
+            raw = raw.toMediaSource(),
+            width = width,
+            height = height,
+            duration = duration,
+            thumb = thumb.toMediaSource(),
+            thumbFormat = thumbFormat,
+        )
+
         override fun toString(): String = "[视频 ${width}x${height} ${duration}s]"
     }
 

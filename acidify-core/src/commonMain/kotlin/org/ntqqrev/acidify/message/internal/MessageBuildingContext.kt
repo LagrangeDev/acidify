@@ -14,7 +14,6 @@ import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.getFriendHistoryMessages
 import org.ntqqrev.acidify.getGroupHistoryMessages
 import org.ntqqrev.acidify.getUidByUin
-import org.ntqqrev.acidify.internal.crypto.hash.MD5
 import org.ntqqrev.acidify.internal.json.message.ForwardJsonPayload
 import org.ntqqrev.acidify.internal.json.message.lightAppJsonModule
 import org.ntqqrev.acidify.internal.proto.message.*
@@ -25,8 +24,8 @@ import org.ntqqrev.acidify.internal.proto.message.extra.SourceMsgResvAttr
 import org.ntqqrev.acidify.internal.proto.message.extra.TextResvAttr
 import org.ntqqrev.acidify.internal.service.message.RichMediaUpload
 import org.ntqqrev.acidify.internal.service.message.SendLongMsg
+import org.ntqqrev.acidify.internal.util.MediaSourceMetadata
 import org.ntqqrev.acidify.internal.util.pbEncode
-import org.ntqqrev.acidify.internal.util.sha1
 import org.ntqqrev.acidify.message.BotOutgoingSegment
 import org.ntqqrev.acidify.message.MessageScene
 import kotlin.random.Random
@@ -161,17 +160,17 @@ internal class MessageBuildingContext(
     }
 
     fun BotOutgoingSegment.Image.build() = addMultipleAsync {
-        val imageMd5Bytes = MD5.hash(raw)
-        val imageMd5 = imageMd5Bytes.toHexString()
-        val imageSha1Bytes = raw.sha1()
-        val imageSha1 = imageSha1Bytes.toHexString()
+        val metadata = MediaSourceMetadata.from(raw)
+        require(metadata.size <= Int.MAX_VALUE) { "图片大小超过 Int 上限: ${metadata.size}" }
+        val imageMd5 = metadata.md5.toHexString()
+        val imageSha1 = metadata.sha1.toHexString()
 
         val uploadResp = when (scene) {
             MessageScene.FRIEND -> {
                 bot.client.callService(
                     RichMediaUpload.PrivateImage,
                     RichMediaUpload.ImageUploadRequest(
-                        imageData = raw,
+                        imageSize = metadata.size.toInt(),
                         imageMd5 = imageMd5,
                         imageSha1 = imageSha1,
                         imageExt = ".${format.ext}",
@@ -188,7 +187,7 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.GroupImage,
                     RichMediaUpload.ImageUploadRequest(
-                        imageData = raw,
+                        imageSize = metadata.size.toInt(),
                         imageMd5 = imageMd5,
                         imageSha1 = imageSha1,
                         imageExt = ".${format.ext}",
@@ -207,9 +206,10 @@ internal class MessageBuildingContext(
 
         if (uploadResp.uKey.isNotEmpty()) {
             bot.client.highwayContext.uploadImage(
-                image = raw,
-                imageMd5 = imageMd5Bytes,
-                imageSha1 = imageSha1Bytes,
+                imageSource = raw,
+                imageSize = metadata.size,
+                imageMd5 = metadata.md5,
+                imageSha1 = metadata.sha1,
                 uploadResp = uploadResp,
                 messageScene = scene
             )
@@ -254,17 +254,17 @@ internal class MessageBuildingContext(
     }
 
     fun BotOutgoingSegment.Record.build() = addAsync {
-        val recordMd5Bytes = MD5.hash(rawSilk)
-        val recordMd5 = recordMd5Bytes.toHexString()
-        val recordSha1Bytes = rawSilk.sha1()
-        val recordSha1 = recordSha1Bytes.toHexString()
+        val metadata = MediaSourceMetadata.from(rawSilk)
+        require(metadata.size <= Int.MAX_VALUE) { "语音大小超过 Int 上限: ${metadata.size}" }
+        val recordMd5 = metadata.md5.toHexString()
+        val recordSha1 = metadata.sha1.toHexString()
 
         val uploadResp = when (scene) {
             MessageScene.FRIEND -> {
                 bot.client.callService(
                     RichMediaUpload.PrivateRecord,
                     RichMediaUpload.RecordUploadRequest(
-                        audioData = rawSilk,
+                        audioSize = metadata.size.toInt(),
                         audioMd5 = recordMd5,
                         audioSha1 = recordSha1,
                         audioDuration = duration.toInt()
@@ -276,7 +276,7 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.GroupRecord,
                     RichMediaUpload.RecordUploadRequest(
-                        audioData = rawSilk,
+                        audioSize = metadata.size.toInt(),
                         audioMd5 = recordMd5,
                         audioSha1 = recordSha1,
                         audioDuration = duration.toInt(),
@@ -290,9 +290,10 @@ internal class MessageBuildingContext(
 
         if (uploadResp.uKey.isNotEmpty()) {
             bot.client.highwayContext.uploadRecord(
-                record = rawSilk,
-                recordMd5 = recordMd5Bytes,
-                recordSha1 = recordSha1Bytes,
+                recordSource = rawSilk,
+                recordSize = metadata.size,
+                recordMd5 = metadata.md5,
+                recordSha1 = metadata.sha1,
                 uploadResp = uploadResp,
                 messageScene = scene
             )
@@ -317,28 +318,28 @@ internal class MessageBuildingContext(
     }
 
     fun BotOutgoingSegment.Video.build() = addAsync {
-        val videoMd5Bytes = MD5.hash(raw)
-        val videoMd5 = videoMd5Bytes.toHexString()
-        val videoSha1Bytes = raw.sha1()
-        val videoSha1 = videoSha1Bytes.toHexString()
+        val videoMetadata = MediaSourceMetadata.from(raw)
+        val thumbMetadata = MediaSourceMetadata.from(thumb)
+        require(videoMetadata.size <= Int.MAX_VALUE) { "视频大小超过 Int 上限: ${videoMetadata.size}" }
+        require(thumbMetadata.size <= Int.MAX_VALUE) { "视频缩略图大小超过 Int 上限: ${thumbMetadata.size}" }
+        val videoMd5 = videoMetadata.md5.toHexString()
+        val videoSha1 = videoMetadata.sha1.toHexString()
 
-        val thumbMd5Bytes = MD5.hash(thumb)
-        val thumbMd5 = thumbMd5Bytes.toHexString()
-        val thumbSha1Bytes = thumb.sha1()
-        val thumbSha1 = thumbSha1Bytes.toHexString()
+        val thumbMd5 = thumbMetadata.md5.toHexString()
+        val thumbSha1 = thumbMetadata.sha1.toHexString()
 
         val uploadResp = when (scene) {
             MessageScene.FRIEND -> {
                 bot.client.callService(
                     RichMediaUpload.PrivateVideo,
                     RichMediaUpload.VideoUploadRequest(
-                        videoData = raw,
+                        videoSize = videoMetadata.size.toInt(),
                         videoMd5 = videoMd5,
                         videoSha1 = videoSha1,
                         videoWidth = width,
                         videoHeight = height,
                         videoDuration = duration.toInt(),
-                        thumbnailData = thumb,
+                        thumbnailSize = thumbMetadata.size.toInt(),
                         thumbnailMd5 = thumbMd5,
                         thumbnailSha1 = thumbSha1,
                         thumbnailExt = thumbFormat.ext,
@@ -351,13 +352,13 @@ internal class MessageBuildingContext(
                 bot.client.callService(
                     RichMediaUpload.GroupVideo,
                     RichMediaUpload.VideoUploadRequest(
-                        videoData = raw,
+                        videoSize = videoMetadata.size.toInt(),
                         videoMd5 = videoMd5,
                         videoSha1 = videoSha1,
                         videoWidth = width,
                         videoHeight = height,
                         videoDuration = duration.toInt(),
-                        thumbnailData = thumb,
+                        thumbnailSize = thumbMetadata.size.toInt(),
                         thumbnailMd5 = thumbMd5,
                         thumbnailSha1 = thumbSha1,
                         thumbnailExt = thumbFormat.ext,
@@ -375,7 +376,8 @@ internal class MessageBuildingContext(
             val success = bot.client.flashTransferContext.uploadFile(
                 uKey = uploadResp.uKey,
                 appId = if (scene == MessageScene.FRIEND) 1413 else 1415,
-                bodyStream = raw,
+                source = raw,
+                size = videoMetadata.size,
             )
             if (!success) {
                 throw IllegalStateException("视频文件上传失败")
@@ -386,9 +388,10 @@ internal class MessageBuildingContext(
 
         if (uploadResp.subFileInfos.firstOrNull()?.uKey?.isNotEmpty() == true) {
             bot.client.highwayContext.uploadVideoThumbnail(
-                thumbnail = thumb,
-                thumbnailMd5 = thumbMd5Bytes,
-                thumbnailSha1 = thumbSha1Bytes,
+                thumbnailSource = thumb,
+                thumbnailSize = thumbMetadata.size,
+                thumbnailMd5 = thumbMetadata.md5,
+                thumbnailSha1 = thumbMetadata.sha1,
                 uploadResp = uploadResp,
                 messageScene = scene
             )

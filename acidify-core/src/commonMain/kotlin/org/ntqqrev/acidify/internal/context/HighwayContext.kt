@@ -6,6 +6,9 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
+import kotlinx.io.buffered
+import kotlinx.io.readTo
+import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.proto.message.media.*
 import org.ntqqrev.acidify.internal.service.system.FetchHighwayInfo
@@ -37,7 +40,8 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
 
     private suspend fun upload(
         cmd: Int,
-        data: ByteArray,
+        source: MediaSource,
+        dataSize: Long,
         md5: ByteArray,
         extendInfo: ByteArray,
         timeout: Long = 1200_000L // 1200 seconds
@@ -51,7 +55,8 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
                     highwayPort = highwayPort,
                     sigSession = sigSession,
                     cmd = cmd,
-                    data = data,
+                    source = source,
+                    dataSize = dataSize,
                     md5 = md5,
                     extendInfo = extendInfo
                 )
@@ -63,7 +68,8 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
     }
 
     suspend fun uploadImage(
-        image: ByteArray,
+        imageSource: MediaSource,
+        imageSize: Long,
         imageMd5: ByteArray,
         imageSha1: ByteArray,
         uploadResp: UploadResp,
@@ -72,14 +78,16 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
         val cmd = if (messageScene == MessageScene.FRIEND) 1003 else 1004
         upload(
             cmd = cmd,
-            data = image,
+            source = imageSource,
+            dataSize = imageSize,
             md5 = imageMd5,
             extendInfo = buildExtendInfo(uploadResp, imageSha1)
         )
     }
 
     suspend fun uploadRecord(
-        record: ByteArray,
+        recordSource: MediaSource,
+        recordSize: Long,
         recordMd5: ByteArray,
         recordSha1: ByteArray,
         uploadResp: UploadResp,
@@ -87,14 +95,16 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
     ) {
         upload(
             cmd = if (messageScene == MessageScene.FRIEND) 1007 else 1008,
-            data = record,
+            source = recordSource,
+            dataSize = recordSize,
             md5 = recordMd5,
             extendInfo = buildExtendInfo(uploadResp, recordSha1)
         )
     }
 
     suspend fun uploadVideo(
-        video: ByteArray,
+        videoSource: MediaSource,
+        videoSize: Long,
         videoMd5: ByteArray,
         videoSha1: ByteArray,
         uploadResp: UploadResp,
@@ -102,14 +112,16 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
     ) {
         upload(
             cmd = if (messageScene == MessageScene.FRIEND) 1001 else 1005,
-            data = video,
+            source = videoSource,
+            dataSize = videoSize,
             md5 = videoMd5,
             extendInfo = buildExtendInfo(uploadResp, videoSha1)
         )
     }
 
     suspend fun uploadVideoThumbnail(
-        thumbnail: ByteArray,
+        thumbnailSource: MediaSource,
+        thumbnailSize: Long,
         thumbnailMd5: ByteArray,
         thumbnailSha1: ByteArray,
         uploadResp: UploadResp,
@@ -117,7 +129,8 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
     ) {
         upload(
             cmd = if (messageScene == MessageScene.FRIEND) 1002 else 1006,
-            data = thumbnail,
+            source = thumbnailSource,
+            dataSize = thumbnailSize,
             md5 = thumbnailMd5,
             extendInfo = buildExtendInfo(uploadResp, thumbnailSha1, subFileInfoIdx = 0)
         )
@@ -156,13 +169,18 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
         ).pbEncode()
     }
 
-    suspend fun uploadAvatar(imageData: ByteArray) {
-        val md5 = imageData.md5()
-        upload(90, imageData, md5, ByteArray(0))
+    suspend fun uploadAvatar(
+        imageSource: MediaSource,
+        imageMd5: ByteArray,
+    ) {
+        upload(90, imageSource, imageSource.size, imageMd5, ByteArray(0))
     }
 
-    suspend fun uploadGroupAvatar(groupUin: Long, imageData: ByteArray) {
-        val md5 = imageData.md5()
+    suspend fun uploadGroupAvatar(
+        groupUin: Long,
+        imageSource: MediaSource,
+        imageMd5: ByteArray,
+    ) {
         val extra = GroupAvatarExtra(
             type = 101,
             groupUin = groupUin,
@@ -170,13 +188,14 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
             field5 = 3,
             field6 = 1,
         ).pbEncode()
-        upload(3000, imageData, md5, extra)
+        upload(3000, imageSource, imageSource.size, imageMd5, extra)
     }
 
     suspend fun uploadPrivateFile(
         receiverUin: Long,
         fileName: String,
-        fileData: ByteArray,
+        fileSource: MediaSource,
+        fileSize: Long,
         fileMd5: ByteArray,
         fileSha1: ByteArray,
         md510M: ByteArray,
@@ -195,7 +214,7 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
                     receiverUin = receiverUin,
                 ),
                 fileEntry = ExcitingFileEntry(
-                    fileSize = fileData.size.toLong(),
+                    fileSize = fileSize,
                     md5 = fileMd5,
                     checkKey = fileSha1,
                     md510M = md510M,
@@ -228,24 +247,23 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
             unknown200 = 1,
         ).pbEncode()
 
-        upload(95, fileData, fileMd5, ext)
+        upload(95, fileSource, fileSize, fileMd5, ext)
     }
 
     suspend fun uploadGroupFile(
         senderUin: Long,
         groupUin: Long,
         fileName: String,
-        fileData: ByteArray,
+        fileSource: MediaSource,
+        fileSize: Long,
+        fileMd5: ByteArray,
+        md510M: ByteArray,
         fileId: String,
         fileKey: ByteArray,
         checkKey: ByteArray,
         uploadIp: String,
         uploadPort: Int
     ) {
-        // 计算前 10MB 的 MD5
-        val md510M = fileData.copyOfRange(0, minOf(10 * 1024 * 1024, fileData.size)).md5()
-
-        // 构建上传扩展信息
         val ext = FileUploadExt(
             unknown1 = 100,
             unknown2 = 1,
@@ -256,8 +274,8 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
                     groupCode = groupUin,
                 ),
                 fileEntry = ExcitingFileEntry(
-                    fileSize = fileData.size.toLong(),
-                    md5 = fileData.md5(),
+                    fileSize = fileSize,
+                    md5 = fileMd5,
                     checkKey = fileKey,
                     md510M = md510M,
                     fileId = fileId,
@@ -287,8 +305,7 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
             )
         ).pbEncode()
 
-        val md5 = fileData.md5()
-        upload(71, fileData, md5, ext)
+        upload(71, fileSource, fileSize, fileMd5, ext)
     }
 
     private class HttpSession(
@@ -298,25 +315,32 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
         private val highwayPort: Int,
         private val sigSession: ByteArray,
         private val cmd: Int,
-        private val data: ByteArray,
+        private val source: MediaSource,
+        private val dataSize: Long,
         private val md5: ByteArray,
         private val extendInfo: ByteArray
     ) {
         private val logger = client.loggerFactory.invoke(this)
 
         suspend fun upload() {
-            var offset = 0
-            while (offset < data.size) {
-                val blockSize = minOf(MAX_BLOCK_SIZE, data.size - offset)
-                val block = data.copyOfRange(offset, offset + blockSize)
-                uploadBlock(block, offset)
-                val progress = (offset.toLong() + blockSize.toLong()) * 100L / data.size.toLong()
-                logger.d { "Highway 上传进度: $progress%" }
-                offset += blockSize
+            val bufferedSource = source.openRawSource().buffered()
+            var offset = 0L
+            try {
+                while (offset < dataSize) {
+                    val blockSize = minOf(MAX_BLOCK_SIZE.toLong(), dataSize - offset).toInt()
+                    val block = ByteArray(blockSize)
+                    bufferedSource.readTo(block)
+                    uploadBlock(block, offset)
+                    val progress = (offset + blockSize.toLong()) * 100L / dataSize
+                    logger.d { "Highway 上传进度: $progress%" }
+                    offset += blockSize
+                }
+            } finally {
+                bufferedSource.close()
             }
         }
 
-        private suspend fun uploadBlock(block: ByteArray, offset: Int) {
+        private suspend fun uploadBlock(block: ByteArray, offset: Long) {
             val blockMd5 = block.md5()
             val head = buildPicUpHead(offset, block.size, blockMd5)
             val frame = packFrame(head, block)
@@ -343,7 +367,7 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
             }
         }
 
-        private fun buildPicUpHead(offset: Int, bodyLength: Int, bodyMd5: ByteArray): ByteArray {
+        private fun buildPicUpHead(offset: Long, bodyLength: Int, bodyMd5: ByteArray): ByteArray {
             return ReqDataHighwayHead(
                 msgBaseHead = DataHighwayHead(
                     version = 1,
@@ -357,8 +381,8 @@ internal class HighwayContext(client: AbstractClient) : AbstractContext(client) 
                 ),
                 msgSegHead = SegHead(
                     serviceId = 0,
-                    filesize = data.size.toLong(),
-                    dataOffset = offset.toLong(),
+                    filesize = dataSize,
+                    dataOffset = offset,
                     dataLength = bodyLength,
                     serviceTicket = sigSession,
                     md5 = bodyMd5,

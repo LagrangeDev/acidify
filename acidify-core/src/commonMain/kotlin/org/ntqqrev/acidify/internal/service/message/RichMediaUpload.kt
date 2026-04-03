@@ -17,7 +17,7 @@ internal abstract class RichMediaUpload<T>(
     val scene: MessageScene,
 ) : OidbService<T, UploadResp>(oidbCommand, oidbService, true) {
     class ImageUploadRequest(
-        val imageData: ByteArray,
+        val imageSize: Int,
         val imageMd5: String,
         val imageSha1: String,
         val imageExt: String,
@@ -30,7 +30,7 @@ internal abstract class RichMediaUpload<T>(
     )
 
     class RecordUploadRequest(
-        val audioData: ByteArray,
+        val audioSize: Int,
         val audioMd5: String,
         val audioSha1: String,
         val audioDuration: Int,
@@ -38,13 +38,13 @@ internal abstract class RichMediaUpload<T>(
     )
 
     class VideoUploadRequest(
-        val videoData: ByteArray,
+        val videoSize: Int,
         val videoMd5: String,
         val videoSha1: String,
         val videoWidth: Int,
         val videoHeight: Int,
         val videoDuration: Int,
-        val thumbnailData: ByteArray,
+        val thumbnailSize: Int,
         val thumbnailMd5: String,
         val thumbnailSha1: String,
         val thumbnailExt: String,
@@ -102,7 +102,7 @@ internal abstract class RichMediaUpload<T>(
     protected fun buildImageUploadInfo(payload: ImageUploadRequest): UploadInfo =
         UploadInfo(
             fileInfo = FileInfo(
-                fileSize = payload.imageData.size,
+                fileSize = payload.imageSize,
                 fileHash = payload.imageMd5,
                 fileSha1 = payload.imageSha1,
                 fileName = payload.imageMd5.uppercase() + payload.imageExt,
@@ -141,7 +141,7 @@ internal abstract class RichMediaUpload<T>(
     protected fun buildRecordUploadInfo(payload: RecordUploadRequest): UploadInfo =
         UploadInfo(
             fileInfo = FileInfo(
-                fileSize = payload.audioData.size,
+                fileSize = payload.audioSize,
                 fileHash = payload.audioMd5,
                 fileSha1 = payload.audioSha1,
                 fileName = payload.audioMd5 + ".amr",
@@ -210,7 +210,7 @@ internal abstract class RichMediaUpload<T>(
     protected fun buildVideoUploadInfoList(payload: VideoUploadRequest): List<UploadInfo> = listOf(
         UploadInfo(
             fileInfo = FileInfo(
-                fileSize = payload.videoData.size,
+                fileSize = payload.videoSize,
                 fileHash = payload.videoMd5,
                 fileSha1 = payload.videoSha1,
                 fileName = "video.mp4",
@@ -229,7 +229,7 @@ internal abstract class RichMediaUpload<T>(
         ),
         UploadInfo(
             fileInfo = FileInfo(
-                fileSize = payload.thumbnailData.size,
+                fileSize = payload.thumbnailSize,
                 fileHash = payload.thumbnailMd5,
                 fileSha1 = payload.thumbnailSha1,
                 fileName = "video." + payload.thumbnailExt,

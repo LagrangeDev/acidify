@@ -6,12 +6,17 @@ import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.io.buffered
+import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import org.ntqqrev.acidify.common.MediaSource
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import org.ntqqrev.acidify.exception.WebApiException
 import org.ntqqrev.acidify.internal.json.*
 import org.ntqqrev.acidify.internal.service.group.*
+import org.ntqqrev.acidify.internal.util.MediaSourceMetadata
 import org.ntqqrev.acidify.internal.util.unescapeHttp
 import org.ntqqrev.acidify.message.BotEssenceMessageResult
 import org.ntqqrev.acidify.message.ImageFormat
@@ -36,12 +41,25 @@ suspend fun AbstractBot.setGroupName(
 /**
  * 设置群头像
  * @param groupUin 群号
+ * @param imageSource 群头像数据源
+ */
+suspend fun AbstractBot.setGroupAvatar(
+    groupUin: Long,
+    imageSource: MediaSource
+) {
+    val metadata = MediaSourceMetadata.from(imageSource)
+    client.highwayContext.uploadGroupAvatar(groupUin, imageSource, metadata.md5)
+}
+
+/**
+ * 设置群头像
+ * @param groupUin 群号
  * @param imageData 图片数据（字节数组）
  */
 suspend fun AbstractBot.setGroupAvatar(
     groupUin: Long,
     imageData: ByteArray
-) = client.highwayContext.uploadGroupAvatar(groupUin, imageData)
+) = setGroupAvatar(groupUin, imageData.toMediaSource())
 
 /**
  * 设置群成员的群名片
@@ -199,10 +217,16 @@ suspend fun AbstractBot.getGroupAnnouncements(groupUin: Long): List<BotGroupAnno
 }
 
 /**
- * 发送群公告
+ * 发送群公告。
+ *
+ * 可选图片参数改为 [MediaSource]，以便与其他媒体上传接口保持一致。
+ * 若提供 [imageSource]，则必须同时提供 [imageFormat]。
+ * 当前群公告图片上传最终仍会走表单上传，因此内部会在发送前一次性读取图片内容。
+ *
  * @param groupUin 群号
  * @param content 公告内容
- * @param imageData 公告图片数据（字节数组，可选，暂不支持）
+ * @param imageSource 公告图片数据源，可为 `null`
+ * @param imageFormat 公告图片格式；当 [imageSource] 不为 `null` 时必填
  * @param showEditCard 是否显示编辑名片提示
  * @param showTipWindow 是否显示提示窗口
  * @param confirmRequired 是否需要确认
@@ -212,16 +236,16 @@ suspend fun AbstractBot.getGroupAnnouncements(groupUin: Long): List<BotGroupAnno
 suspend fun AbstractBot.sendGroupAnnouncement(
     groupUin: Long,
     content: String,
-    imageData: ByteArray? = null,
+    imageSource: MediaSource?,
     imageFormat: ImageFormat? = null,
     showEditCard: Boolean = false,
     showTipWindow: Boolean = true,
     confirmRequired: Boolean = true,
     isPinned: Boolean = false,
 ): String {
-    val announceImage = if (imageData != null) {
+    val announceImage = if (imageSource != null) {
         requireNotNull(imageFormat) { "imageFormat is required when imageData is provided" }
-        uploadGroupAnnouncementImage(imageData, imageFormat)
+        uploadGroupAnnouncementImage(imageSource, imageFormat)
     } else {
         null
     }
@@ -268,10 +292,43 @@ suspend fun AbstractBot.sendGroupAnnouncement(
     return sendResp.noticeId
 }
 
+/**
+ * 发送群公告
+ * @param groupUin 群号
+ * @param content 公告内容
+ * @param imageData 公告图片完整字节数据，可为 `null`
+ * @param imageFormat 公告图片格式；当 [imageData] 不为 `null` 时必填
+ * @param showEditCard 是否显示编辑名片提示
+ * @param showTipWindow 是否显示提示窗口
+ * @param confirmRequired 是否需要确认
+ * @param isPinned 是否置顶
+ * @return 公告 ID
+ */
+suspend fun AbstractBot.sendGroupAnnouncement(
+    groupUin: Long,
+    content: String,
+    imageData: ByteArray? = null,
+    imageFormat: ImageFormat? = null,
+    showEditCard: Boolean = false,
+    showTipWindow: Boolean = true,
+    confirmRequired: Boolean = true,
+    isPinned: Boolean = false,
+): String = sendGroupAnnouncement(
+    groupUin = groupUin,
+    content = content,
+    imageSource = imageData?.toMediaSource(),
+    imageFormat = imageFormat,
+    showEditCard = showEditCard,
+    showTipWindow = showTipWindow,
+    confirmRequired = confirmRequired,
+    isPinned = isPinned,
+)
+
 private suspend fun AbstractBot.uploadGroupAnnouncementImage(
-    imageData: ByteArray,
+    imageSource: MediaSource,
     imageFormat: ImageFormat
 ): GroupAnnounceImage {
+    val imageData = imageSource.openRawSource().buffered().readByteArray()
     val response = httpClient.post("https://web.qun.qq.com/cgi-bin/announce/upload_img") {
         withBkn()
         withCookies("qun.qq.com")

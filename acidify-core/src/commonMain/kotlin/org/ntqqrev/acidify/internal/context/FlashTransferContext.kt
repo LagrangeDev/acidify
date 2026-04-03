@@ -5,6 +5,9 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.async
+import kotlinx.io.buffered
+import kotlinx.io.readTo
+import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.crypto.hash.SHA1Stream
 import org.ntqqrev.acidify.internal.proto.message.media.FlashTransferSha1StateV
@@ -23,38 +26,54 @@ internal class FlashTransferContext(client: AbstractClient) : AbstractContext(cl
         const val CHUNK_SIZE = 1024 * 1024 // 1MB
     }
 
-    suspend fun uploadFile(uKey: String, appId: Int, bodyStream: ByteArray): Boolean {
-        val chunkCount = (bodyStream.size + CHUNK_SIZE - 1) / CHUNK_SIZE
+    suspend fun uploadFile(
+        uKey: String,
+        appId: Int,
+        source: MediaSource,
+        size: Long,
+    ): Boolean {
+        val chunkCount = ((size + CHUNK_SIZE - 1) / CHUNK_SIZE).toInt()
         val sha1StateList = mutableListOf<ByteArray>()
         val sha1Stream = SHA1Stream()
-        for (i in 0 until chunkCount) {
-            if (i != chunkCount - 1) {
-                val accLength = (i + 1) * CHUNK_SIZE
-                val accBuffer = bodyStream.copyOfRange(0, accLength)
+        val scanSource = source.openRawSource().buffered()
+        try {
+            for (i in 0 until chunkCount) {
+                val chunkSize = minOf(CHUNK_SIZE.toLong(), size - i.toLong() * CHUNK_SIZE).toInt()
+                val chunkBuffer = ByteArray(chunkSize)
+                scanSource.readTo(chunkBuffer)
+                sha1Stream.update(chunkBuffer)
                 val digest = ByteArray(20)
-                sha1Stream.update(accBuffer)
-                sha1Stream.hash(digest, false)
-                sha1Stream.reset()
-                sha1StateList.add(digest)
-            } else {
-                val digest = bodyStream.sha1()
+                if (i != chunkCount - 1) {
+                    sha1Stream.hash(digest, false)
+                } else {
+                    sha1Stream.final(digest)
+                }
                 sha1StateList.add(digest)
             }
+        } finally {
+            scanSource.close()
         }
-        for (i in 0 until chunkCount) {
-            val chunkStart = i * CHUNK_SIZE
-            val chunkLength = minOf(CHUNK_SIZE, bodyStream.size - chunkStart)
-            val uploadBuffer = bodyStream.copyOfRange(chunkStart, chunkStart + chunkLength)
-            val success = uploadChunk(
-                uKey = uKey,
-                appId = appId,
-                start = chunkStart,
-                sha1StateList = sha1StateList,
-                body = uploadBuffer
-            )
-            if (!success) {
-                return false
+
+        val uploadSource = source.openRawSource().buffered()
+        try {
+            for (i in 0 until chunkCount) {
+                val chunkStart = i * CHUNK_SIZE
+                val chunkLength = minOf(CHUNK_SIZE.toLong(), size - chunkStart.toLong()).toInt()
+                val uploadBuffer = ByteArray(chunkLength)
+                uploadSource.readTo(uploadBuffer)
+                val success = uploadChunk(
+                    uKey = uKey,
+                    appId = appId,
+                    start = chunkStart,
+                    sha1StateList = sha1StateList,
+                    body = uploadBuffer
+                )
+                if (!success) {
+                    return false
+                }
             }
+        } finally {
+            uploadSource.close()
         }
         return true
     }

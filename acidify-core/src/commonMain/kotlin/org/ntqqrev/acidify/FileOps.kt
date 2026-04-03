@@ -1,9 +1,9 @@
 package org.ntqqrev.acidify
 
+import org.ntqqrev.acidify.common.MediaSource
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import org.ntqqrev.acidify.internal.service.file.*
-import org.ntqqrev.acidify.internal.util.md5
-import org.ntqqrev.acidify.internal.util.sha1
-import org.ntqqrev.acidify.internal.util.triSha1
+import org.ntqqrev.acidify.internal.util.MediaSourceMetadata
 import org.ntqqrev.acidify.struct.BotGroupFileEntry
 import org.ntqqrev.acidify.struct.BotGroupFileSystemList
 import org.ntqqrev.acidify.struct.BotGroupFolderEntry
@@ -13,24 +13,25 @@ import org.ntqqrev.acidify.struct.BotGroupFolderEntry
  * 上传群文件
  * @param groupUin 群号
  * @param fileName 文件名
- * @param fileData 文件数据
- * @param parentFolderId 父文件夹 ID，默认为根目录 "/"
+ * @param fileSource 文件数据源
+ * @param parentFolderId 父文件夹 ID，默认为根目录 `/`
  * @return 文件 ID
  */
 suspend fun AbstractBot.uploadGroupFile(
     groupUin: Long,
     fileName: String,
-    fileData: ByteArray,
+    fileSource: MediaSource,
     parentFolderId: String = "/"
 ): String {
+    val metadata = MediaSourceMetadata.from(fileSource)
     val uploadResp = client.callService(
         UploadGroupFile, UploadGroupFile.Req(
             groupUin = groupUin,
             fileName = fileName,
-            fileSize = fileData.size.toLong(),
-            fileMd5 = fileData.md5(),
-            fileSha1 = fileData.sha1(),
-            fileTriSha1 = fileData.triSha1(),
+            fileSize = metadata.size,
+            fileMd5 = metadata.md5,
+            fileSha1 = metadata.sha1,
+            fileTriSha1 = metadata.triSha1,
             parentFolderId = parentFolderId
         )
     )
@@ -40,7 +41,10 @@ suspend fun AbstractBot.uploadGroupFile(
             senderUin = uin,
             groupUin = groupUin,
             fileName = fileName,
-            fileData = fileData,
+            fileSource = fileSource,
+            fileSize = metadata.size,
+            fileMd5 = metadata.md5,
+            md510M = metadata.md510M,
             fileId = uploadResp.fileId,
             fileKey = uploadResp.fileKey,
             checkKey = uploadResp.checkKey,
@@ -59,22 +63,41 @@ suspend fun AbstractBot.uploadGroupFile(
 }
 
 /**
+ * 上传群文件
+ * @param groupUin 群号
+ * @param fileName 文件名
+ * @param fileData 文件原始字节数据
+ * @param parentFolderId 父文件夹 ID，默认为根目录 `/`
+ * @return 文件 ID
+ */
+suspend fun AbstractBot.uploadGroupFile(
+    groupUin: Long,
+    fileName: String,
+    fileData: ByteArray,
+    parentFolderId: String = "/"
+): String = uploadGroupFile(
+    groupUin = groupUin,
+    fileName = fileName,
+    fileSource = fileData.toMediaSource(),
+    parentFolderId = parentFolderId,
+)
+
+/**
  * 上传私聊文件
  * @param friendUin 好友 QQ 号
  * @param fileName 文件名
- * @param fileData 文件数据
+ * @param fileSource 文件数据源
  * @return 文件 ID
  */
 suspend fun AbstractBot.uploadPrivateFile(
     friendUin: Long,
     fileName: String,
-    fileData: ByteArray
+    fileSource: MediaSource
 ): String {
     val friendUid = getUidByUin(friendUin)
-    val fileMd5 = fileData.md5()
-    val fileSha1 = fileData.sha1()
-    val md510M = fileData.copyOfRange(0, minOf(10002432, fileData.size)).md5()
-    val fileTriSha1 = fileData.triSha1()
+    val metadata = MediaSourceMetadata.from(fileSource)
+    require(metadata.size <= Int.MAX_VALUE) { "私聊文件大小超过 Int 上限: ${metadata.size}" }
+    val md510M = metadata.md510M
 
     val uploadResp = client.callService(
         UploadPrivateFile,
@@ -82,11 +105,11 @@ suspend fun AbstractBot.uploadPrivateFile(
             senderUid = uid,
             receiverUid = friendUid,
             fileName = fileName,
-            fileSize = fileData.size,
-            fileMd5 = fileMd5,
-            fileSha1 = fileSha1,
+            fileSize = metadata.size.toInt(),
+            fileMd5 = metadata.md5,
+            fileSha1 = metadata.sha1,
             md510M = md510M,
-            fileTriSha1 = fileTriSha1
+            fileTriSha1 = metadata.triSha1
         )
     )
 
@@ -94,11 +117,12 @@ suspend fun AbstractBot.uploadPrivateFile(
         client.highwayContext.uploadPrivateFile(
             receiverUin = friendUin,
             fileName = fileName,
-            fileData = fileData,
-            fileMd5 = fileMd5,
-            fileSha1 = fileSha1,
+            fileSource = fileSource,
+            fileSize = metadata.size,
+            fileMd5 = metadata.md5,
+            fileSha1 = metadata.sha1,
             md510M = md510M,
-            fileTriSha1 = fileTriSha1,
+            fileTriSha1 = metadata.triSha1,
             fileId = uploadResp.fileId,
             uploadKey = uploadResp.uploadKey,
             uploadIpAndPorts = uploadResp.ipAndPorts
@@ -113,13 +137,30 @@ suspend fun AbstractBot.uploadPrivateFile(
             fileId = uploadResp.fileId,
             fileMd510M = md510M,
             fileName = fileName,
-            fileSize = fileData.size.toLong(),
+            fileSize = metadata.size,
             crcMedia = uploadResp.fileCrcMedia
         )
     )
 
     return uploadResp.fileId
 }
+
+/**
+ * 上传私聊文件
+ * @param friendUin 好友 QQ 号
+ * @param fileName 文件名
+ * @param fileData 文件完整字节数据
+ * @return 文件 ID
+ */
+suspend fun AbstractBot.uploadPrivateFile(
+    friendUin: Long,
+    fileName: String,
+    fileData: ByteArray
+): String = uploadPrivateFile(
+    friendUin = friendUin,
+    fileName = fileName,
+    fileSource = fileData.toMediaSource(),
+)
 
 /**
  * 获取私聊文件下载链接

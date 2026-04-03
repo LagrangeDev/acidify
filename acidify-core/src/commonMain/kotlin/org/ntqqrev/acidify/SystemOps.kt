@@ -2,11 +2,14 @@ package org.ntqqrev.acidify
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
+import org.ntqqrev.acidify.common.MediaSource
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import org.ntqqrev.acidify.internal.proto.misc.UserInfoKey
 import org.ntqqrev.acidify.internal.service.friend.FetchFriends
 import org.ntqqrev.acidify.internal.service.group.FetchGroupMembers
 import org.ntqqrev.acidify.internal.service.group.FetchGroups
 import org.ntqqrev.acidify.internal.service.system.*
+import org.ntqqrev.acidify.internal.util.MediaSourceMetadata
 import org.ntqqrev.acidify.struct.*
 
 /**
@@ -239,9 +242,18 @@ suspend fun AbstractBot.setGroupPin(groupUin: Long, isPinned: Boolean) =
 
 /**
  * 设置账号头像
+ * @param imageSource 头像数据源
+ */
+suspend fun AbstractBot.setAvatar(imageSource: MediaSource) {
+    val metadata = MediaSourceMetadata.from(imageSource)
+    client.highwayContext.uploadAvatar(imageSource, metadata.md5)
+}
+
+/**
+ * 设置账号头像
  * @param imageData 头像原始字节数据
  */
-suspend fun AbstractBot.setAvatar(imageData: ByteArray) = client.highwayContext.uploadAvatar(imageData)
+suspend fun AbstractBot.setAvatar(imageData: ByteArray) = setAvatar(imageData.toMediaSource())
 
 /**
  * 设置账号昵称

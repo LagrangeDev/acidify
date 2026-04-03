@@ -5,6 +5,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import org.ntqqrev.acidify.common.AcidifyDsl
+import org.ntqqrev.acidify.common.MediaSource
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import kotlin.js.JsName
 
 /**
@@ -58,7 +60,7 @@ class BotOutgoingMessageBuilder {
      * @param summary 图片的文本描述
      */
     fun image(
-        raw: ByteArray,
+        raw: MediaSource,
         format: ImageFormat,
         width: Int,
         height: Int,
@@ -77,17 +79,38 @@ class BotOutgoingMessageBuilder {
         )
     }
 
+    fun image(
+        raw: ByteArray,
+        format: ImageFormat,
+        width: Int,
+        height: Int,
+        subType: ImageSubType = ImageSubType.NORMAL,
+        summary: String = "[图片]"
+    ) = image(
+        raw = raw.toMediaSource(),
+        format = format,
+        width = width,
+        height = height,
+        subType = subType,
+        summary = summary,
+    )
+
     /**
      * 添加语音消息段
      * @param rawSilk Silk 格式的语音数据
      * @param duration 语音时长（秒）
      */
     fun record(
-        rawSilk: ByteArray,
+        rawSilk: MediaSource,
         duration: Long
     ) {
         segments.add(BotOutgoingSegment.Record(rawSilk, duration))
     }
+
+    fun record(
+        rawSilk: ByteArray,
+        duration: Long
+    ) = record(rawSilk.toMediaSource(), duration)
 
     /**
      * 添加视频消息段
@@ -99,11 +122,11 @@ class BotOutgoingMessageBuilder {
      * @param thumbFormat 视频缩略图格式
      */
     fun video(
-        raw: ByteArray,
+        raw: MediaSource,
         width: Int,
         height: Int,
         duration: Long,
-        thumb: ByteArray,
+        thumb: MediaSource,
         thumbFormat: ImageFormat
     ) {
         segments.add(
@@ -117,6 +140,22 @@ class BotOutgoingMessageBuilder {
             )
         )
     }
+
+    fun video(
+        raw: ByteArray,
+        width: Int,
+        height: Int,
+        duration: Long,
+        thumb: ByteArray,
+        thumbFormat: ImageFormat
+    ) = video(
+        raw = raw.toMediaSource(),
+        width = width,
+        height = height,
+        duration = duration,
+        thumb = thumb.toMediaSource(),
+        thumbFormat = thumbFormat,
+    )
 
     /**
      * 添加合并转发消息段
