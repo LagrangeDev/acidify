@@ -12,45 +12,6 @@ internal fun ByteArray.md5(): ByteArray = MD5.hash(this)
 
 internal fun ByteArray.sha1(): ByteArray = SHA1.hash(this)
 
-internal fun ByteArray.triSha1(): ByteArray {
-    val sha1SampleSize = 30 * 1024 * 1024
-    val singleSampleSize = 10 * 1024 * 1024
-    val length = this.size.toLong()
-
-    val sample = when {
-        length <= sha1SampleSize -> {
-            // 如果文件小于等于 30MB，使用整个文件 + 长度
-            val result = ByteArray(this.size + 8)
-            this.copyInto(result, 0, 0, this.size)
-            // 写入 length (little-endian)
-            for (i in 0 until 8) {
-                result[this.size + i] = ((length shr (i * 8)) and 0xFF).toByte()
-            }
-            result
-        }
-
-        else -> {
-            // 如果文件大于 30MB，取三段各 10MB + 长度
-            val result = ByteArray(sha1SampleSize + 8)
-            // 第一段：开头 10MB
-            this.copyInto(result, 0, 0, singleSampleSize)
-            // 第二段：中间 10MB
-            val middleStart = ((length / 2) - (singleSampleSize / 2)).toInt()
-            this.copyInto(result, singleSampleSize, middleStart, middleStart + singleSampleSize)
-            // 第三段：结尾 10MB
-            val endStart = (length - singleSampleSize).toInt()
-            this.copyInto(result, singleSampleSize * 2, endStart, endStart + singleSampleSize)
-            // 写入 length (little-endian)
-            for (i in 0 until 8) {
-                result[sha1SampleSize + i] = ((length shr (i * 8)) and 0xFF).toByte()
-            }
-            result
-        }
-    }
-
-    return sample.sha1()
-}
-
 // ======== ByteArray Extensions ========
 
 internal fun ByteArray.writeUInt32BE(value: Long, offset: Int) {

@@ -108,27 +108,21 @@ internal class MediaSourceMetadata(
             val md510M = ByteArray(MD5Stream.Md5DigestSize)
             md510MStream.final(md510M)
 
+            val payload = ByteArray(triSample.size + 8)
+            triSample.copyInto(payload, 0, 0, triSample.size)
+            for (i in 0 until 8) {
+                payload[triSample.size + i] = ((size shr (i * 8)) and 0xFF).toByte()
+            }
+
             return MediaSourceMetadata(
                 size = size,
                 md5 = md5,
                 sha1 = sha1,
-                triSha1 = buildTriSha1(size, triSample),
+                triSha1 = payload.sha1(),
                 md510M = md510M,
             )
         }
     }
-}
-
-private fun buildTriSha1(
-    size: Long,
-    sample: ByteArray,
-): ByteArray {
-    val payload = ByteArray(sample.size + 8)
-    sample.copyInto(payload, 0, 0, sample.size)
-    for (i in 0 until 8) {
-        payload[sample.size + i] = ((size shr (i * 8)) and 0xFF).toByte()
-    }
-    return payload.sha1()
 }
 
 private fun copyIntersection(
@@ -146,7 +140,6 @@ private fun copyIntersection(
     if (copyStart >= copyEnd) {
         return
     }
-
     val srcStartIndex = (copyStart - srcOffset).toInt()
     val srcEndIndex = (copyEnd - srcOffset).toInt()
     val destStartIndex = (destOffset + (copyStart - rangeStart)).toInt()
