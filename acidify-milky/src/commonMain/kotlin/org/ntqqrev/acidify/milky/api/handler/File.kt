@@ -7,22 +7,20 @@ import org.ntqqrev.acidify.milky.transform.toMilkyEntity
 import org.ntqqrev.milky.*
 
 val UploadPrivateFile = ApiEndpoint.UploadPrivateFile.define {
-    val fileData = resolveUri(it.fileUri)
     val fileId = bot.uploadPrivateFile(
         friendUin = it.userId,
         fileName = it.fileName,
-        fileData = fileData
+        fileSource = resolveUri(it.fileUri)
     )
     UploadPrivateFileOutput(fileId)
 }
 
 val UploadGroupFile = ApiEndpoint.UploadGroupFile.define {
     bot.getGroup(it.groupId) ?: throw MilkyApiException(-404, "Group not found")
-    val fileData = resolveUri(it.fileUri)
     val fileId = bot.uploadGroupFile(
         groupUin = it.groupId,
         fileName = it.fileName,
-        fileData = fileData,
+        fileSource = resolveUri(it.fileUri),
         parentFolderId = it.parentFolderId
     )
     UploadGroupFileOutput(fileId)

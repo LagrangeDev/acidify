@@ -213,7 +213,7 @@ suspend fun MilkyContext.transformSegment(
         )
 
         is OutgoingSegment.Image -> {
-            val imageData = resolveUri(segment.data.uri)
+            val imageData = resolveUri(segment.data.uri).readByteArray()
             val imageInfo = codec.getImageInfo(imageData)
             BotOutgoingSegment.Image(
                 raw = imageData,
@@ -226,7 +226,7 @@ suspend fun MilkyContext.transformSegment(
         }
 
         is OutgoingSegment.Record -> {
-            val audioData = resolveUri(segment.data.uri)
+            val audioData = resolveUri(segment.data.uri).readByteArray()
             // 尝试转换为 PCM，若失败则假设已是 PCM 格式
             val pcmData = try {
                 codec.audioToPcm(audioData)
@@ -244,11 +244,12 @@ suspend fun MilkyContext.transformSegment(
         }
 
         is OutgoingSegment.Video -> {
-            val videoData = resolveUri(segment.data.uri)
+            // TODO: refactor Codec API to Source-based
+            val videoData = resolveUri(segment.data.uri).readByteArray()
             val videoInfo = codec.getVideoInfo(videoData)
             logger.d { "视频 ${segment.data.uri} 信息：${videoInfo.width}x${videoInfo.height}，时长 ${videoInfo.duration.inWholeSeconds} 秒" }
             val thumbData = if (segment.data.thumbUri != null) {
-                resolveUri(segment.data.thumbUri!!)
+                resolveUri(segment.data.thumbUri!!).readByteArray()
             } else {
                 codec.getVideoFirstFrameJpg(videoData)
             }
@@ -324,7 +325,7 @@ suspend fun MilkyContext.transformEssenceSegment(segment: BotEssenceSegment): In
         )
 
         is BotEssenceSegment.Image -> {
-            val imageData = resolveUri(segment.imageUrl)
+            val imageData = resolveUri(segment.imageUrl).readByteArray()
             val imageInfo = try {
                 codec.getImageInfo(imageData)
             } catch (e: Exception) {
@@ -349,7 +350,7 @@ suspend fun MilkyContext.transformEssenceSegment(segment: BotEssenceSegment): In
 
         is BotEssenceSegment.Video -> {
             // also transform to image
-            val imageData = resolveUri(segment.thumbnailUrl)
+            val imageData = resolveUri(segment.thumbnailUrl).readByteArray()
             val imageInfo = codec.getImageInfo(imageData)
             IncomingSegment.Image(
                 data = IncomingSegment.Image.Data(

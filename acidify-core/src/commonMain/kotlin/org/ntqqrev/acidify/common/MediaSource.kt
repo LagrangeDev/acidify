@@ -7,7 +7,7 @@ import kotlinx.io.readByteArray
 import kotlin.js.JsExport
 
 @JsExport
-class MediaSource internal constructor(
+class MediaSource(
     val size: Long,
     private val opener: () -> RawSource,
 ) {
@@ -15,9 +15,9 @@ class MediaSource internal constructor(
         require(size >= 0L) { "size must be non-negative" }
     }
 
-    internal fun openRawSource(): RawSource = opener()
+    fun openRawSource(): RawSource = opener()
 
-    internal fun readByteArray(): ByteArray {
+    fun readByteArray(): ByteArray {
         return openRawSource().buffered().use { source ->
             source.readByteArray()
         }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.ntqqrev.acidify.AbstractBot
+import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.milky.transform.transformAcidifyEvent
 import org.ntqqrev.milky.Event
 
@@ -18,7 +19,7 @@ open class MilkyContext(
     val httpAccessToken: String,
     val webhookEndpoints: List<WebhookEndpoint>,
     val reportSelfMessage: Boolean,
-    val resolveUri: suspend (uri: String) -> ByteArray,
+    val resolveUri: suspend (uri: String) -> MediaSource,
     val codec: Codec,
 ) : CoroutineScope by application {
     val bot: AbstractBot

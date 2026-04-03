@@ -21,8 +21,7 @@ val SetGroupName = ApiEndpoint.SetGroupName.define {
 val SetGroupAvatar = ApiEndpoint.SetGroupAvatar.define {
     bot.getGroup(it.groupId)
         ?: throw MilkyApiException(-404, "Group not found")
-    val imageData = resolveUri(it.imageUri)
-    bot.setGroupAvatar(it.groupId, imageData)
+    bot.setGroupAvatar(it.groupId, resolveUri(it.imageUri))
     SetGroupAvatarOutput()
 }
 
@@ -89,7 +88,7 @@ val GetGroupAnnouncements = ApiEndpoint.GetGroupAnnouncements.define {
 val SendGroupAnnouncement = ApiEndpoint.SendGroupAnnouncement.define {
     bot.getGroup(it.groupId)
         ?: throw MilkyApiException(-404, "Group not found")
-    val imageData = it.imageUri?.let { uri -> resolveUri(uri) }
+    val imageData = it.imageUri?.let { uri -> resolveUri(uri).readByteArray() }
     val imageFormat = imageData?.let { data -> codec.getImageInfo(data) }?.format
     bot.sendGroupAnnouncement(
         groupUin = it.groupId,
