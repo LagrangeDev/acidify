@@ -245,7 +245,7 @@ suspend fun AbstractBot.sendGroupAnnouncement(
 ): String {
     val announceImage = if (imageSource != null) {
         requireNotNull(imageFormat) { "imageFormat is required when imageData is provided" }
-        uploadGroupAnnouncementImage(imageSource, imageFormat)
+        uploadGroupAnnouncementImage(imageSource.readByteArray(), imageFormat)
     } else {
         null
     }
@@ -325,10 +325,9 @@ suspend fun AbstractBot.sendGroupAnnouncement(
 )
 
 private suspend fun AbstractBot.uploadGroupAnnouncementImage(
-    imageSource: MediaSource,
+    imageData: ByteArray,
     imageFormat: ImageFormat
 ): GroupAnnounceImage {
-    val imageData = imageSource.openRawSource().buffered().readByteArray()
     val response = httpClient.post("https://web.qun.qq.com/cgi-bin/announce/upload_img") {
         withBkn()
         withCookies("qun.qq.com")

@@ -2,6 +2,8 @@ package org.ntqqrev.acidify.common
 
 import kotlinx.io.Buffer
 import kotlinx.io.RawSource
+import kotlinx.io.buffered
+import kotlinx.io.readByteArray
 import kotlin.js.JsExport
 
 @JsExport
@@ -14,6 +16,12 @@ class MediaSource internal constructor(
     }
 
     internal fun openRawSource(): RawSource = opener()
+
+    internal fun readByteArray(): ByteArray {
+        return openRawSource().buffered().use { source ->
+            source.readByteArray()
+        }
+    }
 
     companion object {
         fun fromByteArray(data: ByteArray): MediaSource = MediaSource(data.size.toLong()) {
