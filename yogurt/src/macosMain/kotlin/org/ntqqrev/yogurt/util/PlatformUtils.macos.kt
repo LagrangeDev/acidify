@@ -3,21 +3,19 @@
 package org.ntqqrev.yogurt.util
 
 import kotlinx.cinterop.*
+import org.ntqqrev.yogurt.fs.withFs
 import platform.Foundation.NSError
 import platform.Foundation.NSTask
 import platform.Foundation.NSURL
 import platform.posix.usleep
 
-actual fun executeCommand(vararg args: String): CommandExecutionResult {
-    require(args.isNotEmpty()) { "Command arguments must not be empty." }
+actual fun executeCommand(vararg args: String): CommandExecutionResult = withFs {
+    withCommandTempFile { stdout, stderr ->
+        require(args.isNotEmpty()) { "Command arguments must not be empty." }
 
-    val stdoutPath = createCommandTempFilePath("stdout")
-    val stderrPath = createCommandTempFilePath("stderr")
-
-    try {
         val task = NSTask()
         task.executableURL = NSURL(fileURLWithPath = "/bin/sh")
-        task.arguments = listOf("-c", buildPosixRedirectedCommand(args, stdoutPath, stderrPath))
+        task.arguments = listOf("-c", buildPosixRedirectedCommand(args, stdout.toString(), stderr.toString()))
 
         val launchError = memScoped {
             val error = alloc<ObjCObjectVar<NSError?>>()
@@ -35,13 +33,10 @@ actual fun executeCommand(vararg args: String): CommandExecutionResult {
             usleep(10_000u)
         }
 
-        return CommandExecutionResult(
+        CommandExecutionResult(
             errorCode = task.terminationStatus,
-            stdout = readCommandTempFile(stdoutPath),
-            stderr = readCommandTempFile(stderrPath),
+            stdout = stdout.readText(),
+            stderr = stderr.readText(),
         )
-    } finally {
-        deleteCommandTempFile(stdoutPath)
-        deleteCommandTempFile(stderrPath)
     }
 }

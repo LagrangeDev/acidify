@@ -36,3 +36,10 @@ inline fun <R> mediaSourceScoped(
         scope.disposeAll()
     }
 }
+
+context(scope: MediaSourceScope)
+inline fun <R : MediaSource> tracked(block: () -> R): R {
+    val source = block()
+    scope.track(source)
+    return source
+}

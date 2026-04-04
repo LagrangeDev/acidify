@@ -1,5 +1,6 @@
 package org.ntqqrev.acidify.milky
 
+import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.message.ImageFormat
 import kotlin.time.Duration
 
@@ -14,8 +15,11 @@ interface Codec {
         sampleRate: Int = 24000,
     ): Duration
 
-    suspend fun getVideoInfo(videoData: ByteArray): VideoInfo
-    suspend fun getVideoFirstFrameJpg(videoData: ByteArray): ByteArray
+    context(scope: MediaSourceScope)
+    suspend fun getVideoInfo(videoSource: MediaSource): VideoInfo
+
+    context(scope: MediaSourceScope)
+    suspend fun getVideoFirstFrameJpg(videoSource: MediaSource): ByteArray
 }
 
 data class ImageInfo(

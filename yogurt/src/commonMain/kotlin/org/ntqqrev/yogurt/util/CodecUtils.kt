@@ -6,13 +6,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.io.files.Path
+import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.message.ImageFormat
-import org.ntqqrev.acidify.milky.Codec
-import org.ntqqrev.acidify.milky.ImageInfo
-import org.ntqqrev.acidify.milky.VideoInfo
+import org.ntqqrev.acidify.milky.*
 import org.ntqqrev.yogurt.YogurtApp.config
-import org.ntqqrev.yogurt.fs.FileSystem
-import org.ntqqrev.yogurt.fs.withFs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -42,69 +39,70 @@ object FFmpegCodec : Codec {
         return org.ntqqrev.acidify.codec.calculatePcmDuration(input, bitDepth, channelCount, sampleRate)
     }
 
-    override suspend fun getVideoInfo(videoData: ByteArray): VideoInfo = if (config.milky.ffmpegPath.isNotEmpty()) {
+    context(scope: MediaSourceScope)
+    override suspend fun getVideoInfo(videoSource: MediaSource): VideoInfo = if (config.milky.ffmpegPath.isEmpty()) {
+        ffmpegMutex.withLock {
+            org.ntqqrev.acidify.codec.getVideoInfo(
+                videoSource.readByteArray()
+            ).toAcidifyVideoInfo()
+        }
+    } else {
         withContext(Dispatchers.IO) {
-            withTempFile(videoData, "video-input") { inputPath ->
+            val result = executeCommand(
+                config.milky.ffmpegPath,
+                "-hide_banner",
+                "-nostdin",
+                "-i",
+                videoSource.ensureLocalized().toString(),
+                "-frames:v",
+                "1",
+                "-f",
+                "null",
+                "-"
+            )
+
+            parseVideoInfoFromFfmpegOutput(result.stderr)
+                ?: throw IllegalStateException(
+                    "Failed to parse video info from ffmpeg output (code=${result.errorCode}): ${result.stderr}"
+                )
+        }
+    }
+
+    context(scope: MediaSourceScope)
+    override suspend fun getVideoFirstFrameJpg(videoSource: MediaSource): ByteArray =
+        if (config.milky.ffmpegPath.isEmpty()) {
+            ffmpegMutex.withLock {
+                org.ntqqrev.acidify.codec.getVideoFirstFrameJpg(
+                    videoSource.readByteArray()
+                )
+            }
+        } else {
+            withContext(Dispatchers.IO) {
+                val outputSource = tracked {
+                    TempFileMediaSource(
+                        kind = "ffmpeg-output",
+                        ext = "jpg"
+                    )
+                }
                 val result = executeCommand(
                     config.milky.ffmpegPath,
                     "-hide_banner",
                     "-nostdin",
+                    "-y",
                     "-i",
-                    inputPath,
+                    videoSource.ensureLocalized().toString(),
+                    "-an",
+                    "-sn",
                     "-frames:v",
                     "1",
-                    "-f",
-                    "null",
-                    "-"
+                    outputSource.path.toString()
                 )
-
-                parseVideoInfoFromFfmpegOutput(result.stderr)
-                    ?: throw IllegalStateException(
-                        "Failed to parse video info from ffmpeg output (code=${result.errorCode}): ${result.stderr}"
+                if (result.errorCode != 0) {
+                    throw IllegalStateException(
+                        "ffmpeg failed to extract the first video frame (code=${result.errorCode}): ${result.stderr}"
                     )
-            }
-        }
-    } else {
-        ffmpegMutex.withLock {
-            org.ntqqrev.acidify.codec.getVideoInfo(videoData).toAcidifyVideoInfo()
-        }
-    }
-
-    override suspend fun getVideoFirstFrameJpg(videoData: ByteArray): ByteArray =
-        if (config.milky.ffmpegPath.isNotEmpty()) {
-        withContext(Dispatchers.IO) {
-            withTempFile(videoData, "video-input") { inputPath ->
-                val outputPath = createCodecTempFilePath("video-first-frame", ".jpg")
-                try {
-                    val result = executeCommand(
-                        config.milky.ffmpegPath,
-                        "-hide_banner",
-                        "-nostdin",
-                        "-y",
-                        "-i",
-                        inputPath,
-                        "-an",
-                        "-sn",
-                        "-frames:v",
-                        "1",
-                        outputPath
-                    )
-
-                    if (result.errorCode != 0) {
-                        throw IllegalStateException(
-                            "ffmpeg failed to extract the first video frame (code=${result.errorCode}): ${result.stderr}"
-                        )
-                    }
-
-                    Path(outputPath).readBytes()
-                } finally {
-                    deleteCodecTempFile(outputPath)
                 }
-            }
-        }
-        } else {
-            ffmpegMutex.withLock {
-                org.ntqqrev.acidify.codec.getVideoFirstFrameJpg(videoData)
+                outputSource.readByteArray()
             }
         }
 }
@@ -128,36 +126,23 @@ private fun org.ntqqrev.acidify.codec.VideoInfo.toAcidifyVideoInfo() = VideoInfo
     duration = duration,
 )
 
-private inline fun <T> withTempFile(
-    data: ByteArray,
-    kind: String,
-    block: FileSystem.(String) -> T,
-): T = withFs {
-    val inputPath = createCodecTempFilePath(kind)
-    try {
-        Path(inputPath).write(data)
-        return block(inputPath)
-    } finally {
-        deleteCodecTempFile(inputPath)
-    }
-}
-
-private fun createCodecTempFilePath(kind: String, extension: String = ".tmp"): String = withFs {
-    val basePath = createCommandTempFilePath(kind)
-    if (extension == ".tmp") {
-        return basePath
+context(scope: MediaSourceScope)
+private fun MediaSource.ensureLocalized(): Path {
+    if (this is LocalFileMediaSource) {
+        return this.path
     }
 
-    val targetPath = basePath.removeSuffix(".tmp") + extension
-    atomicMove(Path(basePath), Path(targetPath))
-    return targetPath
-}
-
-private fun deleteCodecTempFile(path: String) = withFs {
-    val file = Path(path)
-    if (exists(file)) {
-        delete(file, mustExist = false)
+    if (this is TempFileMediaSource) {
+        return this.path
     }
+
+    val source = tracked {
+        TempFileMediaSource(
+            kind = "ffmpeg-media",
+            initialRawSource = openRawSource()
+        )
+    }
+    return source.path
 }
 
 private fun parseVideoInfoFromFfmpegOutput(output: String): VideoInfo? {

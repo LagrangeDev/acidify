@@ -4,6 +4,7 @@ import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.ntqqrev.acidify.AbstractBot
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import org.ntqqrev.acidify.getDownloadUrl
 import org.ntqqrev.acidify.getFriend
 import org.ntqqrev.acidify.getGroup
@@ -11,6 +12,7 @@ import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.milky.ImageInfo
 import org.ntqqrev.acidify.milky.MediaSourceScope
 import org.ntqqrev.acidify.milky.MilkyContext
+import org.ntqqrev.acidify.milky.tracked
 import org.ntqqrev.milky.*
 
 suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): IncomingMessage? {
@@ -247,21 +249,23 @@ suspend fun MilkyContext.transformOutgoingSegment(
 
         is OutgoingSegment.Video -> {
             // TODO: refactor Codec API to Source-based
-            val videoData = resolveUri(segment.data.uri).readByteArray()
-            val videoInfo = codec.getVideoInfo(videoData)
+            val videoSource = resolveUri(segment.data.uri)
+            val videoInfo = codec.getVideoInfo(videoSource)
             logger.d { "视频 ${segment.data.uri} 信息：${videoInfo.width}x${videoInfo.height}，时长 ${videoInfo.duration.inWholeSeconds} 秒" }
-            val thumbData = if (segment.data.thumbUri != null) {
-                resolveUri(segment.data.thumbUri!!).readByteArray()
+            val thumbSource = if (segment.data.thumbUri != null) {
+                resolveUri(segment.data.thumbUri!!)
             } else {
-                codec.getVideoFirstFrameJpg(videoData)
+                tracked {
+                    codec.getVideoFirstFrameJpg(videoSource).toMediaSource()
+                }
             }
-            val thumbInfo = codec.getImageInfo(thumbData)
+            val thumbInfo = codec.getImageInfo(thumbSource.readByteArray())
             BotOutgoingSegment.Video(
-                raw = videoData,
+                raw = videoSource,
                 width = videoInfo.width,
                 height = videoInfo.height,
                 duration = videoInfo.duration.inWholeSeconds,
-                thumb = thumbData,
+                thumb = thumbSource,
                 thumbFormat = thumbInfo.format
             )
         }
