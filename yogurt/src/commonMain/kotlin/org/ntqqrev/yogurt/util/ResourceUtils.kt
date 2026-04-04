@@ -88,6 +88,10 @@ class LocalFileMediaSource(val path: Path) : LazyMediaSource() {
     override fun dispose() {
         // No-op
     }
+
+    override fun toString(): String {
+        return "LocalFileMediaSource(path=$path)"
+    }
 }
 
 class TempFileMediaSource(
@@ -122,5 +126,9 @@ class TempFileMediaSource(
 
     override fun dispose() = withFs {
         delete(path, mustExist = false)
+    }
+
+    override fun toString(): String {
+        return "TempFileMediaSource(path=$path)"
     }
 }

@@ -36,9 +36,9 @@ private inline fun <reified T : Any, reified R : Any> Route.serve(
                 var result: R
                 val duration = measureTime {
                     result = mediaSourceScoped(
-                        onDisposeFailure = { _, exception ->
+                        onDisposeFailure = { source, exception ->
                             logger.e(exception) {
-                                "释放资源文件时出现错误"
+                                "释放资源文件 $source 时出现错误"
                             }
                         }
                     ) {

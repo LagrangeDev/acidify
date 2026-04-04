@@ -167,9 +167,9 @@ inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
         try {
             val duration = measureTime {
                 resp = mediaSourceScoped(
-                    onDisposeFailure = { _, exception ->
+                    onDisposeFailure = { source, exception ->
                         logger.e(exception) {
-                            "释放资源文件时出现错误"
+                            "释放资源文件 $source 时出现错误"
                         }
                     }
                 ) {

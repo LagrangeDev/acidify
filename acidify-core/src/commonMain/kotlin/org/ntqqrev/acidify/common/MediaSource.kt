@@ -35,6 +35,10 @@ abstract class MediaSource {
         override fun readByteArray(): ByteArray {
             return data // reduce reallocation
         }
+
+        override fun toString(): String {
+            return "MediaSource.Bytes(size=$size)"
+        }
     }
 
     companion object {
