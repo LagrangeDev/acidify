@@ -128,7 +128,7 @@ object YogurtApp {
                 MilkyContext.WebhookEndpoint(url, token)
             },
             reportSelfMessage = config.milky.reportSelfMessage,
-            resolveUri = ::resolveUri,
+            uriResolver = ::resolveUri,
             codec = FFmpegCodec,
         )
         context(ctx) {

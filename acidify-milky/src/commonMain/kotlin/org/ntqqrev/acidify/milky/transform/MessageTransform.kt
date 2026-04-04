@@ -9,10 +9,11 @@ import org.ntqqrev.acidify.getFriend
 import org.ntqqrev.acidify.getGroup
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.milky.ImageInfo
+import org.ntqqrev.acidify.milky.MediaSourceScope
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.milky.*
 
-suspend fun MilkyContext.transformMessage(msg: BotIncomingMessage): IncomingMessage? {
+suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): IncomingMessage? {
     val bot = application.dependencies.resolve<AbstractBot>()
     return when (msg.scene) {
         MessageScene.FRIEND -> {
@@ -23,7 +24,7 @@ suspend fun MilkyContext.transformMessage(msg: BotIncomingMessage): IncomingMess
                 senderId = msg.senderUin,
                 time = msg.timestamp,
                 segments = msg.segments.map {
-                    async { transformSegment(it) }
+                    async { transformIncomingSegment(it) }
                 }.awaitAll(),
                 friend = friend.toMilkyEntity()
             )
@@ -38,7 +39,7 @@ suspend fun MilkyContext.transformMessage(msg: BotIncomingMessage): IncomingMess
                 senderId = msg.senderUin,
                 time = msg.timestamp,
                 segments = msg.segments.map {
-                    async { transformSegment(it) }
+                    async { transformIncomingSegment(it) }
                 }.awaitAll(),
                 group = group.toMilkyEntity(),
                 groupMember = member.toMilkyEntity(),
@@ -56,12 +57,12 @@ suspend fun MilkyContext.transformForwardedMessage(msg: BotForwardedMessage): In
         avatarUrl = msg.avatarUrl,
         time = msg.timestamp,
         segments = msg.segments.map { segment ->
-            async { transformSegment(segment) }
+            async { transformIncomingSegment(segment) }
         }.awaitAll()
     )
 }
 
-suspend fun MilkyContext.transformSegment(segment: BotIncomingSegment): IncomingSegment {
+suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): IncomingSegment {
     val bot = application.dependencies.resolve<AbstractBot>()
     return when (segment) {
         is BotIncomingSegment.Text -> IncomingSegment.Text(
@@ -97,7 +98,7 @@ suspend fun MilkyContext.transformSegment(segment: BotIncomingSegment): Incoming
                 senderName = segment.senderName,
                 time = segment.timestamp,
                 segments = segment.segments.map {
-                    async { transformSegment(it) }
+                    async { transformIncomingSegment(it) }
                 }.awaitAll(),
             )
         )
@@ -168,7 +169,8 @@ suspend fun MilkyContext.transformSegment(segment: BotIncomingSegment): Incoming
     }
 }
 
-suspend fun MilkyContext.transformSegment(
+context(scope: MediaSourceScope)
+suspend fun MilkyContext.transformOutgoingSegment(
     scene: MessageScene,
     peerUin: Long,
     segment: OutgoingSegment,
@@ -270,7 +272,7 @@ suspend fun MilkyContext.transformSegment(
                     senderUin = msg.userId,
                     senderName = msg.senderName,
                     segments = msg.segments.map { seg ->
-                        async { transformSegment(scene, peerUin, seg) }
+                        async { transformOutgoingSegment(scene, peerUin, seg) }
                     }.awaitAll()
                 )
             }
@@ -291,6 +293,7 @@ suspend fun MilkyContext.transformSegment(
     }
 }
 
+context(scope: MediaSourceScope)
 suspend fun MilkyContext.transformEssenceMessage(msg: BotEssenceMessage): GroupEssenceMessage {
     return GroupEssenceMessage(
         groupId = msg.groupUin,
@@ -307,6 +310,7 @@ suspend fun MilkyContext.transformEssenceMessage(msg: BotEssenceMessage): GroupE
     )
 }
 
+context(scope: MediaSourceScope)
 suspend fun MilkyContext.transformEssenceSegment(segment: BotEssenceSegment): IncomingSegment {
     val bot = application.dependencies.resolve<AbstractBot>()
     val logger = bot.createLogger("MessageTransform")

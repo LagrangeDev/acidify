@@ -19,7 +19,7 @@ open class MilkyContext(
     val httpAccessToken: String,
     val webhookEndpoints: List<WebhookEndpoint>,
     val reportSelfMessage: Boolean,
-    val resolveUri: suspend (uri: String) -> MediaSource,
+    val uriResolver: suspend (uri: String) -> MediaSource,
     val codec: Codec,
 ) : CoroutineScope by application {
     val bot: AbstractBot
@@ -51,6 +51,13 @@ open class MilkyContext(
                     }
                 }
             }
+        }
+    }
+
+    context(scope: MediaSourceScope)
+    suspend fun resolveUri(uri: String): MediaSource {
+        return uriResolver(uri).also {
+            scope.track(it)
         }
     }
 }

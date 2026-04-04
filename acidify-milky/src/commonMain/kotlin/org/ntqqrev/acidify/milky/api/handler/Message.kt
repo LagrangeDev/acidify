@@ -8,8 +8,8 @@ import org.ntqqrev.acidify.milky.api.MilkyApiException
 import org.ntqqrev.acidify.milky.api.define
 import org.ntqqrev.acidify.milky.transform.toMessageScene
 import org.ntqqrev.acidify.milky.transform.transformForwardedMessage
-import org.ntqqrev.acidify.milky.transform.transformMessage
-import org.ntqqrev.acidify.milky.transform.transformSegment
+import org.ntqqrev.acidify.milky.transform.transformIncomingMessage
+import org.ntqqrev.acidify.milky.transform.transformOutgoingSegment
 import org.ntqqrev.milky.*
 
 val SendPrivateMessage = ApiEndpoint.SendPrivateMessage.define {
@@ -20,7 +20,7 @@ val SendPrivateMessage = ApiEndpoint.SendPrivateMessage.define {
         segments = it.message.map { segment ->
             with(application) {
                 async {
-                    transformSegment(
+                    transformOutgoingSegment(
                         scene = MessageScene.FRIEND,
                         peerUin = it.userId,
                         segment = segment
@@ -43,7 +43,7 @@ val SendGroupMessage = ApiEndpoint.SendGroupMessage.define {
         segments = it.message.map { segment ->
             with(application) {
                 async {
-                    transformSegment(
+                    transformOutgoingSegment(
                         scene = MessageScene.GROUP,
                         peerUin = it.groupId,
                         segment = segment
@@ -104,7 +104,7 @@ val GetMessage = ApiEndpoint.GetMessage.define {
     }
     val message = messages.messages.firstOrNull()
         ?: throw MilkyApiException(-404, "Message not found")
-    val transformedMessage = transformMessage(message)
+    val transformedMessage = transformIncomingMessage(message)
         ?: throw MilkyApiException(-404, "Message transformation failed")
     GetMessageOutput(
         message = transformedMessage
@@ -137,7 +137,7 @@ val GetHistoryMessages = ApiEndpoint.GetHistoryMessages.define {
         else -> throw MilkyApiException(-400, "Unsupported message scene")
     }
     val transformedMessages = historyMessages.messages.mapNotNull { msg ->
-        transformMessage(msg)
+        transformIncomingMessage(msg)
     }
     GetHistoryMessagesOutput(
         messages = transformedMessages,

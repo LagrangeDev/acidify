@@ -9,8 +9,10 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.exception.OidbException
 import org.ntqqrev.acidify.exception.ServiceException
+import org.ntqqrev.acidify.milky.MediaSourceScope
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.handler.*
+import org.ntqqrev.acidify.milky.mediaSourceScoped
 import org.ntqqrev.milky.ApiEndpoint
 import org.ntqqrev.milky.ApiGeneralResponse
 import org.ntqqrev.milky.milkyJsonModule
@@ -18,7 +20,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.measureTime
 
 inline fun <reified T : Any, reified R : Any> ApiEndpoint<T, R>.define(
-    noinline handler: suspend MilkyContext.(T) -> R
+    noinline handler: suspend context(MediaSourceScope) MilkyContext.(T) -> R
 ) = MilkyApiHandler(this.path, handler)
 
 context(ctx: MilkyContext)
@@ -33,7 +35,15 @@ private inline fun <reified T : Any, reified R : Any> Route.serve(
             try {
                 var result: R
                 val duration = measureTime {
-                    result = handler.callHandler(ctx, payload)
+                    result = mediaSourceScoped(
+                        onDisposeFailure = { _, exception ->
+                            logger.e(exception) {
+                                "释放资源文件时出现错误"
+                            }
+                        }
+                    ) {
+                        handler.callHandler(ctx, payload)
+                    }
                 }
                 logger.i {
                     "${call.request.local.remoteAddress} 调用 API ${handler.path}（成功 ${

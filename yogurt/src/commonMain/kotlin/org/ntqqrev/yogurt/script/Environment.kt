@@ -12,6 +12,7 @@ import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
 import org.ntqqrev.acidify.milky.api.handler.*
+import org.ntqqrev.acidify.milky.mediaSourceScoped
 import org.ntqqrev.milky.milkyJsonModule
 import org.ntqqrev.yogurt.script.stdlib.defineConsole
 import org.ntqqrev.yogurt.script.stdlib.defineHttp
@@ -165,7 +166,15 @@ inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
         var resp: R
         try {
             val duration = measureTime {
-                resp = handler.callHandler(ctx, milkyJsonModule.decodeFromString(payloadString))
+                resp = mediaSourceScoped(
+                    onDisposeFailure = { _, exception ->
+                        logger.e(exception) {
+                            "释放资源文件时出现错误"
+                        }
+                    }
+                ) {
+                    handler.callHandler(ctx, milkyJsonModule.decodeFromString(payloadString))
+                }
             }
             logger.i {
                 "脚本调用 API ${handler.path}（成功 ${duration.toString(DurationUnit.MILLISECONDS)}）"

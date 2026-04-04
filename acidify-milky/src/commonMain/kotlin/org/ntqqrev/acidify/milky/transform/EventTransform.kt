@@ -24,7 +24,7 @@ suspend fun MilkyContext.transformAcidifyEvent(event: AcidifyEvent): Event? {
                 Event.MessageReceive(
                     time = Clock.System.now().epochSeconds,
                     selfId = bot.uin,
-                    data = transformMessage(event.message) ?: return null
+                    data = transformIncomingMessage(event.message) ?: return null
                 )
             } else {
                 null
