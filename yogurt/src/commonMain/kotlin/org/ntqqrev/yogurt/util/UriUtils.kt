@@ -8,12 +8,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
+import kotlinx.io.RawSource
 import kotlinx.io.files.Path
 import org.ntqqrev.acidify.common.MediaSource
+import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import org.ntqqrev.yogurt.fs.withFs
 import kotlin.io.encoding.Base64
 
 val httpClient = HttpClient()
+
+class LocalFileMediaSource(val path: Path) : MediaSource() {
+    override val size: Long = withFs {
+        metadataOrNull(path)?.size
+            ?: throw IOException("File not found: $path")
+    }
+
+    override fun openRawSource(): RawSource = withFs {
+        source(path)
+    }
+
+    override fun dispose() {
+        // No-op
+    }
+}
 
 suspend fun resolveUri(uri: String): MediaSource = withContext(Dispatchers.IO) {
     when {
@@ -22,20 +39,17 @@ suspend fun resolveUri(uri: String): MediaSource = withContext(Dispatchers.IO) {
             if (!exists(filePath)) {
                 throw IOException("File not found: $filePath")
             }
-            MediaSource(
-                size = metadataOrNull(filePath)!!.size,
-                opener = { source(filePath) }
-            )
+            LocalFileMediaSource(filePath)
         }
 
         uri.startsWith("http://") || uri.startsWith("https://") -> {
             // TODO: prepare content into temporary file
-            MediaSource.fromByteArray(httpClient.get(uri).readRawBytes())
+            httpClient.get(uri).readRawBytes().toMediaSource()
         }
 
         uri.startsWith("base64://") -> {
             val base64Data = uri.removePrefix("base64://")
-            MediaSource.fromByteArray(Base64.decode(base64Data))
+            Base64.decode(base64Data).toMediaSource()
         }
 
         else -> throw IllegalArgumentException("Unsupported URI scheme: $uri")

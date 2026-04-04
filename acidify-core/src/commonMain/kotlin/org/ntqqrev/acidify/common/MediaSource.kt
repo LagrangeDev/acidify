@@ -7,15 +7,12 @@ import kotlinx.io.readByteArray
 import kotlin.js.JsExport
 
 @JsExport
-class MediaSource(
-    val size: Long,
-    private val opener: () -> RawSource,
-) {
-    init {
-        require(size >= 0L) { "size must be non-negative" }
-    }
+abstract class MediaSource {
+    abstract val size: Long
 
-    fun openRawSource(): RawSource = opener()
+    abstract fun openRawSource(): RawSource
+
+    abstract fun dispose()
 
     fun readByteArray(): ByteArray {
         return openRawSource().buffered().use { source ->
@@ -23,13 +20,22 @@ class MediaSource(
         }
     }
 
-    companion object {
-        fun fromByteArray(data: ByteArray): MediaSource = MediaSource(data.size.toLong()) {
-            ByteArrayRawSource(data)
+    class Bytes(private val data: ByteArray) : MediaSource() {
+        override val size: Long
+            get() = data.size.toLong()
+
+        override fun openRawSource(): RawSource {
+            return ByteArrayRawSource(data)
         }
 
+        override fun dispose() {
+            // No-op, let GC handle it
+        }
+    }
+
+    companion object {
         @JsExport.Ignore
-        fun ByteArray.toMediaSource(): MediaSource = fromByteArray(this)
+        fun ByteArray.toMediaSource(): MediaSource = Bytes(this)
     }
 }
 
