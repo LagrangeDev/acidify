@@ -139,6 +139,10 @@ Milky 协议服务所在路由的路径前缀。默认为空字符串。
 
 FFmpeg 可执行文件的路径。默认为空字符串，表示不使用 FFmpeg，而使用内置的媒体处理功能。若使用内置媒体处理功能时发生崩溃，可以尝试安装 FFmpeg 并将该项设置为 FFmpeg 可执行文件的路径来解决问题。
 
+> [!warning]
+> 
+> 如果你有处理较大媒体文件的需求（`>= 100MB`），强烈建议安装 FFmpeg 并配置该项，否则可能会遇到内存不足或性能问题。
+
 ### `logging.ansiLevel`
 
 Yogurt 日志中 ANSI 颜色的输出级别。可选值有 `NONE`, `ANSI16`, `ANSI256` 和 `TRUECOLOR`。如果不设置该配置项，则默认使用 `ANSI256`。如果你的终端不支持 ANSI 颜色，可以将该配置项设置为 `NONE` 来禁用颜色输出，或降级到 `ANSI16`。更详细的说明请参考 [Mordant 文档中的 AnsiLevel](https://ajalt.github.io/mordant/api/mordant/com.github.ajalt.mordant.rendering/-ansi-level/index.html)。
