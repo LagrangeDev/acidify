@@ -14,7 +14,7 @@ abstract class MediaSource {
 
     abstract fun dispose()
 
-    fun readByteArray(): ByteArray {
+    open fun readByteArray(): ByteArray {
         return openRawSource().buffered().use { source ->
             source.readByteArray()
         }
@@ -30,6 +30,10 @@ abstract class MediaSource {
 
         override fun dispose() {
             // No-op, let GC handle it
+        }
+
+        override fun readByteArray(): ByteArray {
+            return data // reduce reallocation
         }
     }
 
