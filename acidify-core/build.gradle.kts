@@ -26,11 +26,19 @@ kotlin {
         }
     }
 
+    applyDefaultHierarchyTemplate()
+
     compilerOptions {
         freeCompilerArgs.add("-Xconsistent-data-class-copy-visibility")
     }
 
     sourceSets {
+        val nonJsMain by creating {
+            dependsOn(commonMain.get())
+            jvmMain.get().dependsOn(this)
+            nativeMain.get().dependsOn(this)
+        }
+
         commonMain.dependencies {
             implementation(kotlin("reflect"))
             implementation(libs.kotlinx.serialization.json)

@@ -14,11 +14,19 @@ plugins {
 version = "0.1.0"
 
 kotlin {
+    applyDefaultHierarchyTemplate()
+
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
     }
 
     sourceSets {
+        val posixMain by creating {
+            dependsOn(commonMain.get())
+            macosMain.get().dependsOn(this)
+            linuxMain.get().dependsOn(this)
+        }
+
         commonMain.dependencies {
             implementation(project(":acidify-core"))
             implementation(project(":acidify-milky"))
