@@ -1,29 +1,41 @@
-package org.ntqqrev.yogurt.script
+package org.ntqqrev.yogurt.scripting
 
 import com.dokar.quickjs.QuickJs
 import com.dokar.quickjs.binding.ObjectBindingScope
 import com.dokar.quickjs.binding.define
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.coroutines.*
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
 import org.ntqqrev.acidify.milky.api.handler.*
 import org.ntqqrev.acidify.milky.mediaSourceScoped
 import org.ntqqrev.milky.milkyJsonModule
-import org.ntqqrev.yogurt.script.stdlib.defineConsole
-import org.ntqqrev.yogurt.script.stdlib.defineHttp
+import org.ntqqrev.yogurt.fs.withFs
+import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibConsole
+import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibHttp
+import org.ntqqrev.yogurt.scriptsPath
 import kotlin.time.DurationUnit
 import kotlin.time.measureTime
 
+const val rootHandle = "yogurt"
+const val apiHandle = "api"
+const val eventHandle = "event"
+
+const val internalApiHandle = "__yogurtInternal_api"
+const val internalEventMapHandle = "__yogurtInternal_eventMap"
+const val internalEmitHandle = "__yogurtInternal_emit"
+
+class Script(
+    val name: String,
+    val content: String,
+)
+
 context(ctx: MilkyContext)
-suspend fun Application.createScriptEnvironment() =
-    QuickJs.create(jobDispatcher = Dispatchers.Default).apply {
-    defineConsole()
-    defineHttp()
+suspend fun Application.configureScripting() = QuickJs.create(jobDispatcher = Dispatchers.Default).apply {
+    defineStdlibConsole()
+    defineStdlibHttp()
 
     evaluate<Any?>(
         """
@@ -132,15 +144,20 @@ suspend fun Application.createScriptEnvironment() =
             }
         """.trimIndent()
     )
+
+    monitor.subscribe(ApplicationStarted) {
+        this@configureScripting.launch {
+            loadScripts()
+        }
+    }
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 context(
     qjs: QuickJs,
     scope: ObjectBindingScope,
     ctx: MilkyContext,
 )
-inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
+private inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
     handler: MilkyApiHandler<T, R>
 ) {
     val methodName = handler.path.removePrefix("/")
@@ -183,6 +200,45 @@ inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
         } catch (e: Exception) {
             logger.e(e) { "脚本调用 API ${handler.path}（失败 ${e::class.simpleName}）" }
             throw e
+        }
+    }
+}
+
+context(ctx: MilkyContext)
+private suspend fun QuickJs.loadScripts() = withFs {
+    val logger = ctx.application.dependencies
+        .resolve<AbstractBot>()
+        .createLogger("ScriptLoader")
+
+    if (!exists(scriptsPath)) {
+        createDirectories(scriptsPath)
+    }
+
+    val scripts = list(scriptsPath)
+        .filter { it.name.endsWith(".yogurtx.js") }
+        .map {
+            ctx.async {
+                Script(
+                    name = it.name,
+                    content = withContext(Dispatchers.IO) {
+                        it.readText()
+                    }
+                )
+            }
+        }
+        .awaitAll()
+    if (scripts.isNotEmpty()) {
+        scripts.forEach {
+            evaluate<Any?>(
+                code = it.content,
+                filename = it.name,
+                asModule = true,
+            )
+            logger.i { "脚本 ${it.name.removeSuffix(".yogurtx.js")} 加载完成" }
+        }
+        logger.i { "加载了 ${scripts.size} 个脚本" }
+        ctx.eventFlow.collect {
+            evaluate<Any?>("$internalEmitHandle(${milkyJsonModule.encodeToString(it)})")
         }
     }
 }

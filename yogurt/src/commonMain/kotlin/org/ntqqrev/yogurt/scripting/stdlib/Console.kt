@@ -1,11 +1,11 @@
-package org.ntqqrev.yogurt.script.stdlib
+package org.ntqqrev.yogurt.scripting.stdlib
 
 import com.dokar.quickjs.QuickJs
 import com.dokar.quickjs.binding.define
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-fun QuickJs.defineConsole() = define("console") {
+fun QuickJs.defineStdlibConsole() = define("console") {
     val consoleTimers = mutableMapOf<String, TimeMark>()
     val consoleCounts = mutableMapOf<String, Int>()
     var consoleGroupDepth = 0

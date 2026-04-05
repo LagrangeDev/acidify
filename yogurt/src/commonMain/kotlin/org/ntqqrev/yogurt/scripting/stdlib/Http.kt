@@ -1,16 +1,11 @@
-package org.ntqqrev.yogurt.script.stdlib
+package org.ntqqrev.yogurt.scripting.stdlib
 
 import com.dokar.quickjs.QuickJs
 import com.dokar.quickjs.binding.JsObject
 import com.dokar.quickjs.binding.define
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsBytes
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 
 class HttpRequestOptions(
     val method: String,
@@ -46,7 +41,7 @@ class HttpRequestOptions(
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun QuickJs.defineHttp() = define("http") {
+fun QuickJs.defineStdlibHttp() = define("http") {
     val httpClient = HttpClient()
 
     fun Array<Any?>.extractParams(): Pair<String, HttpRequestOptions> {

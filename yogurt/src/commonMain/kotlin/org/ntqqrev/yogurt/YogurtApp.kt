@@ -1,6 +1,5 @@
 package org.ntqqrev.yogurt
 
-import com.dokar.quickjs.QuickJs
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.http.*
@@ -11,7 +10,6 @@ import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
-import io.ktor.server.plugins.di.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
 import io.ktor.server.websocket.*
@@ -25,8 +23,7 @@ import org.ntqqrev.milky.milkyVersion
 import org.ntqqrev.yogurt.config.loadConfigAndUpdate
 import org.ntqqrev.yogurt.debug.configureDebugFaceDetailsApi
 import org.ntqqrev.yogurt.fs.withFs
-import org.ntqqrev.yogurt.script.createScriptEnvironment
-import org.ntqqrev.yogurt.script.loadScripts
+import org.ntqqrev.yogurt.scripting.configureScripting
 import org.ntqqrev.yogurt.util.*
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -147,12 +144,7 @@ object YogurtApp {
                 }
             }
 
-            val qjs = createScriptEnvironment()
-
-            dependencies {
-                provide<MilkyContext> { ctx }
-                provide<QuickJs> { qjs } cleanup { it.close() }
-            }
+            configureScripting()
         }
 
         monitor.subscribe(ApplicationStarted) {
@@ -162,7 +154,6 @@ object YogurtApp {
 
             launch {
                 botLogin()
-                loadScripts()
             }
         }
     }
