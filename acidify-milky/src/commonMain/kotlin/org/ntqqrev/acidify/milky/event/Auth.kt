@@ -9,7 +9,7 @@ import org.ntqqrev.acidify.milky.MilkyContext
 context(ctx: MilkyContext)
 fun Route.eventAuth() = install(createRouteScopedPlugin("EventAuth") {
     onCall { call ->
-        val logger = ctx.bot.createLogger("ApiAuthPlugin")
+        val logger = ctx.bot.createLogger("EventAuthPlugin")
         if (
             call.request.headers["Authorization"] != "Bearer ${ctx.httpAccessToken}" &&
             call.request.queryParameters["access_token"] != ctx.httpAccessToken
