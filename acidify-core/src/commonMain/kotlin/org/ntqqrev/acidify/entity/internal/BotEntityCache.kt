@@ -6,7 +6,7 @@ import kotlinx.coroutines.sync.withLock
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.entity.BotEntity
 
-internal class CacheUtility<K, V : BotEntity<D>, D>(
+internal class BotEntityCache<K, V : BotEntity<D>, D>(
     val bot: AbstractBot,
     private val updateCache: suspend (bot: AbstractBot) -> Map<K, D>,
     private val entityFactory: (bot: AbstractBot, data: D) -> V,

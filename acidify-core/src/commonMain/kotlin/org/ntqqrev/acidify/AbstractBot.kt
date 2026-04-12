@@ -16,7 +16,7 @@ import org.ntqqrev.acidify.common.SsoResponse
 import org.ntqqrev.acidify.common.UnsafeAcidifyApi
 import org.ntqqrev.acidify.entity.BotFriend
 import org.ntqqrev.acidify.entity.BotGroup
-import org.ntqqrev.acidify.entity.internal.CacheUtility
+import org.ntqqrev.acidify.entity.internal.BotEntityCache
 import org.ntqqrev.acidify.event.AcidifyEvent
 import org.ntqqrev.acidify.event.internal.KickSignal
 import org.ntqqrev.acidify.event.internal.MsgPushSignal
@@ -46,12 +46,12 @@ sealed class AbstractBot(
     ).associateBy { it.cmd }
     internal lateinit var faceDetailMapMut: Map<String, BotFaceDetail>
     internal var eventCollectJob: Job? = null
-    internal val friendCache = CacheUtility(
+    internal val friendCache = BotEntityCache(
         bot = this,
         updateCache = { bot -> bot.fetchFriends().associateBy { it.uin } },
         entityFactory = ::BotFriend
     )
-    internal val groupCache = CacheUtility(
+    internal val groupCache = BotEntityCache(
         bot = this,
         updateCache = { bot -> bot.fetchGroups().associateBy { it.uin } },
         entityFactory = ::BotGroup

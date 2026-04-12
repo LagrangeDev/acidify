@@ -1,7 +1,7 @@
 package org.ntqqrev.acidify.entity
 
 import org.ntqqrev.acidify.AbstractBot
-import org.ntqqrev.acidify.entity.internal.CacheUtility
+import org.ntqqrev.acidify.entity.internal.BotEntityCache
 import org.ntqqrev.acidify.fetchGroupMembers
 import org.ntqqrev.acidify.struct.BotGroupData
 import org.ntqqrev.acidify.struct.GroupMemberRole
@@ -15,7 +15,7 @@ class BotGroup internal constructor(
     bot: AbstractBot,
     data: BotGroupData,
 ) : BotEntity<BotGroupData>(bot, data) {
-    private val memberCache = CacheUtility(
+    private val memberCache = BotEntityCache(
         bot = bot,
         updateCache = { bot -> bot.fetchGroupMembers(uin).associateBy { it.uin } },
         entityFactory = { bot, data ->
