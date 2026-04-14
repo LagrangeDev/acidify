@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import com.codingfeline.buildkonfig.compiler.FieldSpec
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -14,19 +17,20 @@ plugins {
 version = "0.1.0"
 
 kotlin {
-    applyDefaultHierarchyTemplate()
+    applyDefaultHierarchyTemplate {
+        common {
+            group("posix") {
+                withLinux()
+                withMacos()
+            }
+        }
+    }
 
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
     }
 
     sourceSets {
-        val posixMain by creating {
-            dependsOn(commonMain.get())
-            macosMain.get().dependsOn(this)
-            linuxMain.get().dependsOn(this)
-        }
-
         commonMain.dependencies {
             implementation(project(":acidify-core"))
             implementation(project(":acidify-milky"))

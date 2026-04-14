@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import com.vanniktech.maven.publish.DeploymentValidation
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -26,19 +29,20 @@ kotlin {
         }
     }
 
-    applyDefaultHierarchyTemplate()
+    applyDefaultHierarchyTemplate {
+        common {
+            group("nonJs") {
+                withJvm()
+                withNative()
+            }
+        }
+    }
 
     compilerOptions {
         freeCompilerArgs.add("-Xconsistent-data-class-copy-visibility")
     }
 
     sourceSets {
-        val nonJsMain by creating {
-            dependsOn(commonMain.get())
-            jvmMain.get().dependsOn(this)
-            nativeMain.get().dependsOn(this)
-        }
-
         commonMain.dependencies {
             implementation(kotlin("reflect"))
             implementation(libs.kotlinx.serialization.json)
