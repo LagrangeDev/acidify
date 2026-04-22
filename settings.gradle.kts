@@ -22,7 +22,6 @@ include(
     ":acidify-milky",
     ":yogurt",
     ":yogurt-jvm",
-    ":yogurt-fs",
 )
 
 rootProject.name = "acidify"

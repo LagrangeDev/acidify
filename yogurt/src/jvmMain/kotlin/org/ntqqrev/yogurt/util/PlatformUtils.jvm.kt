@@ -1,6 +1,6 @@
 package org.ntqqrev.yogurt.util
 
-import org.ntqqrev.yogurt.fs.withFs
+import org.ntqqrev.ktfs.withFs
 import java.io.File
 
 actual fun executeCommand(vararg args: String): CommandExecutionResult = withFs {

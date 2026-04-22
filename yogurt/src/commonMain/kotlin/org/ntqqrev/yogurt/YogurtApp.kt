@@ -18,11 +18,11 @@ import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.configureMilky
+import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.milky.milkyJsonModule
 import org.ntqqrev.milky.milkyVersion
 import org.ntqqrev.yogurt.config.loadConfigAndUpdate
 import org.ntqqrev.yogurt.debug.configureDebugFaceDetailsApi
-import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.scripting.configureScripting
 import org.ntqqrev.yogurt.util.*
 import kotlin.time.Duration.Companion.milliseconds

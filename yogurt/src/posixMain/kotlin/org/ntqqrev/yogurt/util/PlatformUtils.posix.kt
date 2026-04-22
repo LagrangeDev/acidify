@@ -4,7 +4,7 @@ package org.ntqqrev.yogurt.util
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
-import org.ntqqrev.yogurt.fs.withFs
+import org.ntqqrev.ktfs.withFs
 import platform.posix.errno
 import platform.posix.strerror
 import platform.posix.system

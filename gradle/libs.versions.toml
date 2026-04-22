@@ -13,6 +13,7 @@ ktor = "3.4.2"
 
 milky = "1.2.0"
 acidify-codec = "0.1.0"
+ktfs = "0.1.1"
 kompress = "1.3.1"
 qr-matrix = "0.1.0"
 xmlutil = "1.0.0-rc2"
@@ -58,6 +59,7 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 milky-types = { module = "org.ntqqrev:milky-kt-types", version.ref = "milky" }
 
 acidify-codec = { module = "org.ntqqrev:acidify-codec", version.ref = "acidify-codec" }
+ktfs = { module = "org.ntqqrev:ktfs", version.ref = "ktfs" }
 kompress = { module = "dev.karmakrafts.kompress:kompress-core", version.ref = "kompress" }
 qr-matrix = { module = "org.ntqqrev:qr-matrix", version.ref = "qr-matrix" }
 xmlutil-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "xmlutil" }

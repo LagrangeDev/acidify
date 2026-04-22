@@ -4,8 +4,8 @@ package org.ntqqrev.yogurt.config
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
+import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.yogurt.configPath
-import org.ntqqrev.yogurt.fs.withFs
 
 fun YogurtConfig.toV2() = YogurtConfigV2(
     signApiUrl = signApiUrl,

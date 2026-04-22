@@ -15,7 +15,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
-import org.ntqqrev.yogurt.fs.withFs
+import org.ntqqrev.ktfs.withFs
 import kotlin.io.encoding.Base64
 import kotlin.random.Random
 

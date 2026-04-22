@@ -11,8 +11,8 @@ import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
 import org.ntqqrev.acidify.milky.api.handler.*
 import org.ntqqrev.acidify.milky.mediaSourceScoped
+import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.milky.milkyJsonModule
-import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibConsole
 import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibHttp
 import org.ntqqrev.yogurt.scriptsPath

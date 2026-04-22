@@ -3,7 +3,7 @@
 package org.ntqqrev.yogurt.util
 
 import kotlinx.cinterop.*
-import org.ntqqrev.yogurt.fs.withFs
+import org.ntqqrev.ktfs.withFs
 import platform.windows.*
 import platform.windows.CloseHandle as closeHandle
 

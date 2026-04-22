@@ -9,9 +9,9 @@ import org.ntqqrev.acidify.common.*
 import org.ntqqrev.acidify.common.android.*
 import org.ntqqrev.acidify.exception.UnstableNetworkException
 import org.ntqqrev.acidify.exception.WtLoginException
+import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.yogurt.YogurtApp.config
 import org.ntqqrev.yogurt.YogurtApp.t
-import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.util.logHandler
 
 suspend fun Application.initializePC(): Bot = withFs {

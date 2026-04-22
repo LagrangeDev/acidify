@@ -7,8 +7,8 @@ import kotlinx.coroutines.launch
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.event.AndroidSessionStoreUpdatedEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
+import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.yogurt.androidSessionStorePath
-import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.sessionStorePath
 
 fun Application.configureSessionStoreAutoSave() = launch {

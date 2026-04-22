@@ -1,7 +1,7 @@
 package org.ntqqrev.yogurt.util
 
 import kotlinx.io.files.Path
-import org.ntqqrev.yogurt.fs.withFs
+import org.ntqqrev.ktfs.withFs
 
 data class CommandExecutionResult(
     val errorCode: Int,

@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
+import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.qrmatrix.ErrorCorrectionLevel
 import org.ntqqrev.qrmatrix.generateMatrix
 import org.ntqqrev.yogurt.YogurtApp.t
-import org.ntqqrev.yogurt.fs.withFs
 import org.ntqqrev.yogurt.qrCodePath
 
 object Palette {
