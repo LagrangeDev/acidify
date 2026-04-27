@@ -210,11 +210,11 @@ private suspend fun QuickJs.loadScripts() = withFs {
         .resolve<AbstractBot>()
         .createLogger("ScriptLoader")
 
-    if (!exists(scriptsPath)) {
+    if (!scriptsPath.exists) {
         createDirectories(scriptsPath)
     }
 
-    val scripts = list(scriptsPath)
+    val scripts = scriptsPath.children
         .filter { it.name.endsWith(".yogurtx.js") }
         .map {
             ctx.async {

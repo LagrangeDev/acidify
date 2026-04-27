@@ -15,7 +15,7 @@ import org.ntqqrev.yogurt.YogurtApp.t
 import org.ntqqrev.yogurt.util.logHandler
 
 suspend fun Application.initializePC(): Bot = withFs {
-    val sessionStore: SessionStore = if (exists(sessionStorePath)) {
+    val sessionStore: SessionStore = if (sessionStorePath.exists) {
         SessionStore.fromJson(sessionStorePath.readText())
     } else SessionStore.empty()
 
@@ -23,7 +23,7 @@ suspend fun Application.initializePC(): Bot = withFs {
     var appInfo: AppInfo
 
     fun readCustomAppInfo(): AppInfo {
-        return if (exists(customAppInfoPath)) {
+        return if (customAppInfoPath.exists) {
             AppInfo.fromJson(customAppInfoPath.readText())
         } else {
             throw IllegalStateException("未在 $customAppInfoPath 下找到自定义 AppInfo 文件")
@@ -88,7 +88,7 @@ suspend fun Application.initializeAndroid(): AndroidBot = withFs {
     require(config.protocol.uin != 0L && config.protocol.password.isNotEmpty()) {
         "使用 Android 协议登录时，请在配置文件中填写 uin 和 password 字段"
     }
-    val sessionStore: AndroidSessionStore = if (exists(androidSessionStorePath)) {
+    val sessionStore: AndroidSessionStore = if (androidSessionStorePath.exists) {
         AndroidSessionStore.fromJson(androidSessionStorePath.readText()).takeIf {
             it.uin == config.protocol.uin && it.password == config.protocol.password
         } ?: run {
@@ -103,7 +103,7 @@ suspend fun Application.initializeAndroid(): AndroidBot = withFs {
         password = config.protocol.password
     ).also {
         t.println("未找到 Android SessionStore，正在创建新的 SessionStore 并保存到文件...")
-        androidSessionStorePath.write(it.toJson())
+        androidSessionStorePath.writeText(it.toJson())
     }
     val signProvider: AndroidSignProvider = if (!config.protocol.androidUseLegacySign) {
         AndroidUrlSignProvider(config.protocol.signApiUrl)
@@ -123,7 +123,7 @@ suspend fun Application.initializeAndroid(): AndroidBot = withFs {
     val appInfo: AndroidAppInfo = when (config.protocol.version) {
         "fetched" -> throw IllegalStateException("Android 协议不支持通过 Sign API 获取 AppInfo，请使用内置版本或自定义版本")
 
-        "custom" -> if (exists(customAppInfoPath)) {
+        "custom" -> if (customAppInfoPath.exists) {
             AndroidAppInfo.fromJson(customAppInfoPath.readText())
         } else {
             throw IllegalStateException("未在 $customAppInfoPath 下找到自定义 AppInfo 文件")

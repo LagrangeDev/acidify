@@ -65,7 +65,7 @@ object YogurtApp {
                 Milky Version:  ${BuildKonfig.milkyVersion} ($milkyVersion)
                 Build Time:     ${BuildKonfig.buildTime}
                 Listen Address: ${config.milky.http.host}:${config.milky.http.port}${config.milky.http.prefix}
-                Data Directory: ${withFs { resolve(Path(".")) }}
+                Data Directory: ${withFs { Path(".").absolute }}
             """.trimIndent()
         )
 

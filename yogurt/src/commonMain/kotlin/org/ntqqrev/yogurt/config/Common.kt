@@ -75,10 +75,10 @@ val jsonModule = Json {
 }
 
 fun loadConfigAndUpdate(): YogurtConfigV3 = withFs {
-    if (!exists(configPath)) {
+    if (!configPath.exists) {
         val defaultConfig = YogurtConfigV3()
-        configPath.write(jsonModule.encodeToString(defaultConfig))
-        println("配置文件已生成于 ${resolve(configPath)}")
+        configPath.writeText(jsonModule.encodeToString(defaultConfig))
+        println("配置文件已生成于 ${configPath.absolute}")
         println("请根据需要进行修改，修改完成后按 Enter 键继续...")
         readln()
     }
@@ -91,7 +91,7 @@ fun loadConfigAndUpdate(): YogurtConfigV3 = withFs {
         else -> error("不支持的配置版本 $configVersion")
     }
 
-    configPath.write(jsonModule.encodeToString(config))
+    configPath.writeText(jsonModule.encodeToString(config))
 
     return@withFs config
 }

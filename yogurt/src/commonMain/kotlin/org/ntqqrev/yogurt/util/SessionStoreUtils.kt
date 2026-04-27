@@ -17,12 +17,12 @@ fun Application.configureSessionStoreAutoSave() = launch {
     if (isPC) {
         bot.eventFlow.filterIsInstance<SessionStoreUpdatedEvent>().collect {
             logger.i { "SessionStore 已更新，正在保存至文件..." }
-            withFs { sessionStorePath.write(it.sessionStore.toJson()) }
+            withFs { sessionStorePath.writeText(it.sessionStore.toJson()) }
         }
     } else if (isAndroid) {
         bot.eventFlow.filterIsInstance<AndroidSessionStoreUpdatedEvent>().collect {
             logger.i { "Android SessionStore 已更新，正在保存至文件..." }
-            withFs { androidSessionStorePath.write(it.sessionStore.toJson()) }
+            withFs { androidSessionStorePath.writeText(it.sessionStore.toJson()) }
         }
     }
 }

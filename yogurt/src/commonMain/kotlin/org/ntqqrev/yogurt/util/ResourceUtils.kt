@@ -25,7 +25,7 @@ suspend fun resolveUri(uri: String): MediaSource = withContext(Dispatchers.IO) {
     when {
         uri.startsWith("file://") -> withFs {
             val filePath = Path(uri.removePrefix("file://").decodeURLPart())
-            if (!exists(filePath)) {
+            if (!filePath.exists) {
                 throw IOException("File not found: $filePath")
             }
             LocalFileMediaSource(filePath)
@@ -58,9 +58,9 @@ fun createTempFile(kind: String, ext: String = "tmp"): Path = withFs {
             SystemTemporaryDirectory,
             "yogurt-$kind-${Random.nextLong().toULong().toString(16)}.$ext",
         )
-    } while (exists(candidate))
+    } while (candidate.exists)
     // Touch the file
-    sink(candidate).buffered().use { }
+    candidate.writeText("")
     candidate
 }
 
@@ -77,8 +77,7 @@ abstract class LazyMediaSource : MediaSource() {
 
 class LocalFileMediaSource(val path: Path) : LazyMediaSource() {
     override val size: Long = withFs {
-        metadataOrNull(path)?.size
-            ?: throw IOException("File not found: $path")
+        path.metadataOrNull?.size ?: throw IOException("File not found: $path")
     }
 
     override fun openRawSource(): RawSource = withFs {

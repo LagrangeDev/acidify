@@ -51,8 +51,8 @@ fun Application.configureQRCodeDisplay() = launch {
             """.trimIndent()
         )
         withFs {
-            qrCodePath.write(it.png)
-            t.println("二维码文件已保存至 ${resolve(qrCodePath)}")
+            qrCodePath.writeBytes(it.png)
+            t.println("二维码文件已保存至 ${qrCodePath.absolute}")
         }
     }
 }
