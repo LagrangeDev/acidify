@@ -238,25 +238,21 @@ internal class EcdhProvider {
      * Pack shared secret (with optional MD5 hash)
      */
     private fun packShared(ecShared: EllipticPoint, isHash: Boolean): ByteArray {
-        var xBytes = ecShared.x.toBytes(true)
+        val xBytes = ecShared.x.toFixedBytes(curve.size)
+        return if (isHash) MD5.hash(xBytes.copyOfRange(0, curve.packSize)) else xBytes
+    }
 
-        // Ensure we have exactly the packSize bytes
-        xBytes = when {
-            xBytes.size > curve.packSize -> xBytes.sliceArray(0 until curve.packSize)
-            xBytes.size < curve.packSize -> {
-                // Pad with zeros at the beginning (big-endian)
-                val padded = ByteArray(curve.packSize)
-                xBytes.copyInto(
-                    padded, curve.packSize - xBytes.size,
-                    0, xBytes.size
-                )
-                padded
+    private fun BigInt.toFixedBytes(size: Int): ByteArray {
+        val bytes = toBytes(true)
+        if (bytes.size == size) return bytes
+
+        return ByteArray(size).also { result ->
+            if (bytes.size < size) {
+                bytes.copyInto(result, size - bytes.size)
+            } else {
+                bytes.copyInto(result, 0, bytes.size - size, bytes.size)
             }
-
-            else -> xBytes
         }
-
-        return if (isHash) MD5.hash(xBytes) else xBytes
     }
 
     /**

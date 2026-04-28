@@ -14,13 +14,6 @@ internal fun ByteArray.sha1(): ByteArray = SHA1.hash(this)
 
 // ======== ByteArray Extensions ========
 
-internal fun ByteArray.writeUInt32BE(value: Long, offset: Int) {
-    this[offset] = (value ushr 24).toByte()
-    this[offset + 1] = (value ushr 16).toByte()
-    this[offset + 2] = (value ushr 8).toByte()
-    this[offset + 3] = value.toByte()
-}
-
 internal fun ByteArray.readUInt32BE(offset: Int): Long {
     return ((this[offset].toUInt() shl 24) or
             ((this[offset + 1].toUInt() and 0xffu) shl 16) or
