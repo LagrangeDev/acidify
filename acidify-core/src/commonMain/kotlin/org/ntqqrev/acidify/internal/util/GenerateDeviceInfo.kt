@@ -7,7 +7,12 @@ import org.ntqqrev.acidify.internal.proto.system.DeviceInfo
 internal fun LagrangeClient.generateDeviceInfo() = DeviceInfo(
     devName = sessionStore.deviceName,
     devType = appInfo.kernel,
-    osVer = "Windows 10.0.19042",
+    osVer = when (appInfo.os) {
+        "Windows" -> "Windows 10.0.19042"
+        "Mac" -> "macOS 14.4.1"
+        "Linux" -> "Ubuntu 22.04.4 LTS"
+        else -> ""
+    },
     vendorOsName = appInfo.vendorOs,
 )
 

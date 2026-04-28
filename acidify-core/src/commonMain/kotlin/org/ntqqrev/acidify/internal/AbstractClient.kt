@@ -46,7 +46,7 @@ internal sealed class AbstractClient(
     val packetContext = PacketContext(this)
     val ticketContext = TicketContext(this)
 
-    val contextCollection = listOf(
+    open val contextCollection = listOf(
         packetContext,
         ticketContext,
         highwayContext,
