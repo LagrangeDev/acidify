@@ -13,6 +13,8 @@ export interface ApiCollection {
   get_group_info: (input: z.input<typeof types.GetGroupInfoInput>) => Promise<types.GetGroupInfoOutput>;
   get_group_member_list: (input: z.input<typeof types.GetGroupMemberListInput>) => Promise<types.GetGroupMemberListOutput>;
   get_group_member_info: (input: z.input<typeof types.GetGroupMemberInfoInput>) => Promise<types.GetGroupMemberInfoOutput>;
+  get_peer_pins: () => Promise<types.GetPeerPinsOutput>;
+  set_peer_pin: (input: z.input<typeof types.SetPeerPinInput>) => Promise<void>;
   set_avatar: (input: z.input<typeof types.SetAvatarInput>) => Promise<void>;
   set_nickname: (input: z.input<typeof types.SetNicknameInput>) => Promise<void>;
   set_bio: (input: z.input<typeof types.SetBioInput>) => Promise<void>;

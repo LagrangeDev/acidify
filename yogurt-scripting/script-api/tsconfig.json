@@ -3,6 +3,7 @@
     "lib": ["esnext"],
     "module": "nodenext",
     "target": "esnext",
-    "moduleResolution": "nodenext"
+    "moduleResolution": "nodenext",
+    "types": ["node"]
   }
 }

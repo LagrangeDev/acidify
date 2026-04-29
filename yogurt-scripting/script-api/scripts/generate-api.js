@@ -1,19 +1,36 @@
-import { apiCategories } from '@saltify/milky-types/api';
+import {zodApiCategories} from '@saltify/milky-types';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const ApiCollection = Object.entries(apiCategories)
+const preserveAllCapitalWords = new Set([
+    'csrf'
+])
+
+function snakeToPascal(str) {
+    return str
+        .split('_')
+        .filter(Boolean)
+        .map(word => {
+            if (preserveAllCapitalWords.has(word)) {
+                return word.toUpperCase();
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join('');
+}
+
+const ApiCollection = Object.entries(zodApiCategories)
     .map(([category, data]) => {
-        const res = data.apis.map((api) => {
-            const input = api.inputStruct ? `input: z.input<typeof types.${api.inputStruct}>` : '';
-            const output = api.outputStruct ? `types.${api.outputStruct}` : 'void';
-            return `${api.endpoint}: (${input}) => Promise<${output}>;`;
+        const res = Object.entries(data.apis).map(([endpoint, api]) => {
+            const input = api.requestSchema ? `input: z.input<typeof types.${snakeToPascal(endpoint)}Input>` : '';
+            const output = api.responseSchema ? `types.${snakeToPascal(endpoint)}Output` : 'void';
+            return `${endpoint}: (${input}) => Promise<${output}>;`;
         });
         return `  // ${category} API\n  ${res.join('\n  ')}\n`;
     })
     .join('\n');
 
-await fs.promises.writeFile(path.resolve('api.d.ts'), `
+fs.writeFileSync(path.resolve('api.d.ts'), `
 /* eslint-disable */
 import * as types from '@saltify/milky-types';
 import type z from 'zod';
