@@ -12,6 +12,8 @@ import org.ntqqrev.acidify.internal.LagrangeClient
 import org.ntqqrev.acidify.internal.service.system.AndroidFetchClientKey
 import org.ntqqrev.acidify.internal.service.system.FetchClientKey
 import org.ntqqrev.acidify.internal.service.system.FetchPSKey
+import org.ntqqrev.acidify.internal.util.RetryPolicy
+import org.ntqqrev.acidify.internal.util.withRetry
 import kotlin.time.Clock
 
 internal class TicketContext(client: AbstractClient) : AbstractContext(client) {
@@ -61,17 +63,28 @@ internal class TicketContext(client: AbstractClient) : AbstractContext(client) {
                 "&clientuin=${client.uin}" +
                 "&clientkey=$clientKey" +
                 "&u1=$jump"
-        val resp = httpClient.get(urlString)
-        val cookies = httpClient.cookies(urlString)
-        cookies.firstOrNull { it.name == "skey" }
-            ?.let { currentSKey.refreshWith(it.value, 86400L) }
-            ?: when (client) {
-                is LagrangeClient -> throw WebApiException("获取 SKey 失败", resp.status.value)
+        try {
+            withRetry(
+                policy = RetryPolicy(maxAttempts = 5),
+                onRetry = { attempt, cause, nextDelay ->
+                    logger.w(cause) { "获取 SKey 失败（第 $attempt 次尝试），将在 ${nextDelay.inWholeMilliseconds}ms 后重试" }
+                }
+            ) {
+                val resp = httpClient.get(urlString)
+                val cookies = httpClient.cookies(urlString)
+                cookies.firstOrNull { it.name == "skey" }
+                    ?.let { currentSKey.refreshWith(it.value, 86400L) }
+                    ?: throw WebApiException("获取 SKey 失败", resp.status.value)
+            }
+        } catch (e: WebApiException) {
+            when (client) {
+                is LagrangeClient -> throw e // 给你机会你不中用啊
                 is KuromeClient -> {
                     logger.w { "通过 URL 刷新 SKey 失败，使用 SessionStore 中的 SKey（可能已经过期）" }
                     currentSKey.refreshWith(client.sessionStore.wloginSigs.sKey.toHexString(), 86400L)
                 }
             }
+        }
         return currentSKey.value
     }
 
