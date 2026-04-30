@@ -12,7 +12,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract release metadata
         id: release
@@ -48,13 +48,13 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ''
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           package_json_file: acidify-core-js/package.json
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'pnpm'
@@ -103,7 +103,7 @@ jobs:
           git push origin "${TAG}"
 
       - name: Create GitHub release draft
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.release.outputs.tag }}
           name: acidify-core ${{ steps.release.outputs.version }}
