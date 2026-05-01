@@ -6,10 +6,12 @@ import com.dokar.quickjs.binding.define
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
-import org.ntqqrev.acidify.milky.api.handler.*
+import org.ntqqrev.acidify.milky.api.apiHandlers
 import org.ntqqrev.acidify.milky.mediaSourceScoped
 import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.milky.milkyJsonModule
@@ -48,74 +50,9 @@ suspend fun Application.configureScripting() = QuickJs.create(jobDispatcher = Di
 
     define(internalApiHandle) {
         context(this@apply, this) {
-            defineJsApi(GetLoginInfo)
-            defineJsApi(GetImplInfo)
-            defineJsApi(GetUserProfile)
-            defineJsApi(GetFriendList)
-            defineJsApi(GetFriendInfo)
-            defineJsApi(GetGroupList)
-            defineJsApi(GetGroupInfo)
-            defineJsApi(GetGroupMemberList)
-            defineJsApi(GetGroupMemberInfo)
-            defineJsApi(GetPeerPins)
-            defineJsApi(SetPeerPin)
-            defineJsApi(SetAvatar)
-            defineJsApi(SetNickname)
-            defineJsApi(SetBio)
-            defineJsApi(GetCustomFaceUrlList)
-            defineJsApi(GetCookies)
-            defineJsApi(GetCsrfToken)
-
-            defineJsApi(SendPrivateMessage)
-            defineJsApi(SendGroupMessage)
-            defineJsApi(RecallPrivateMessage)
-            defineJsApi(RecallGroupMessage)
-            defineJsApi(GetMessage)
-            defineJsApi(GetHistoryMessages)
-            defineJsApi(GetResourceTempUrl)
-            defineJsApi(GetForwardedMessages)
-            defineJsApi(MarkMessageAsRead)
-
-            defineJsApi(SendFriendNudge)
-            defineJsApi(SendProfileLike)
-            defineJsApi(DeleteFriend)
-            defineJsApi(GetFriendRequests)
-            defineJsApi(AcceptFriendRequest)
-            defineJsApi(RejectFriendRequest)
-
-            defineJsApi(SetGroupName)
-            defineJsApi(SetGroupAvatar)
-            defineJsApi(SetGroupMemberCard)
-            defineJsApi(SetGroupMemberSpecialTitle)
-            defineJsApi(SetGroupMemberAdmin)
-            defineJsApi(SetGroupMemberMute)
-            defineJsApi(SetGroupWholeMute)
-            defineJsApi(KickGroupMember)
-            defineJsApi(GetGroupAnnouncements)
-            defineJsApi(SendGroupAnnouncement)
-            defineJsApi(DeleteGroupAnnouncement)
-            defineJsApi(GetGroupEssenceMessages)
-            defineJsApi(SetGroupEssenceMessage)
-            defineJsApi(QuitGroup)
-            defineJsApi(SendGroupMessageReaction)
-            defineJsApi(SendGroupNudge)
-            defineJsApi(GetGroupNotifications)
-            defineJsApi(AcceptGroupRequest)
-            defineJsApi(RejectGroupRequest)
-            defineJsApi(AcceptGroupInvitation)
-            defineJsApi(RejectGroupInvitation)
-
-            defineJsApi(UploadPrivateFile)
-            defineJsApi(UploadGroupFile)
-            defineJsApi(GetPrivateFileDownloadUrl)
-            defineJsApi(GetGroupFileDownloadUrl)
-            defineJsApi(GetGroupFiles)
-            defineJsApi(MoveGroupFile)
-            defineJsApi(RenameGroupFile)
-            defineJsApi(DeleteGroupFile)
-            defineJsApi(CreateGroupFolder)
-            defineJsApi(RenameGroupFolder)
-            defineJsApi(DeleteGroupFolder)
+            apiHandlers.forEach {
+                defineJsApi(it)
+            }
         }
     }
 
@@ -157,9 +94,7 @@ context(
     scope: ObjectBindingScope,
     ctx: MilkyContext,
 )
-private inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
-    handler: MilkyApiHandler<T, R>
-) {
+private fun <T : Any, R : Any> Application.defineJsApi(handler: MilkyApiHandler<T, R>) {
     val methodName = handler.path.removePrefix("/")
 
     runBlocking {
@@ -180,7 +115,7 @@ private inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
             ?: throw IllegalArgumentException("Expected argument to be a JSON string")
         val bot = dependencies.resolve<AbstractBot>()
         val logger = bot.createLogger("Scripting")
-        var resp: R
+        var resp: JsonElement
         try {
             val duration = measureTime {
                 resp = mediaSourceScoped(
@@ -190,13 +125,13 @@ private inline fun <reified T : Any, reified R : Any> Application.defineJsApi(
                         }
                     }
                 ) {
-                    handler.callHandler(ctx, milkyJsonModule.decodeFromString(payloadString))
+                    handler.handleRaw(Json.parseToJsonElement(payloadString))
                 }
             }
             logger.i {
                 "脚本调用 API ${handler.path}（成功 ${duration.toString(DurationUnit.MILLISECONDS)}）"
             }
-            milkyJsonModule.encodeToString(resp)
+            Json.encodeToString(resp)
         } catch (e: Exception) {
             logger.e(e) { "脚本调用 API ${handler.path}（失败 ${e::class.simpleName}）" }
             throw e

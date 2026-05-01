@@ -5,6 +5,8 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.exception.OidbException
@@ -21,19 +23,22 @@ import kotlin.time.measureTime
 
 inline fun <reified T : Any, reified R : Any> ApiEndpoint<T, R>.define(
     noinline handler: suspend context(MediaSourceScope) MilkyContext.(T) -> R
-) = MilkyApiHandler(this.path, handler)
+) = MilkyApiHandler(
+    path = this.path,
+    transformInput = milkyJsonModule::decodeFromJsonElement,
+    transformOutput = milkyJsonModule::encodeToJsonElement,
+    callHandler = handler,
+)
 
 context(ctx: MilkyContext)
-private inline fun <reified T : Any, reified R : Any> Route.serve(
-    handler: MilkyApiHandler<T, R>
-) = post(handler.path) {
+private fun <T : Any, R : Any> Route.serve(handler: MilkyApiHandler<T, R>) = post(handler.path) {
     val bot = application.dependencies.resolve<AbstractBot>()
     val logger = bot.createLogger("HttpModule")
     try {
-        val payload = call.receive<T>()
+        val rawPayload = call.receive<JsonElement>()
         call.respond(
             try {
-                var result: R
+                var result: JsonElement
                 val duration = measureTime {
                     result = mediaSourceScoped(
                         onDisposeFailure = { source, exception ->
@@ -42,7 +47,7 @@ private inline fun <reified T : Any, reified R : Any> Route.serve(
                             }
                         }
                     ) {
-                        handler.callHandler(ctx, payload)
+                        handler.handleRaw(rawPayload)
                     }
                 }
                 logger.i {
@@ -55,7 +60,7 @@ private inline fun <reified T : Any, reified R : Any> Route.serve(
                 ApiGeneralResponse(
                     status = "ok",
                     retcode = 0,
-                    data = milkyJsonModule.encodeToJsonElement(result)
+                    data = result,
                 )
             } catch (e: MilkyApiException) {
                 logger.w { "${call.request.local.remoteAddress} 调用 API ${handler.path}（${e.retcode} ${e.message}）" }
@@ -109,74 +114,80 @@ private inline fun <reified T : Any, reified R : Any> Route.serve(
     }
 }
 
+val apiHandlers = listOf(
+    GetLoginInfo,
+    GetImplInfo,
+    GetUserProfile,
+    GetFriendList,
+    GetFriendInfo,
+    GetGroupList,
+    GetGroupInfo,
+    GetGroupMemberList,
+    GetGroupMemberInfo,
+    GetPeerPins,
+    SetPeerPin,
+    SetAvatar,
+    SetNickname,
+    SetBio,
+    GetCustomFaceUrlList,
+    GetCookies,
+    GetCsrfToken,
+
+    SendPrivateMessage,
+    SendGroupMessage,
+    RecallPrivateMessage,
+    RecallGroupMessage,
+    GetMessage,
+    GetHistoryMessages,
+    GetResourceTempUrl,
+    GetForwardedMessages,
+    MarkMessageAsRead,
+
+    SendFriendNudge,
+    SendProfileLike,
+    DeleteFriend,
+    GetFriendRequests,
+    AcceptFriendRequest,
+    RejectFriendRequest,
+
+    SetGroupName,
+    SetGroupAvatar,
+    SetGroupMemberCard,
+    SetGroupMemberSpecialTitle,
+    SetGroupMemberAdmin,
+    SetGroupMemberMute,
+    SetGroupWholeMute,
+    KickGroupMember,
+    GetGroupAnnouncements,
+    SendGroupAnnouncement,
+    DeleteGroupAnnouncement,
+    GetGroupEssenceMessages,
+    SetGroupEssenceMessage,
+    QuitGroup,
+    SendGroupMessageReaction,
+    SendGroupNudge,
+    GetGroupNotifications,
+    AcceptGroupRequest,
+    RejectGroupRequest,
+    AcceptGroupInvitation,
+    RejectGroupInvitation,
+
+    UploadPrivateFile,
+    UploadGroupFile,
+    GetPrivateFileDownloadUrl,
+    GetGroupFileDownloadUrl,
+    GetGroupFiles,
+    MoveGroupFile,
+    RenameGroupFile,
+    DeleteGroupFile,
+    CreateGroupFolder,
+    RenameGroupFolder,
+    DeleteGroupFolder,
+)
+
 context(ctx: MilkyContext)
 fun Route.apiRoutes() {
-    serve(GetLoginInfo)
-    serve(GetImplInfo)
-    serve(GetUserProfile)
-    serve(GetFriendList)
-    serve(GetFriendInfo)
-    serve(GetGroupList)
-    serve(GetGroupInfo)
-    serve(GetGroupMemberList)
-    serve(GetGroupMemberInfo)
-    serve(GetPeerPins)
-    serve(SetPeerPin)
-    serve(SetAvatar)
-    serve(SetNickname)
-    serve(SetBio)
-    serve(GetCustomFaceUrlList)
-    serve(GetCookies)
-    serve(GetCsrfToken)
-
-    serve(SendPrivateMessage)
-    serve(SendGroupMessage)
-    serve(RecallPrivateMessage)
-    serve(RecallGroupMessage)
-    serve(GetMessage)
-    serve(GetHistoryMessages)
-    serve(GetResourceTempUrl)
-    serve(GetForwardedMessages)
-    serve(MarkMessageAsRead)
-
-    serve(SendFriendNudge)
-    serve(SendProfileLike)
-    serve(DeleteFriend)
-    serve(GetFriendRequests)
-    serve(AcceptFriendRequest)
-    serve(RejectFriendRequest)
-
-    serve(SetGroupName)
-    serve(SetGroupAvatar)
-    serve(SetGroupMemberCard)
-    serve(SetGroupMemberSpecialTitle)
-    serve(SetGroupMemberAdmin)
-    serve(SetGroupMemberMute)
-    serve(SetGroupWholeMute)
-    serve(KickGroupMember)
-    serve(GetGroupAnnouncements)
-    serve(SendGroupAnnouncement)
-    serve(DeleteGroupAnnouncement)
-    serve(GetGroupEssenceMessages)
-    serve(SetGroupEssenceMessage)
-    serve(QuitGroup)
-    serve(SendGroupMessageReaction)
-    serve(SendGroupNudge)
-    serve(GetGroupNotifications)
-    serve(AcceptGroupRequest)
-    serve(RejectGroupRequest)
-    serve(AcceptGroupInvitation)
-    serve(RejectGroupInvitation)
-
-    serve(UploadPrivateFile)
-    serve(UploadGroupFile)
-    serve(GetPrivateFileDownloadUrl)
-    serve(GetGroupFileDownloadUrl)
-    serve(GetGroupFiles)
-    serve(MoveGroupFile)
-    serve(RenameGroupFile)
-    serve(DeleteGroupFile)
-    serve(CreateGroupFolder)
-    serve(RenameGroupFolder)
-    serve(DeleteGroupFolder)
+    apiHandlers.forEach {
+        serve(it)
+    }
 }
