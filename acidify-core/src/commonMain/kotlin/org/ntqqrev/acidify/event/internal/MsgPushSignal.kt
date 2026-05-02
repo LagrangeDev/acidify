@@ -279,15 +279,25 @@ internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.Ms
             ?.uid
         val operatorUin = operatorUid?.let { bot.getUinByUid(it) }
 
-        return listOf(
-            GroupMemberDecreaseEvent(
-                groupUin = groupUin,
-                userUin = memberUin,
-                userUid = memberUid,
-                operatorUin = operatorUin,
-                operatorUid = operatorUid
+        return when (content.type) {
+            129 if operatorUin != null -> listOf(
+                GroupDisbandEvent(
+                    groupUin = groupUin,
+                    operatorUin = operatorUin,
+                    operatorUid = operatorUid
+                )
             )
-        )
+
+            else -> listOf(
+                GroupMemberDecreaseEvent(
+                    groupUin = groupUin,
+                    userUin = memberUin,
+                    userUid = memberUid,
+                    operatorUin = operatorUin,
+                    operatorUid = operatorUid
+                )
+            )
+        }
     }
 
     private fun parseFriendRequest(routingHead: RoutingHead, msgContent: ByteArray): List<AcidifyEvent> {
