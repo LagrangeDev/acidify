@@ -300,6 +300,16 @@ fun Application.configureEventLogging() = launch {
                 logger.d { b.toString() }
             }
 
+            is GroupDisbandEvent -> {
+                val b = StringBuilder()
+                val group = bot.getGroup(it.groupUin) ?: return@collect
+
+                b.append("[${group.displayString}] ")
+                b.append("${it.operatorUin} 解散了群聊")
+
+                logger.d { b.toString() }
+            }
+
             is GroupNameChangeEvent -> {
                 val b = StringBuilder()
                 val group = bot.getGroup(it.groupUin) ?: return@collect
