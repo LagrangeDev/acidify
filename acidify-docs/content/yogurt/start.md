@@ -6,7 +6,7 @@ Yogurt 是基于 `acidify-core` 实现的 QQ 协议端，实现了 [Milky 协议
 
 > [!important]
 >
-> Yogurt 需要一个可用的签名 API URL 才能运行，具体协议标准见[签名 API 标准](./signing.md)。Yogurt **不提供**内置签名 API，请自行寻找或实现相关 API。如果没有可用的签名 API，可以考虑使用 [Yogurt-PMHQ](https://github.com/LLOneBot/yogurt-pmhq) 等替代方案。
+> Yogurt 需要一个可用的签名 API URL 才能运行，具体协议标准见[签名 API 标准](./signing.md)。Yogurt **不提供**内置签名 API，请自行寻找或实现相关 API。
 
 ## 启动
 
