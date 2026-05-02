@@ -23,7 +23,7 @@ import org.ntqqrev.acidify.struct.RequestState
 import kotlin.time.Clock
 
 @Suppress("duplicatedCode")
-internal object MsgPushSignal : AbstractSignal("trpc.msg.olpush.OlPushService.MsgPush") {
+internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPushService.MsgPush") {
     override suspend fun parse(bot: AbstractBot, payload: ByteArray): List<AcidifyEvent> {
         val commonMsg = payload.pbDecode<PushMsg>().message
         val contentHead = commonMsg.contentHead

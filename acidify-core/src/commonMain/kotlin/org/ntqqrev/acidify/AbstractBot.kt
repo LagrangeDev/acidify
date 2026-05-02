@@ -18,8 +18,8 @@ import org.ntqqrev.acidify.entity.BotFriend
 import org.ntqqrev.acidify.entity.BotGroup
 import org.ntqqrev.acidify.entity.internal.BotEntityCache
 import org.ntqqrev.acidify.event.AcidifyEvent
-import org.ntqqrev.acidify.event.internal.KickSignal
-import org.ntqqrev.acidify.event.internal.MsgPushSignal
+import org.ntqqrev.acidify.event.internal.KickTransformer
+import org.ntqqrev.acidify.event.internal.MsgPushTransformer
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
@@ -40,9 +40,9 @@ sealed class AbstractBot(
         extraBufferCapacity = 100,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-    internal val signals = listOf(
-        MsgPushSignal,
-        KickSignal
+    internal val transformers = listOf(
+        MsgPushTransformer,
+        KickTransformer
     ).associateBy { it.cmd }
     internal lateinit var faceDetailMapMut: Map<String, BotFaceDetail>
     internal var eventCollectJob: Job? = null

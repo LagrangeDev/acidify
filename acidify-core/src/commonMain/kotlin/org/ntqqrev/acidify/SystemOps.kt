@@ -27,14 +27,14 @@ suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
     eventCollectJob = launch {
         while (currentCoroutineContext().isActive) {
             val sso = client.pushChannel.receive()
-            val signal = signals[sso.command]
-            if (signal != null) {
+            val transformer = transformers[sso.command]
+            if (transformer != null) {
                 try {
-                    val parsed = signal.parse(this@online, sso.response)
-                    logger.v { "由 ${sso.command} 解析出事件：$parsed" }
+                    val parsed = transformer.parse(this@online, sso.response)
+                    logger.v { "由推送 ${sso.command} 解析出事件：$parsed" }
                     parsed.forEach { sharedEventFlow.emit(it) }
                 } catch (e: Exception) {
-                    logger.e(e) { "处理信令 ${sso.command} 时出现错误" }
+                    logger.e(e) { "处理推送 ${sso.command} 时出现错误" }
                 }
             }
         }
