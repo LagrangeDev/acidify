@@ -10,10 +10,7 @@ import org.ntqqrev.acidify.internal.json.message.ForwardXmlPayload
 import org.ntqqrev.acidify.internal.json.message.lightAppJsonModule
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
 import org.ntqqrev.acidify.internal.proto.message.elem.SourceMsg
-import org.ntqqrev.acidify.internal.proto.message.extra.GroupFileExtra
-import org.ntqqrev.acidify.internal.proto.message.extra.QBigFaceExtra
-import org.ntqqrev.acidify.internal.proto.message.extra.QSmallFaceExtra
-import org.ntqqrev.acidify.internal.proto.message.extra.TextResvAttr
+import org.ntqqrev.acidify.internal.proto.message.extra.*
 import org.ntqqrev.acidify.internal.proto.message.media.MsgInfo
 import org.ntqqrev.acidify.internal.util.BinaryReader
 import org.ntqqrev.acidify.internal.util.Prefix
@@ -39,6 +36,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
             Forward,
             MarketFace,
             LightApp,
+            Markdown,
         )
     }
 
@@ -48,6 +46,13 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
                 ?.takeIf { it.attr6Buf.isEmpty() }
                 ?: return null
             ctx.consume()
+
+            // Markdown message layout: text + commonElem(45,1)
+            if (ctx.hasNext()) {
+                val elem = ctx.tryPeekType { commonElem }
+                if (elem?.serviceType == 45 && elem.businessType == 1) return null
+            }
+
             return BotIncomingSegment.Text(
                 text = text.textMsg
             )
@@ -328,6 +333,18 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
             return BotIncomingSegment.LightApp(
                 appName = appName,
                 jsonPayload = json,
+            )
+        }
+    }
+
+    object Markdown : IncomingSegmentFactory<BotIncomingSegment.Markdown> {
+        override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Markdown? {
+            val elem = ctx.tryPeekType { commonElem } ?: return null
+            if (elem.serviceType != 45 || elem.businessType != 1) return null
+            ctx.consume()
+            val markdown = elem.pbElem.pbDecode<MarkdownExtra>()
+            return BotIncomingSegment.Markdown(
+                content = markdown.content
             )
         }
     }

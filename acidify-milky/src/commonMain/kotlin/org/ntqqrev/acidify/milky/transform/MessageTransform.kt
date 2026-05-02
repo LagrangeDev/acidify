@@ -168,6 +168,12 @@ suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): 
                 jsonPayload = segment.jsonPayload
             )
         )
+
+        is BotIncomingSegment.Markdown -> IncomingSegment.Text(
+            data = IncomingSegment.Text.Data(
+                text = segment.content // TODO: Markdown segment
+            )
+        )
     }
 }
 

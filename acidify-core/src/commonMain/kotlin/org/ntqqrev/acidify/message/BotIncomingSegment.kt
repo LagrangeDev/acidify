@@ -168,4 +168,14 @@ sealed class BotIncomingSegment {
     ) : BotIncomingSegment() {
         override fun toString(): String = "[卡片消息 $appName]"
     }
+
+    /**
+     * Markdown 消息段
+     * @property content Markdown 内容
+     */
+    data class Markdown internal constructor(
+        val content: String,
+    ) : BotIncomingSegment() {
+        override fun toString(): String = content
+    }
 }
