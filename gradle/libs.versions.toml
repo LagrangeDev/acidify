@@ -21,7 +21,7 @@ quickjs = "1.0.5"
 mordant = "3.0.2"
 logback = "1.5.32"
 
-build-konfig = "0.19.0"
+build-konfig = "0.20.0"
 maven-publish = "0.36.0"
 dokka = "2.2.0"
 shadow = "9.4.1"
