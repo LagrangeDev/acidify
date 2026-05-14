@@ -1,6 +1,7 @@
 package org.ntqqrev.acidify.js
 
 import org.ntqqrev.acidify.message.BotOutgoingMessageBuilder
+import kotlin.time.Clock
 
 @JsExport
 @JsName("BotForwardBlockBuilder")
@@ -11,11 +12,13 @@ class JsBotForwardBlockBuilder internal constructor(
     fun node(
         senderUin: Long,
         senderName: String,
-        block: (JsBotOutgoingMessageBuilder) -> Unit
+        block: (JsBotOutgoingMessageBuilder) -> Unit,
+        timestamp: Long = Clock.System.now().epochSeconds
     ) {
         underlying.node(
             senderUin,
-            senderName
+            senderName,
+            timestamp,
         ) {
             val b = JsBotOutgoingMessageBuilder(this)
             block(b)

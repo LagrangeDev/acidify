@@ -4,6 +4,7 @@ import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import kotlin.js.JsExport
 import kotlin.js.JsName
+import kotlin.time.Clock
 
 /**
  * 发送消息段
@@ -185,11 +186,13 @@ sealed class BotOutgoingSegment {
          * @property senderUin 发送者 QQ 号
          * @property senderName 发送者名称
          * @property segments 消息内容
+         * @property timestamp 消息的 Unix 事件戳（秒）
          */
         data class Node(
             val senderUin: Long,
             val senderName: String,
             val segments: List<BotOutgoingSegment>,
+            val timestamp: Long = Clock.System.now().epochSeconds,
         )
     }
 

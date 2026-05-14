@@ -8,6 +8,7 @@ import org.ntqqrev.acidify.common.AcidifyDsl
 import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import kotlin.js.JsName
+import kotlin.time.Clock
 
 /**
  * 构建发送消息
@@ -175,11 +176,13 @@ class BotOutgoingMessageBuilder {
          * 添加一个伪造合并转发消息
          * @param senderUin 该消息的发送者 QQ 号
          * @param senderName 该消息的发送者昵称
+         * @param timestamp 该消息的 Unix 事件戳（秒）
          * @param block 构建该消息的内容
          */
         inline fun node(
             senderUin: Long,
             senderName: String,
+            timestamp: Long = Clock.System.now().epochSeconds,
             block: BotOutgoingMessageBuilder.() -> Unit
         ) {
             val messageBuilder = BotOutgoingMessageBuilder()
@@ -188,7 +191,8 @@ class BotOutgoingMessageBuilder {
                 BotOutgoingSegment.Forward.Node(
                     senderUin,
                     senderName,
-                    messageBuilder.segments
+                    messageBuilder.segments,
+                    timestamp,
                 )
             )
         }

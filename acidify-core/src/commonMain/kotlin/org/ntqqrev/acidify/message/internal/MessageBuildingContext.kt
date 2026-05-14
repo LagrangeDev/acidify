@@ -29,7 +29,6 @@ import org.ntqqrev.acidify.internal.util.pbEncode
 import org.ntqqrev.acidify.message.BotOutgoingSegment
 import org.ntqqrev.acidify.message.MessageScene
 import kotlin.random.Random
-import kotlin.time.Clock
 
 internal class MessageBuildingContext(
     val bot: AbstractBot,
@@ -556,7 +555,7 @@ internal class MessageBuildingContext(
                     },
                     random = Random.nextInt(),
                     sequence = fakeSequence,
-                    time = Clock.System.now().epochSeconds,
+                    time = timestamp,
                     clientSequence = fakeSequence,
                     msgUid = Random.nextLong(1000000000000, 9999999999999),
                     forwardExt = ContentHead.Forward(

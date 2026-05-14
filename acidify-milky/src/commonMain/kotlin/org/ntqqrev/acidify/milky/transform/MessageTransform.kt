@@ -14,6 +14,7 @@ import org.ntqqrev.acidify.milky.MediaSourceScope
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.tracked
 import org.ntqqrev.milky.*
+import kotlin.time.Clock
 
 suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): IncomingMessage? {
     val bot = application.dependencies.resolve<AbstractBot>()
@@ -282,7 +283,8 @@ suspend fun MilkyContext.transformOutgoingSegment(
                     senderName = msg.senderName,
                     segments = msg.segments.map { seg ->
                         async { transformOutgoingSegment(scene, peerUin, seg) }
-                    }.awaitAll()
+                    }.awaitAll(),
+                    timestamp = msg.time ?: Clock.System.now().epochSeconds,
                 )
             }
             BotOutgoingSegment.Forward(
