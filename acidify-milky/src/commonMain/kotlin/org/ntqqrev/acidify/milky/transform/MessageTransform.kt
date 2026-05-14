@@ -169,9 +169,9 @@ suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): 
             )
         )
 
-        is BotIncomingSegment.Markdown -> IncomingSegment.Text(
-            data = IncomingSegment.Text.Data(
-                text = segment.content // TODO: Markdown segment
+        is BotIncomingSegment.Markdown -> IncomingSegment.Markdown(
+            data = IncomingSegment.Markdown.Data(
+                content = segment.content
             )
         )
     }
@@ -254,12 +254,11 @@ suspend fun MilkyContext.transformOutgoingSegment(
         }
 
         is OutgoingSegment.Video -> {
-            // TODO: refactor Codec API to Source-based
             val videoSource = resolveUri(segment.data.uri)
             val videoInfo = codec.getVideoInfo(videoSource)
             logger.d { "视频 ${segment.data.uri} 信息：${videoInfo.width}x${videoInfo.height}，时长 ${videoInfo.duration.inWholeSeconds} 秒" }
             val thumbSource = if (segment.data.thumbUri != null) {
-                resolveUri(segment.data.thumbUri!!)
+                resolveUri(segment.data.thumbUri)
             } else {
                 tracked {
                     codec.getVideoFirstFrameJpg(videoSource).toMediaSource()

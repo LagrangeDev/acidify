@@ -167,6 +167,15 @@ suspend fun MilkyContext.transformAcidifyEvent(event: AcidifyEvent): Event? {
             )
         )
 
+        is GroupDisbandEvent -> Event.GroupDisband(
+            time = Clock.System.now().epochSeconds,
+            selfId = bot.uin,
+            data = Event.GroupDisband.Data(
+                groupId = event.groupUin,
+                operatorId = event.operatorUin,
+            )
+        )
+
         is GroupNameChangeEvent -> Event.GroupNameChange(
             time = Clock.System.now().epochSeconds,
             selfId = bot.uin,

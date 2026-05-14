@@ -180,6 +180,7 @@ val apiHandlers = listOf(
     MoveGroupFile,
     RenameGroupFile,
     DeleteGroupFile,
+    PersistGroupFile,
     CreateGroupFolder,
     RenameGroupFolder,
     DeleteGroupFolder,

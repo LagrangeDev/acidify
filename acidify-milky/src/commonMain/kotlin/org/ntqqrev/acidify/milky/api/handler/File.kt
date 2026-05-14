@@ -59,6 +59,11 @@ val DeleteGroupFile = ApiEndpoint.DeleteGroupFile.define {
     DeleteGroupFileOutput()
 }
 
+val PersistGroupFile = ApiEndpoint.PersistGroupFile.define {
+    bot.persistGroupFile(it.groupId, it.fileId)
+    PersistGroupFileOutput()
+}
+
 val CreateGroupFolder = ApiEndpoint.CreateGroupFolder.define {
     val folderId = bot.createGroupFolder(it.groupId, it.folderName)
     CreateGroupFolderOutput(folderId)
