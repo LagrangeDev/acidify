@@ -11,7 +11,6 @@ kx-datetime = "0.7.1-0.6.x-compat"
 kx-atomicfu = "0.32.1"
 ktor = "3.4.3"
 
-milky = "1.2.0"
 acidify-codec = "0.1.0"
 ktfs = "0.2.0"
 kompress = "1.4.2"
@@ -55,8 +54,6 @@ ktor-server-sse = { module = "io.ktor:ktor-server-sse", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
-
-milky-types = { module = "org.ntqqrev:milky-kt-types", version.ref = "milky" }
 
 acidify-codec = { module = "org.ntqqrev:acidify-codec", version.ref = "acidify-codec" }
 ktfs = { module = "org.ntqqrev:ktfs", version.ref = "ktfs" }

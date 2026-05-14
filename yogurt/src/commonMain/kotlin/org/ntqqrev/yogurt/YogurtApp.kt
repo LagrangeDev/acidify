@@ -20,6 +20,7 @@ import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.configureMilky
 import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.milky.milkyJsonModule
+import org.ntqqrev.milky.milkyPackageVersion
 import org.ntqqrev.milky.milkyVersion
 import org.ntqqrev.yogurt.config.loadConfigAndUpdate
 import org.ntqqrev.yogurt.debug.configureDebugFaceDetailsApi
@@ -62,7 +63,7 @@ object YogurtApp {
                 
                 Commit Hash:    ${BuildKonfig.commitHash}
                 Core Version:   ${BuildKonfig.coreVersion}
-                Milky Version:  ${BuildKonfig.milkyVersion} ($milkyVersion)
+                Milky Version:  $milkyVersion ($milkyPackageVersion)
                 Build Time:     ${BuildKonfig.buildTime}
                 Listen Address: ${config.milky.http.host}:${config.milky.http.port}${config.milky.http.prefix}
                 Data Directory: ${withFs { Path(".").absolute }}

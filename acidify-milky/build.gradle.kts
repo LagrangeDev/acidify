@@ -5,7 +5,6 @@ plugins {
 }
 
 group = "org.ntqqrev"
-version = libs.versions.milky.get()
 
 kotlin {
     compilerOptions {
@@ -23,7 +22,6 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.milky.types)
         }
     }
 }

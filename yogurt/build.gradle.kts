@@ -38,7 +38,6 @@ kotlin {
             implementation(libs.bundles.ktor.client)
             implementation(libs.bundles.ktor.server)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.milky.types)
             implementation(libs.acidify.codec)
             implementation(libs.ktfs)
             implementation(libs.qr.matrix)
@@ -108,13 +107,6 @@ buildkonfig {
             "coreVersion",
             project(":acidify-core").let {
                 "${it.name} ${it.version}+${coreLibGitHashProvider.get().substring(0, 7)}"
-            }
-        )
-        buildConfigField(
-            FieldSpec.Type.STRING,
-            "milkyVersion",
-            libs.milky.types.get().let {
-                "${it.module.name} ${it.version}"
             }
         )
         buildConfigField(FieldSpec.Type.STRING, "commitHash", gitHashProvider.get())
