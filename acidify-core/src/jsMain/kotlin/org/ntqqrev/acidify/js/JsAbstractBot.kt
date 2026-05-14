@@ -404,6 +404,10 @@ abstract class JsAbstractBot internal constructor(
         bot.deleteGroupFile(groupUin, fileId)
     }
 
+    fun persistGroupFile(groupUin: Long, fileId: String) = promise {
+        bot.persistGroupFile(groupUin, fileId)
+    }
+
     fun createGroupFolder(groupUin: Long, folderName: String): Promise<String> = promise {
         bot.createGroupFolder(groupUin, folderName)
     }

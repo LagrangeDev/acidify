@@ -291,6 +291,19 @@ suspend fun AbstractBot.deleteGroupFile(
 )
 
 /**
+ * 转存群文件为永久文件
+ * @param groupUin 群号
+ * @param fileId 文件 ID
+ */
+suspend fun AbstractBot.persistGroupFile(
+    groupUin: Long,
+    fileId: String
+) = client.callService(
+    PersistGroupFile,
+    PersistGroupFile.Req(groupUin, fileId)
+)
+
+/**
  * 创建群文件夹
  * @param groupUin 群号
  * @param folderName 文件夹名称
