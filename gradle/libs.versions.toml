@@ -13,7 +13,7 @@ ktor = "3.4.3"
 
 acidify-codec = "0.1.0"
 ktfs = "0.2.0"
-kompress = "1.4.2"
+kompress = "1.4.3"
 qr-matrix = "0.1.0"
 xmlutil = "1.0.0-rc2"
 quickjs = "1.0.5"
