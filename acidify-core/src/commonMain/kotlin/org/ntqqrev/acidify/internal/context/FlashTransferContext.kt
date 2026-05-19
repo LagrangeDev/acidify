@@ -4,7 +4,6 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.async
 import kotlinx.io.buffered
 import kotlinx.io.readTo
 import org.ntqqrev.acidify.common.MediaSource
@@ -68,6 +67,8 @@ internal class FlashTransferContext(client: AbstractClient) : AbstractContext(cl
                     sha1StateList = sha1StateList,
                     body = uploadBuffer
                 )
+                val progress = (chunkStart + chunkLength) * 100L / size
+                logger.d { "FlashTransfer 上传进度: $progress%" }
                 if (!success) {
                     return false
                 }
@@ -84,7 +85,7 @@ internal class FlashTransferContext(client: AbstractClient) : AbstractContext(cl
         start: Int,
         sha1StateList: List<ByteArray>,
         body: ByteArray
-    ): Boolean = client.async {
+    ): Boolean {
         val chunkSha1 = body.sha1()
         val end = start + body.size - 1
         val req = FlashTransferUploadReq(
@@ -117,19 +118,18 @@ internal class FlashTransferContext(client: AbstractClient) : AbstractContext(cl
             val responseBytes = response.readRawBytes()
             if (!response.status.isSuccess()) {
                 logger.e { "FlashTransfer 上传块 $start 失败: ${response.status}, ${responseBytes.toHexString()}" }
-                return@async false
+                return false
             }
             val resp = responseBytes.pbDecode<FlashTransferUploadResp>()
             val status = resp.status
             if (status != "success") {
                 logger.e { "FlashTransfer 上传块 $start 失败: $status" }
-                return@async false
+                return false
             }
-            logger.d { "FlashTransfer 上传块 $start 成功" }
-            true
+            return true
         } catch (e: Exception) {
             logger.e(e) { "FlashTransfer 上传块 $start 异常: ${e.message}" }
-            false
+            return false
         }
-    }.await()
+    }
 }
