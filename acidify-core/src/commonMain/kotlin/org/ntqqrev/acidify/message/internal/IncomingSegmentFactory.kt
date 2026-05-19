@@ -66,10 +66,21 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
                 ?: return null
             ctx.consume()
             val attr = at.pbReserve.pbDecode<TextResvAttr>()
-            return BotIncomingSegment.Mention(
-                uin = attr.atMemberUin,
-                name = at.textMsg
-            )
+            return when (attr.atType) {
+                1 -> BotIncomingSegment.Mention( // Mention all
+                    uin = null,
+                    uid = null,
+                    name = at.textMsg
+                )
+
+                2 -> BotIncomingSegment.Mention( // specific user
+                    uin = attr.atMemberUin,
+                    uid = attr.atMemberUid,
+                    name = at.textMsg
+                )
+
+                else -> null
+            }
         }
     }
 

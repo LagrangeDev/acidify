@@ -20,10 +20,12 @@ sealed class BotIncomingSegment {
     /**
      * 提及（At）消息段
      * @property uin 被提及的用户的 QQ 号，为 `null` 表示提及了所有人（`@全体成员`）
+     * @property uid 被提及的用户的 UID，为 `null` 表示提及了所有人（`@全体成员`）
      * @property name 被提及的用户的名称，视情况有可能是昵称 / 备注 / 群名片 / `@全体成员`
      */
     data class Mention internal constructor(
         val uin: Long? = null,
+        val uid: String? = null,
         val name: String,
     ) : BotIncomingSegment() {
         override fun toString(): String = name // already prefixed with '@'

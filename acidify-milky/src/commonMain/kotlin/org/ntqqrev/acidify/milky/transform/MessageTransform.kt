@@ -3,11 +3,8 @@ package org.ntqqrev.acidify.milky.transform
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import org.ntqqrev.acidify.AbstractBot
+import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
-import org.ntqqrev.acidify.getDownloadUrl
-import org.ntqqrev.acidify.getFriend
-import org.ntqqrev.acidify.getGroup
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.milky.ImageInfo
 import org.ntqqrev.acidify.milky.MediaSourceScope
@@ -17,7 +14,6 @@ import org.ntqqrev.milky.*
 import kotlin.time.Clock
 
 suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): IncomingMessage? {
-    val bot = application.dependencies.resolve<AbstractBot>()
     return when (msg.scene) {
         MessageScene.FRIEND -> {
             val friend = bot.getFriend(msg.peerUin) ?: return null
@@ -66,7 +62,6 @@ suspend fun MilkyContext.transformForwardedMessage(msg: BotForwardedMessage): In
 }
 
 suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): IncomingSegment {
-    val bot = application.dependencies.resolve<AbstractBot>()
     return when (segment) {
         is BotIncomingSegment.Text -> IncomingSegment.Text(
             data = IncomingSegment.Text.Data(
@@ -77,7 +72,9 @@ suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): 
         is BotIncomingSegment.Mention -> if (segment.uin != null) {
             IncomingSegment.Mention(
                 data = IncomingSegment.Mention.Data(
-                    userId = segment.uin!!,
+                    userId = if (segment.uin == 0L) {
+                        bot.getUinByUid(segment.uid!!)
+                    } else segment.uin!!,
                     name = segment.name,
                 )
             )
@@ -184,7 +181,6 @@ suspend fun MilkyContext.transformOutgoingSegment(
     peerUin: Long,
     segment: OutgoingSegment,
 ): BotOutgoingSegment {
-    val bot = application.dependencies.resolve<AbstractBot>()
     val logger = bot.createLogger("MessageTransform")
     return when (segment) {
         is OutgoingSegment.Text -> BotOutgoingSegment.Text(
@@ -323,7 +319,6 @@ suspend fun MilkyContext.transformEssenceMessage(msg: BotEssenceMessage): GroupE
 
 context(scope: MediaSourceScope)
 suspend fun MilkyContext.transformEssenceSegment(segment: BotEssenceSegment): IncomingSegment {
-    val bot = application.dependencies.resolve<AbstractBot>()
     val logger = bot.createLogger("MessageTransform")
     return when (segment) {
         is BotEssenceSegment.Text -> IncomingSegment.Text(
