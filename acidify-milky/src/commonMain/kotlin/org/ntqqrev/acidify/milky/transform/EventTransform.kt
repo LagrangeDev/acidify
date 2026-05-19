@@ -1,7 +1,5 @@
 package org.ntqqrev.acidify.milky.transform
 
-import io.ktor.server.plugins.di.*
-import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.event.*
 import org.ntqqrev.acidify.message.MessageScene
 import org.ntqqrev.acidify.milky.MilkyContext
@@ -9,7 +7,6 @@ import org.ntqqrev.milky.Event
 import kotlin.time.Clock
 
 suspend fun MilkyContext.transformAcidifyEvent(event: AcidifyEvent): Event? {
-    val bot = application.dependencies.resolve<AbstractBot>()
     return when (event) {
         is BotOfflineEvent -> Event.BotOffline(
             time = Clock.System.now().epochSeconds,

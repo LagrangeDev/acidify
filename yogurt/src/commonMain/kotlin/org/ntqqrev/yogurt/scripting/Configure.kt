@@ -4,11 +4,9 @@ import com.dokar.quickjs.QuickJs
 import com.dokar.quickjs.binding.ObjectBindingScope
 import com.dokar.quickjs.binding.define
 import io.ktor.server.application.*
-import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
 import org.ntqqrev.acidify.milky.api.apiHandlers
@@ -89,12 +87,8 @@ suspend fun Application.configureScripting() = QuickJs.create(jobDispatcher = Di
     }
 }
 
-context(
-    qjs: QuickJs,
-    scope: ObjectBindingScope,
-    ctx: MilkyContext,
-)
-private fun <T : Any, R : Any> Application.defineJsApi(handler: MilkyApiHandler<T, R>) {
+context(qjs: QuickJs, scope: ObjectBindingScope, ctx: MilkyContext)
+private fun <T : Any, R : Any> defineJsApi(handler: MilkyApiHandler<T, R>) {
     val methodName = handler.path.removePrefix("/")
 
     runBlocking {
@@ -113,8 +107,7 @@ private fun <T : Any, R : Any> Application.defineJsApi(handler: MilkyApiHandler<
         require(args.size == 1)
         val payloadString = args[0] as? String
             ?: throw IllegalArgumentException("Expected argument to be a JSON string")
-        val bot = dependencies.resolve<AbstractBot>()
-        val logger = bot.createLogger("Scripting")
+        val logger = ctx.bot.createLogger("Scripting")
         var resp: JsonElement
         try {
             val duration = measureTime {
@@ -141,9 +134,7 @@ private fun <T : Any, R : Any> Application.defineJsApi(handler: MilkyApiHandler<
 
 context(ctx: MilkyContext)
 private suspend fun QuickJs.loadScripts() = withFs {
-    val logger = ctx.application.dependencies
-        .resolve<AbstractBot>()
-        .createLogger("ScriptLoader")
+    val logger = ctx.bot.createLogger("ScriptLoader")
 
     if (!scriptsPath.exists) {
         createDirectories(scriptsPath)

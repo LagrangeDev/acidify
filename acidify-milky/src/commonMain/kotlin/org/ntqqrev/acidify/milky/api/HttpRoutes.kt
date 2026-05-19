@@ -1,14 +1,12 @@
 package org.ntqqrev.acidify.milky.api
 
 import io.ktor.server.plugins.*
-import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.exception.OidbException
 import org.ntqqrev.acidify.exception.ServiceException
 import org.ntqqrev.acidify.milky.MediaSourceScope
@@ -32,8 +30,7 @@ inline fun <reified T : Any, reified R : Any> ApiEndpoint<T, R>.define(
 
 context(ctx: MilkyContext)
 private fun <T : Any, R : Any> Route.serve(handler: MilkyApiHandler<T, R>) = post(handler.path) {
-    val bot = application.dependencies.resolve<AbstractBot>()
-    val logger = bot.createLogger("HttpModule")
+    val logger = ctx.bot.createLogger("HttpModule")
     try {
         val rawPayload = call.receive<JsonElement>()
         call.respond(
