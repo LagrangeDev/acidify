@@ -4,9 +4,11 @@ import com.dokar.quickjs.QuickJs
 import com.dokar.quickjs.binding.ObjectBindingScope
 import com.dokar.quickjs.binding.define
 import io.ktor.server.application.*
+import io.ktor.server.plugins.di.dependencies
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.api.MilkyApiHandler
 import org.ntqqrev.acidify.milky.api.apiHandlers
@@ -134,7 +136,8 @@ private fun <T : Any, R : Any> defineJsApi(handler: MilkyApiHandler<T, R>) {
 
 context(ctx: MilkyContext)
 private suspend fun QuickJs.loadScripts() = withFs {
-    val logger = ctx.bot.createLogger("ScriptLoader")
+    val bot = ctx.application.dependencies.resolve<AbstractBot>()
+    val logger = bot.createLogger("ScriptLoader")
 
     if (!scriptsPath.exists) {
         createDirectories(scriptsPath)
