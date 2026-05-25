@@ -1,4 +1,4 @@
-import type { Event } from "@saltify/milky-types";
+import type { Event } from "./milky-types.js";
 import type { ApiCollection } from "./api.js";
 
 export interface HttpRequestOptions {
