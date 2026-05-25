@@ -16,6 +16,7 @@ import org.ntqqrev.acidify.milky.mediaSourceScoped
 import org.ntqqrev.ktfs.withFs
 import org.ntqqrev.milky.milkyJsonModule
 import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibConsole
+import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibFs
 import org.ntqqrev.yogurt.scripting.stdlib.defineStdlibHttp
 import org.ntqqrev.yogurt.scriptsPath
 import kotlin.time.DurationUnit
@@ -38,6 +39,7 @@ context(ctx: MilkyContext)
 suspend fun Application.configureScripting() = QuickJs.create(jobDispatcher = Dispatchers.Default).apply {
     defineStdlibConsole()
     defineStdlibHttp()
+    defineStdlibFs()
 
     evaluate<Any?>(
         """

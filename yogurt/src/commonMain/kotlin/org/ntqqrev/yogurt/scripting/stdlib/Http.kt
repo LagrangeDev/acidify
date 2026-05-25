@@ -28,9 +28,8 @@ class HttpRequestOptions(
             val body = if ("body" in obj) {
                 val bodyValue = obj["body"]
                 when (bodyValue) {
-                    is ByteArray -> bodyValue
                     is String -> bodyValue.encodeToByteArray()
-                    else -> throw IllegalArgumentException("Body must be a string or Uint8Array")
+                    else -> bodyValue.toByteArrayArg("body")
                 }
             } else {
                 null
@@ -45,12 +44,9 @@ fun QuickJs.defineStdlibHttp() = define("http") {
     val httpClient = HttpClient()
 
     fun Array<Any?>.extractParams(): Pair<String, HttpRequestOptions> {
-        require(this.size in 1..2) {
-            "Expected arguments: (url: String, options?: { method?: string, headers?: Record<string, string>, body?: string | Uint8Array })"
-        }
-        val url = this[0] as? String
-            ?: throw IllegalArgumentException("Expected first argument to be a String (url)")
-        val options = HttpRequestOptions.fromJsObject(this.getOrNull(1) as? JsObject)
+        requireSize(1..2, "(url: String, options?: { method?: string, headers?: Record<string, string>, body?: string | Uint8Array })")
+        val url = stringArg(0, "url")
+        val options = HttpRequestOptions.fromJsObject(jsObjectArg(1, "options"))
         return url to options
     }
 

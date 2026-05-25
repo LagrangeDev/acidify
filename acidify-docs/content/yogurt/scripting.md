@@ -48,5 +48,6 @@ yogurt.event.on('message_receive', (event) => {
 
 - `console` - 与 DOM API 类似的日志输出功能
 - `http` - 基础的网络请求功能
+- `fs` - 基础的文件系统功能
 
 具体的 API 定义可以参考 [DTS 文件](https://github.com/LagrangeDev/acidify/blob/main/yogurt-scripting/script-api/index.d.ts)。

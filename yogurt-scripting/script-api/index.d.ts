@@ -7,6 +7,12 @@ export interface HttpRequestOptions {
   body?: string | Uint8Array;
 }
 
+export interface FileMetadata {
+  isRegularFile: boolean;
+  isDirectory: boolean;
+  size: number;
+}
+
 declare global {
   const console: {
     log(...args: unknown[]): void;
@@ -26,6 +32,29 @@ declare global {
   const http: {
     request(url: string, options?: HttpRequestOptions): Promise<string>;
     requestBytes(url: string, options?: HttpRequestOptions): Promise<Int8Array>;
+  };
+  const fs: {
+    exists(path: string): Promise<boolean>;
+    delete(path: string, mustExist?: boolean): Promise<void>;
+    createDirectories(path: string, mustCreate?: boolean): Promise<void>;
+    atomicMove(source: string, destination: string): Promise<void>;
+    metadataOrNull(path: string): Promise<FileMetadata | null>;
+    resolve(path: string): Promise<string>;
+    list(directory: string): Promise<string[]>;
+    readText(path: string): Promise<string>;
+    writeText(
+      path: string,
+      text: string,
+      append?: boolean,
+      createParentDirectories?: boolean,
+    ): Promise<void>;
+    readBytes(path: string): Promise<Int8Array>;
+    writeBytes(
+      path: string,
+      bytes: Int8Array | Uint8Array,
+      append?: boolean,
+      createParentDirectories?: boolean,
+    ): Promise<void>;
   };
   const yogurt: {
     api: ApiCollection;
