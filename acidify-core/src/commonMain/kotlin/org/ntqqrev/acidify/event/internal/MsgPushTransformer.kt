@@ -69,7 +69,7 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
                 val member = bot.getGroup(msg.peerUin)?.getMember(msg.senderUin)
                 member?.updateBinding(
                     member.data.copy(
-                        nickname = msg.extraInfo.nick,
+                        nickname = msg.extraInfo.nick.ifEmpty { member.data.nickname },
                         card = msg.extraInfo.groupCard,
                         specialTitle = msg.extraInfo.specialTitle
                     )
