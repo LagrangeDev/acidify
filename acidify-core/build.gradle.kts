@@ -18,7 +18,7 @@ group = "org.ntqqrev"
 version = "1.6.1"
 
 kotlin {
-    js(IR) {
+    js {
         nodejs()
         useEsModules()
         binaries.library()
