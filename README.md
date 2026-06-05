@@ -34,7 +34,8 @@
 ## See Also
 
 - [Milky](https://milky.ntqqrev.org/) - 基于 HTTP / WebSocket 通信的新时代 QQ 机器人应用接口标准
-- [Saltify](https://saltify.ntqqrev.org/) - 跨平台、可扩展的 QQ Bot 框架 & Milky SDK
+- [Saltify](https://saltify.ntqqrev.org/) - 跨平台、可扩展的 Kotlin QQ Bot 框架 & Milky SDK
+- [Fraq](https://fraq.ntqqrev.org/) - 面向 Milky 协议的 TypeScript 聊天机器人框架
 - [yogurt-docker](https://github.com/shoucandanghehe/yogurt-docker) - 社区提供的 Yogurt Docker 部署方案
 
 ## Special Thanks
