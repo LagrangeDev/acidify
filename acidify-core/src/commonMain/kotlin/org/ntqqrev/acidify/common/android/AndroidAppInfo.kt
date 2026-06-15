@@ -259,8 +259,56 @@ class AndroidAppInfo(
             appClientVersion = 0
         )
 
-        val AndroidPhone = AndroidPhone_9_2_20
+        val AndroidPhone_9_2_80 = AndroidAppInfo(
+            os = "Android",
+            vendorOs = "android",
+            qua = "V1_AND_SQ_9.2.80_13690_YYB_D",
+            currentVersion = "9.2.80.90316290",
+            ptVersion = "9.2.80",
+            ssoVersion = 22,
+            packageName = "com.tencent.mobileqq",
+            apkSignatureMd5 = "a6b745bf24a2c277527716f6f36eb68d".hexToByteArray(),
+            sdkInfo = WtLoginSdkInfo(
+                sdkBuildTime = 1757058014,
+                sdkVersion = "6.0.0.2589",
+                miscBitMap = 150470524,
+                subSigMap = 66560,
+                mainSigMap = Sig.WLOGIN_A5 or Sig.WLOGIN_RESERVED or Sig.WLOGIN_STWEB or Sig.WLOGIN_A2 or Sig.WLOGIN_ST
+                        or Sig.WLOGIN_LSKEY or Sig.WLOGIN_SKEY or Sig.WLOGIN_SIG64 or Sig.WLOGIN_VKEY or Sig.WLOGIN_D2
+                        or Sig.WLOGIN_SID or Sig.WLOGIN_PSKEY or Sig.WLOGIN_AQSIG or Sig.WLOGIN_LHSIG or Sig.WLOGIN_PAYTOKEN
+                        or 65536L
+            ),
+            appId = 16,
+            subAppId = 537348293,
+            appClientVersion = 0
+        )
 
-        val AndroidPad = AndroidPad_9_2_20
+        val AndroidPad_9_2_80 = AndroidAppInfo(
+            os = "ANDROID",
+            vendorOs = "android",
+            qua = "V1_AND_SQ_9.2.80_13690_YYB_D",
+            currentVersion = "9.2.80.90316290",
+            ptVersion = "9.2.80",
+            ssoVersion = 22,
+            packageName = "com.tencent.mobileqq",
+            apkSignatureMd5 = "a6b745bf24a2c277527716f6f36eb68d".hexToByteArray(),
+            sdkInfo = WtLoginSdkInfo(
+                sdkBuildTime = 1757058014,
+                sdkVersion = "6.0.0.2589",
+                miscBitMap = 150470524,
+                subSigMap = 66560,
+                mainSigMap = Sig.WLOGIN_A5 or Sig.WLOGIN_RESERVED or Sig.WLOGIN_STWEB or Sig.WLOGIN_A2 or Sig.WLOGIN_ST
+                        or Sig.WLOGIN_LSKEY or Sig.WLOGIN_SKEY or Sig.WLOGIN_SIG64 or Sig.WLOGIN_VKEY or Sig.WLOGIN_D2
+                        or Sig.WLOGIN_SID or Sig.WLOGIN_PSKEY or Sig.WLOGIN_AQSIG or Sig.WLOGIN_LHSIG or Sig.WLOGIN_PAYTOKEN
+                        or 65536L
+            ),
+            appId = 16,
+            subAppId = 537348332,
+            appClientVersion = 0
+        )
+
+        val AndroidPhone = AndroidPhone_9_2_80
+
+        val AndroidPad = AndroidPad_9_2_80
     }
 }

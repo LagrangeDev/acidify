@@ -25,6 +25,11 @@ data class AndroidLegacyAppInfo(
             fekitVersion = "8.409.903",
         )
 
-        val current = `9_2_20`
+        val `9_2_80` = AndroidLegacyAppInfo(
+            fullVersion = "9.2.80.35125",
+            fekitVersion = "8.509.1016",
+        )
+
+        val current = `9_2_80`
     }
 }
