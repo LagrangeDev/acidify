@@ -19,7 +19,7 @@ val bundledAndroidAppInfo = mapOf(
     "AndroidPhone/9.2.20" to AndroidAppInfo.Bundled.AndroidPhone_9_2_20,
     "AndroidPad/9.2.20" to AndroidAppInfo.Bundled.AndroidPad_9_2_20,
     "AndroidPhone/9.2.80" to AndroidAppInfo.Bundled.AndroidPhone_9_2_80,
-    "AndroidPad/9.2.80" to AndroidAppInfo.Bundled.AndroidPhone_9_2_80,
+    "AndroidPad/9.2.80" to AndroidAppInfo.Bundled.AndroidPad_9_2_80,
 )
 
 val bundledAndroidLegacyAppInfo = mapOf(
