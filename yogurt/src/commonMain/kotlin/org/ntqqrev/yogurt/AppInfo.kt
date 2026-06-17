@@ -27,4 +27,5 @@ val bundledAndroidLegacyAppInfo = mapOf(
     "9.1.70" to AndroidLegacyAppInfo.Bundled.`9_1_70`,
     "9.2.0" to AndroidLegacyAppInfo.Bundled.`9_2_0`,
     "9.2.20" to AndroidLegacyAppInfo.Bundled.`9_2_20`,
+    "9.2.80" to AndroidLegacyAppInfo.Bundled.`9_2_80`,
 )
