@@ -27,6 +27,7 @@ val UploadGroupFile = ApiEndpoint.UploadGroupFile.define {
 }
 
 val GetPrivateFileDownloadUrl = ApiEndpoint.GetPrivateFileDownloadUrl.define {
+    // TODO: isSelfSend = false by default. Milky should be updated to support this option
     val url = bot.getPrivateFileDownloadUrl(it.userId, it.fileId, it.fileHash)
     GetPrivateFileDownloadUrlOutput(url)
 }

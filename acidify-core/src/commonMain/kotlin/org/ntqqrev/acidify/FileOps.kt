@@ -166,16 +166,18 @@ suspend fun AbstractBot.uploadPrivateFile(
  * @param friendUin 好友 QQ 号
  * @param fileId 文件 ID
  * @param fileHash 文件的 TriSHA1 哈希值
+ * @param isSelfSend 是否是自己发送的文件，默认为 `false`
  * @return 文件下载链接
  */
 suspend fun AbstractBot.getPrivateFileDownloadUrl(
     friendUin: Long,
     fileId: String,
-    fileHash: String
+    fileHash: String,
+    isSelfSend: Boolean = false,
 ): String = client.callService(
     GetPrivateFileDownloadUrl,
     GetPrivateFileDownloadUrl.Req(
-        receiverUid = getUidByUin(friendUin),
+        receiverUid = if (isSelfSend) getUidByUin(friendUin) else uid,
         fileUuid = fileId,
         fileHash = fileHash
     )
