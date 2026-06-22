@@ -3,7 +3,6 @@ package org.ntqqrev.acidify.event.internal
 import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -18,7 +17,9 @@ import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.BotIncomingSegment
 import org.ntqqrev.acidify.message.MessageScene
 import org.ntqqrev.acidify.message.internal.parseMessage
+import org.ntqqrev.acidify.struct.BotGroupMemberData
 import org.ntqqrev.acidify.struct.BotGroupNotification
+import org.ntqqrev.acidify.struct.GroupMemberRole
 import org.ntqqrev.acidify.struct.RequestState
 import kotlin.time.Clock
 
@@ -60,19 +61,15 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
         }
     }
 
-    private fun parseMessage(bot: AbstractBot, commonMsg: CommonMessage): List<AcidifyEvent> {
+    private suspend fun parseMessage(bot: AbstractBot, commonMsg: CommonMessage): List<AcidifyEvent> {
         val msg = bot.parseMessage(commonMsg) ?: return emptyList()
-
         // 根据 extraInfo 刷新群成员信息
         if (msg.scene == MessageScene.GROUP && msg.extraInfo != null) {
-            bot.launch {
-                val member = bot.getGroup(msg.peerUin)?.getMember(msg.senderUin)
-                member?.updateBinding(
-                    member.data.copy(
-                        nickname = msg.extraInfo.nick.ifEmpty { member.data.nickname },
-                        card = msg.extraInfo.groupCard,
-                        specialTitle = msg.extraInfo.specialTitle
-                    )
+            bot.updateGroupMemberBinding(msg.peerUin, msg.senderUin) { memberData ->
+                memberData.copy(
+                    nickname = msg.extraInfo.nick.ifEmpty { memberData.nickname },
+                    card = msg.extraInfo.groupCard,
+                    specialTitle = msg.extraInfo.specialTitle
                 )
             }
         }
@@ -218,6 +215,13 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
             return emptyList()
         }
         val targetUin = bot.getUinByUid(targetUid)
+
+        bot.updateGroupMemberBinding(groupUin, targetUin) {
+            it.copy(
+                role = if (isSet) GroupMemberRole.ADMIN else GroupMemberRole.MEMBER,
+            )
+        }
+
         return listOf(
             GroupAdminChangeEvent(
                 groupUin = groupUin,
@@ -238,6 +242,8 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
         val operatorInfoBytes = content.operatorInfo ?: return emptyList()
         val operatorUid = operatorInfoBytes.decodeToString()
         val operatorUin = bot.getUinByUid(operatorUid)
+
+        bot.getGroup(groupUin)?.updateMemberCache()
 
         return when (content.type) {
             130 -> listOf(
@@ -279,6 +285,8 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
             ?.uid
         val operatorUin = operatorUid?.let { bot.getUinByUid(it) }
 
+        bot.getGroup(groupUin)?.updateMemberCache()
+
         return when (content.type) {
             129 if operatorUin != null -> listOf(
                 GroupDisbandEvent(
@@ -306,8 +314,7 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
         val fromUid = body.fromUid
         val fromUin = routingHead.fromUin
         val comment = body.message
-        val via = body.via ?: msgContent.pbDecode<FriendRequestExtractVia>()
-            .body?.via ?: ""
+        val via = body.via ?: msgContent.pbDecode<FriendRequestExtractVia>().body?.via ?: ""
 
         return listOf(
             FriendRequestEvent(
@@ -440,12 +447,7 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
 
         return if (targetUid != null) {
             val targetUin = bot.getUinByUid(targetUid)
-            val member = bot.getGroup(groupUin)?.getMember(targetUin)
-            member?.updateBinding(
-                member.data.copy(
-                    mutedUntil = Clock.System.now().epochSeconds
-                )
-            )
+            bot.updateGroupMemberBinding(groupUin, targetUin) { it.copy(mutedUntil = Clock.System.now().epochSeconds) }
             listOf(
                 GroupMuteEvent(
                     groupUin = groupUin,
@@ -608,5 +610,14 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
                 operatorUid = operatorUid
             )
         )
+    }
+
+    private suspend inline fun AbstractBot.updateGroupMemberBinding(
+        groupUin: Long,
+        memberUin: Long,
+        updater: (BotGroupMemberData) -> BotGroupMemberData
+    ) {
+        val member = getGroup(groupUin)?.getMember(memberUin) ?: return
+        member.updateBinding(updater(member.data))
     }
 }
