@@ -18,7 +18,7 @@ qr-matrix = "0.1.0"
 xmlutil = "1.0.0-rc2"
 quickjs = "1.0.5"
 mordant = "3.0.2"
-logback = "1.5.34"
+logback = "1.5.37"
 
 build-konfig = "0.21.2"
 maven-publish = "0.36.0"
