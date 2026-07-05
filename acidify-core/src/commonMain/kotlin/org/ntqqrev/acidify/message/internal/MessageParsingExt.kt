@@ -90,17 +90,24 @@ internal inline fun AbstractBot.buildSegments(
 ): List<BotIncomingSegment> {
     val segments = mutableListOf<BotIncomingSegment>()
     val ctx = MessageParsingContext(scene, elems, this)
+
+    var extraInfoNick: String? = null
+    var extraInfoGroupCard: String? = null
+    var extraInfoSpecialTitle: String? = null
+    var extraInfoLevel: Int? = null
+
     while (ctx.hasNext()) {
-        ctx.tryPeekType { this.extraInfo }?.let {
-            onExtraInfo(
-                ExtraInfo(
-                    nick = it.nick,
-                    groupCard = it.groupCard,
-                    specialTitle = it.senderTitle,
-                )
-            )
+        ctx.tryPeekType { extraInfo }?.let {
+            extraInfoNick = it.nick
+            extraInfoGroupCard = it.groupCard
+            extraInfoSpecialTitle = it.senderTitle
             ctx.consume()
             continue
+        }
+
+        ctx.tryPeekType { generalFlags }?.let {
+            extraInfoLevel = it.pbReserve.levelInfo.level
+            // do not consume
         }
 
         var matched = false
@@ -113,6 +120,10 @@ internal inline fun AbstractBot.buildSegments(
         if (!matched) {
             ctx.skip()
         }
+    }
+
+    if (extraInfoNick != null && extraInfoGroupCard != null && extraInfoSpecialTitle != null && extraInfoLevel != null) {
+        onExtraInfo(ExtraInfo(extraInfoNick, extraInfoGroupCard, extraInfoSpecialTitle, extraInfoLevel))
     }
 
     return segments

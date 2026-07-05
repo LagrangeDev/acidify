@@ -47,6 +47,7 @@ data class BotIncomingMessage internal constructor(
     data class ExtraInfo internal constructor(
         val nick: String,
         val groupCard: String,
-        val specialTitle: String
+        val specialTitle: String,
+        val level: Int,
     )
 }

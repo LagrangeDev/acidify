@@ -23,5 +23,16 @@ internal class GeneralFlags(
     @ProtoNumber(16) val bubbleSubId: Int = 0,
     @ProtoNumber(17) val pendantId: Long = 0L,
     @ProtoNumber(18) val rpIndex: ByteArray = byteArrayOf(),
-    @ProtoNumber(19) val pbReserve: ByteArray = byteArrayOf(),
-)
+    @ProtoNumber(19) val pbReserve: PbReserve = PbReserve(),
+)  {
+    @Serializable
+    internal class PbReserve(
+        @ProtoNumber(65) val levelInfo: LevelInfo = LevelInfo(),
+    ) {
+        @Serializable
+        internal class LevelInfo(
+            @ProtoNumber(1) val legacyLevel: Int = 0,
+            @ProtoNumber(2) val level: Int = 0,
+        )
+    }
+}
