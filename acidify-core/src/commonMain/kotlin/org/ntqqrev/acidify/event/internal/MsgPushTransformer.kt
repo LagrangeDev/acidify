@@ -22,7 +22,6 @@ import org.ntqqrev.acidify.struct.BotGroupNotification
 import org.ntqqrev.acidify.struct.GroupMemberRole
 import org.ntqqrev.acidify.struct.RequestState
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 
 @Suppress("duplicatedCode")
 internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPushService.MsgPush") {
@@ -246,7 +245,10 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
         val operatorUid = operatorInfoBytes.decodeToString()
         val operatorUin = bot.getUinByUid(operatorUid)
 
-        bot.getGroup(groupUin)?.updateMemberCache()
+        bot.getGroup(groupUin)?.let {
+            it.updateBinding(it.data.copy(memberCount = it.data.memberCount + 1))
+            it.updateMemberCache()
+        }
 
         return when (content.type) {
             130 -> listOf(
@@ -288,7 +290,10 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
             ?.uid
         val operatorUin = operatorUid?.let { bot.getUinByUid(it) }
 
-        bot.getGroup(groupUin)?.updateMemberCache()
+        bot.getGroup(groupUin)?.let {
+            it.updateBinding(it.data.copy(memberCount = it.data.memberCount - 1))
+            it.updateMemberCache()
+        }
 
         return when (content.type) {
             129 if operatorUin != null -> listOf(
