@@ -22,6 +22,7 @@ import org.ntqqrev.acidify.struct.BotGroupNotification
 import org.ntqqrev.acidify.struct.GroupMemberRole
 import org.ntqqrev.acidify.struct.RequestState
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("duplicatedCode")
 internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPushService.MsgPush") {
@@ -449,7 +450,9 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
 
         return if (targetUid != null) {
             val targetUin = bot.getUinByUid(targetUid)
-            bot.updateGroupMemberBinding(groupUin, targetUin) { it.copy(mutedUntil = Clock.System.now().epochSeconds) }
+            bot.updateGroupMemberBinding(groupUin, targetUin) {
+                it.copy(mutedUntil = Clock.System.now().epochSeconds + duration)
+            }
             listOf(
                 GroupMuteEvent(
                     groupUin = groupUin,
