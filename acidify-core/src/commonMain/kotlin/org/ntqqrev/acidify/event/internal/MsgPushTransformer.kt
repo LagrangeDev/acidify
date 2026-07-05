@@ -296,13 +296,16 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
         }
 
         return when (content.type) {
-            129 if operatorUin != null -> listOf(
-                GroupDisbandEvent(
-                    groupUin = groupUin,
-                    operatorUin = operatorUin,
-                    operatorUid = operatorUid
+            129 if operatorUin != null -> {
+                bot.groupCache.update()
+                listOf(
+                    GroupDisbandEvent(
+                        groupUin = groupUin,
+                        operatorUin = operatorUin,
+                        operatorUid = operatorUid
+                    )
                 )
-            )
+            }
 
             else -> listOf(
                 GroupMemberDecreaseEvent(
