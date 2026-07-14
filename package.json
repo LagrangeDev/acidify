@@ -1,0 +1,16 @@
+{
+  "name": "acidify",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Acidify monorepo — Kotlin NTQQ protocol implementation and tooling",
+  "license": "GPL-3.0-only",
+  "packageManager": "pnpm@11.13.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:core-js": "pnpm --filter @acidify/core build",
+    "build:docs": "pnpm --filter @acidify/docs build",
+    "dev:docs": "pnpm --filter @acidify/docs dev"
+  }
+}

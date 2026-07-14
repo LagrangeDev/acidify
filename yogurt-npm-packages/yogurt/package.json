@@ -16,7 +16,6 @@
   "homepage": "https://acidify.ntqqrev.org/",
   "author": "LagrangeDev",
   "license": "GPL-3.0-only",
-  "packageManager": "pnpm@10.26.0",
   "optionalDependencies": {
     "@acidify/yogurt-win32-x64": "__VERSION__",
     "@acidify/yogurt-darwin-arm64": "__VERSION__",

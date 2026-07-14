@@ -9,3 +9,28 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+
+  - package-ecosystem: "npm"
+    directory: "/" # pnpm workspace root (updates root pnpm-lock.yaml)
+    schedule:
+      interval: "weekly"
+    groups:
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+          - "@typescript-eslint/*"
+      next:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "nextra"
+          - "nextra-*"
+          - "eslint-config-next"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"

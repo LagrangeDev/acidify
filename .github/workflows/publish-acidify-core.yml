@@ -50,7 +50,6 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v5
         with:
-          package_json_file: acidify-core-js/package.json
           run_install: false
 
       - name: Set up Node.js
@@ -58,16 +57,14 @@ jobs:
         with:
           node-version: 24
           cache: 'pnpm'
-          cache-dependency-path: acidify-core-js/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
           registry-url: https://registry.npmjs.org
 
       - name: Ensure npm is up to date
         run: pnpm install -g npm@latest
 
-      - name: Install npm dependencies
-        run: |
-          cd acidify-core-js
-          pnpm install
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @acidify/core...
 
       - name: Sync npm package version
         run: |

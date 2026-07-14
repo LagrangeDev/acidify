@@ -6,6 +6,8 @@ on:
     paths:
       - 'acidify-docs/**'
       - 'acidify-core/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -30,7 +32,6 @@ jobs:
       - uses: pnpm/action-setup@v5
         name: Install pnpm
         with:
-          package_json_file: acidify-docs/package.json
           run_install: false
 
       - name: Install Node.js
@@ -38,12 +39,10 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: acidify-docs/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: |
-          cd acidify-docs
-          pnpm install
+        run: pnpm install --frozen-lockfile --filter @acidify/docs...
 
       - name: Setup Pages
         id: setup_pages
@@ -73,9 +72,7 @@ jobs:
           GITHUB_ACTIONS_BUILD_TARGET: jvm
 
       - name: Build with Next.js
-        run: |
-          cd acidify-docs
-          pnpm run build
+        run: pnpm --filter @acidify/docs build
         env:
           PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
 

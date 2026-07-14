@@ -123,3 +123,8 @@ session-store-*.json
 qrcode.png
 logs/
 yogurt*/scripts/
+
+### Node / pnpm ###
+node_modules/
+.tsbuildinfo
+*.tsbuildinfo

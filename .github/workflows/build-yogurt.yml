@@ -8,6 +8,11 @@ on:
       - 'kotlin-js-store/**'
       - 'acidify-core-js/**'
       - 'acidify-docs/**'
+      - 'yogurt-scripting/**'
+      - 'yogurt-npm-packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
       - '**.md'
   workflow_dispatch:
 

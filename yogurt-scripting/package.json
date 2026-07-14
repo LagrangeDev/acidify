@@ -4,6 +4,5 @@
   "devDependencies": {
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  },
-  "packageManager": "pnpm@10.26.0"
+  }
 }

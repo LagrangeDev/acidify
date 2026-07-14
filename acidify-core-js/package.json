@@ -23,7 +23,6 @@
   "homepage": "https://acidify.ntqqrev.org/",
   "author": "LagrangeDev",
   "license": "GPL-3.0-only",
-  "packageManager": "pnpm@10.26.0",
   "dependencies": {
     "ws": "^8.18.3",
     "fflate": "^0.8.2"

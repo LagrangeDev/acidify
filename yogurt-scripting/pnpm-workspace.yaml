@@ -1,6 +1,0 @@
-packages:
-  - script-api
-  - script-example
-
-onlyBuiltDependencies:
-  - esbuild
