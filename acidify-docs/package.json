@@ -1,34 +1,37 @@
 {
-  "name": "@acidify/docs",
+  "name": "acidify-docs",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "dev": "next",
     "build": "next build",
-    "start": "next start",
-    "postbuild": "pagefind --site .next/server/app --output-path out/_pagefind"
+    "dev": "next dev",
+    "start": "serve out",
+    "types:check": "fumadocs-mdx && next typegen && tsc --noEmit",
+    "postinstall": "fumadocs-mdx",
+    "lint": "biome check",
+    "format": "biome format --write"
   },
-  "keywords": [],
-  "author": "",
-  "license": "GPL-3.0-only",
   "dependencies": {
-    "@theguild/remark-mermaid": "^0.3.0",
-    "next": "^16.2.6",
-    "nextra": "^4.6.1",
-    "nextra-theme-docs": "^4.6.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "@orama/orama": "^3.1.18",
+    "cnfast": "^0.0.8",
+    "fumadocs-core": "16.11.3",
+    "fumadocs-mdx": "15.1.0",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.11.3",
+    "lucide-react": "^1.23.0",
+    "next": "16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
-    "@next/eslint-plugin-next": "^16.1.6",
-    "@types/node": "^25.2.3",
-    "@types/react": "^19.2.14",
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "eslint-config-next": "16.1.6",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "pagefind": "^1.4.0",
-    "typescript": "5.9.3"
+    "postcss": "^8.5.16",
+    "serve": "^14.2.6",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^6.0.3",
+    "@biomejs/biome": "^2.5.3"
   }
 }
