@@ -31,7 +31,7 @@
     "postcss": "^8.5.16",
     "serve": "^14.2.6",
     "tailwindcss": "^4.3.2",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "@biomejs/biome": "^2.5.3"
   }
 }
