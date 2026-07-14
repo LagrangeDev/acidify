@@ -11,6 +11,7 @@ import org.ntqqrev.acidify.internal.service.group.FetchGroups
 import org.ntqqrev.acidify.internal.service.system.*
 import org.ntqqrev.acidify.internal.util.MediaSourceMetadata
 import org.ntqqrev.acidify.struct.*
+import kotlin.time.Duration.Companion.hours
 
 /**
  * 尝试使用现有的 Session 信息上线。
@@ -42,6 +43,14 @@ suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
 
     refreshFaceDetailsMap()
 
+    faceDetailRefreshJob = launch {
+        while (currentCoroutineContext().isActive) {
+            delay(1.hours)
+            logger.d { "开始定时刷新表情信息" }
+            refreshFaceDetailsMap()
+        }
+    }
+
     if (preloadContacts) {
         // Preload friends, groups and group members to initialize in-memory cache
         val friendCount = getFriends().size
@@ -61,6 +70,8 @@ suspend fun AbstractBot.offline() {
     client.doPreOfflineLogic()
     eventCollectJob?.cancel()
     eventCollectJob = null
+    faceDetailRefreshJob?.cancel()
+    faceDetailRefreshJob = null
     client.callService(BotOffline)
     logger.i { "用户 $uin 已下线" }
     client.packetContext.closeConnection()
