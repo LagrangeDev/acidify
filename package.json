@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "description": "Acidify monorepo — Kotlin NTQQ protocol implementation and tooling",
   "license": "GPL-3.0-only",
-  "packageManager": "pnpm@11.13.0",
   "engines": {
     "node": ">=20"
   },
