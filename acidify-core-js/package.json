@@ -24,7 +24,7 @@
   "author": "LagrangeDev",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "ws": "^8.18.3",
+    "ws": "^8.21.1",
     "fflate": "^0.8.2"
   },
   "devDependencies": {
