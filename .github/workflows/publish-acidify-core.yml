@@ -61,11 +61,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
           registry-url: https://registry.npmjs.org
 
-      - name: Ensure npm is up to date
-        run: pnpm install -g npm@latest
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --filter @acidify/core...
+        run: |
+          pnpm setup
+          pnpm install --frozen-lockfile --filter @acidify/core...
 
       - name: Sync npm package version
         run: |
