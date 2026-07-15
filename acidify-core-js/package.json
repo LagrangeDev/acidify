@@ -28,7 +28,7 @@
     "fflate": "^0.8.2"
   },
   "devDependencies": {
-    "tsdown": "^0.18.0",
-    "typescript": "^5.9.3"
+    "tsdown": "^0.22.7",
+    "typescript": "^6.0.3"
   }
 }
