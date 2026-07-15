@@ -376,8 +376,13 @@ abstract class JsAbstractBot internal constructor(
         bot.uploadPrivateFile(friendUin, fileName, fileData)
     }
 
-    fun getPrivateFileDownloadUrl(friendUin: Long, fileId: String, fileHash: String): Promise<String> = promise {
-        bot.getPrivateFileDownloadUrl(friendUin, fileId, fileHash)
+    fun getPrivateFileDownloadUrl(
+        friendUin: Long,
+        fileId: String,
+        fileHash: String,
+        isSelfSend: Boolean = false
+    ): Promise<String> = promise {
+        bot.getPrivateFileDownloadUrl(friendUin, fileId, fileHash, isSelfSend)
     }
 
     fun getGroupFileDownloadUrl(groupUin: Long, fileId: String): Promise<String> = promise {
