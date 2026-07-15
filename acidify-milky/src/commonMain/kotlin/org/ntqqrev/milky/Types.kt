@@ -1,4 +1,4 @@
-// Generated from Milky 1.3 (1.3.0-rc.1)
+// Generated from Milky 1.3 (1.3.0-rc.2)
 @file:OptIn(ExperimentalSerializationApi::class)
 
 package org.ntqqrev.milky
@@ -10,7 +10,7 @@ import kotlinx.serialization.encoding.*
 import kotlinx.serialization.json.*
 
 const val milkyVersion = "1.3"
-const val milkyPackageVersion = "1.3.0-rc.1"
+const val milkyPackageVersion = "1.3.0-rc.2"
 
 @Target(AnnotationTarget.PROPERTY)
 annotation class LiteralDefault(val value: String)
@@ -2364,7 +2364,7 @@ data class GetImplInfoOutput(
     @SerialName("qq_protocol_version") val qqProtocolVersion: String,
     /** 协议端使用的 QQ 协议平台 */
     @SerialName("qq_protocol_type") val qqProtocolType: String,
-    /** 协议端实现的 Milky 协议版本，目前为 "1.2" */
+    /** 协议端实现的 Milky 协议版本，目前为 "1.3" */
     @SerialName("milky_version") val milkyVersion: String,
 )
 
@@ -3204,6 +3204,8 @@ data class GetPrivateFileDownloadUrlInput(
     @SerialName("file_id") val fileId: String,
     /** 文件的 TriSHA1 哈希值 */
     @SerialName("file_hash") val fileHash: String,
+    /** 是否为自己发送的文件 */
+    @SerialName("is_self_send") @LiteralDefault("false") val isSelfSend: Boolean = false,
 )
 
 /** 获取私聊文件下载链接 API 响应数据 */
