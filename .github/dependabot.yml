@@ -15,19 +15,10 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      eslint:
-        patterns:
-          - "eslint"
-          - "eslint-*"
-          - "@eslint/*"
-          - "@typescript-eslint/*"
       next:
         patterns:
           - "next"
           - "@next/*"
-          - "nextra"
-          - "nextra-*"
-          - "eslint-config-next"
       react:
         patterns:
           - "react"
