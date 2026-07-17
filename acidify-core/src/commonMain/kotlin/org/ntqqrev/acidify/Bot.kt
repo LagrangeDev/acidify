@@ -32,7 +32,10 @@ class Bot(
 
     companion object {
         @JsStatic
-        @Deprecated("请直接使用 Bot 构造器创建实例")
+        @Deprecated(
+            "请直接使用 Bot 构造器创建实例",
+            ReplaceWith("Bot(appInfo = appInfo, sessionStore = sessionStore, signProvider = signProvider, scope = scope, minLogLevel = minLogLevel, logHandler = logHandler)")
+        )
         fun create(
             appInfo: AppInfo,
             sessionStore: SessionStore,

@@ -29,7 +29,10 @@ class AndroidBot(
 
     companion object {
         @JsStatic
-        @Deprecated("请直接使用 AndroidBot 构造器创建实例")
+        @Deprecated(
+            "请直接使用 AndroidBot 构造器创建实例",
+            ReplaceWith("AndroidBot(appInfo = appInfo, sessionStore = sessionStore, signProvider = signProvider, scope = scope, minLogLevel = minLogLevel, logHandler = logHandler)")
+        )
         fun create(
             appInfo: AndroidAppInfo,
             sessionStore: AndroidSessionStore,
