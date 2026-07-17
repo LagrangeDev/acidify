@@ -55,6 +55,13 @@ internal sealed class AbstractClient(
 
     protected val logger = loggerFactory(this)
 
+    abstract suspend fun getSsoSecureInfo(cmd: String, seq: Int, src: ByteArray): SsoSecureInfo?
+
+    private val criticalCommand = setOf(
+        "wtlogin.trans_emp",
+        "wtlogin.login",
+    )
+
     suspend fun doPostOnlineLogic() {
         contextCollection.forEach {
             it.postOnline()
@@ -66,8 +73,6 @@ internal sealed class AbstractClient(
             it.preOffline()
         }
     }
-
-    abstract suspend fun getSsoSecureInfo(cmd: String, seq: Int, src: ByteArray): SsoSecureInfo?
 
     suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long = 10_000L): R {
         val sequence = ssoSequence++
@@ -83,6 +88,10 @@ internal sealed class AbstractClient(
             ssoSecureInfo = try {
                 getSsoSecureInfo(service.cmd, sequence, byteArray)
             } catch (e: UrlSignException) {
+                if (service.cmd in criticalCommand) {
+                    // Should fail instantly
+                    throw e
+                }
                 logger.w { "没有成功获取 ${service.cmd} 的签名，该操作可能会失败: ${e.message}" }
                 null
             } catch (e: Exception) {
