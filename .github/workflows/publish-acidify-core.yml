@@ -34,19 +34,6 @@ jobs:
           distribution: temurin
           java-version: 25
 
-      - name: Generate JS Production Build
-        run: ./gradlew :acidify-core:jsNodeProductionLibraryDistribution
-
-      - name: Publish to MavenCentral
-        run: ./gradlew :acidify-core:publishAndReleaseToMavenCentral
-        env:
-          GITHUB_ACTIONS_BUILD_CORE_LIBRARY: 'true'
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ''
-
       - name: Install pnpm
         uses: pnpm/action-setup@v5
         with:
@@ -59,12 +46,24 @@ jobs:
           node-version: 24
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
-          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: |
           pnpm setup
-          pnpm install --frozen-lockfile --filter @acidify/core...
+          pnpm install --frozen-lockfile --filter @acidify/core...    
+
+      - name: Compile acidify-core
+        run: ./gradlew :acidify-core:build
+
+      - name: Publish to MavenCentral
+        run: ./gradlew :acidify-core:publishAndReleaseToMavenCentral
+        env:
+          GITHUB_ACTIONS_BUILD_CORE_LIBRARY: 'true'
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ''
 
       - name: Sync npm package version
         run: |
