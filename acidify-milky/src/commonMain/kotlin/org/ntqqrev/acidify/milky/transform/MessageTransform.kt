@@ -12,6 +12,8 @@ import org.ntqqrev.acidify.milky.MilkyContext
 import org.ntqqrev.acidify.milky.tracked
 import org.ntqqrev.milky.*
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): IncomingMessage? {
     return when (msg.scene) {
@@ -234,6 +236,14 @@ suspend fun MilkyContext.transformOutgoingSegment(
 
         is OutgoingSegment.Record -> {
             val audioData = resolveUri(segment.data.uri).readByteArray()
+            val silkDuration = audioData.getSilkDurationOrNull()
+            if (silkDuration != null) {
+                logger.d { "语音 ${segment.data.uri} 已是 Silk 格式，跳过编码" }
+                return BotOutgoingSegment.Record(
+                    rawSilk = audioData,
+                    duration = silkDuration.inWholeSeconds
+                )
+            }
             // 尝试转换为 PCM，若失败则假设已是 PCM 格式
             val pcmData = try {
                 codec.audioToPcm(audioData)
@@ -299,6 +309,33 @@ suspend fun MilkyContext.transformOutgoingSegment(
         )
     }
 }
+
+private fun ByteArray.getSilkDurationOrNull(): Duration? {
+    val frameStart = when {
+        matchesSilkHeader(0) -> SILK_HEADER.size
+        firstOrNull() == 0x02.toByte() && matchesSilkHeader(1) -> SILK_HEADER.size + 1
+        else -> return null
+    }
+
+    var offset = frameStart
+    var frameCount = 0
+    while (offset + 2 <= size) {
+        val frameSize = (this[offset].toInt() and 0xff) or
+            ((this[offset + 1].toInt() and 0xff) shl 8)
+        if (frameSize == 0xffff || offset + 2 + frameSize > size) break
+        frameCount++
+        offset += 2 + frameSize
+    }
+    return (frameCount * SILK_FRAME_DURATION_MS).milliseconds
+}
+
+private fun ByteArray.matchesSilkHeader(offset: Int): Boolean {
+    if (size - offset < SILK_HEADER.size) return false
+    return SILK_HEADER.indices.all { this[offset + it] == SILK_HEADER[it] }
+}
+
+private val SILK_HEADER = "#!SILK_V3".encodeToByteArray()
+private const val SILK_FRAME_DURATION_MS = 20
 
 context(scope: MediaSourceScope)
 suspend fun MilkyContext.transformEssenceMessage(msg: BotEssenceMessage): GroupEssenceMessage {
