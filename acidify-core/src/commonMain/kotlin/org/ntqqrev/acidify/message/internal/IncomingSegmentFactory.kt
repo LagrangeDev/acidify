@@ -43,7 +43,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Text : IncomingSegmentFactory<BotIncomingSegment.Text> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Text? {
             val text = ctx.tryPeekType { text }
-                ?.takeIf { it.attr6Buf.isEmpty() }
+                ?.takeIf { it.pbReserve.isEmpty() }
                 ?: return null
             ctx.consume()
 
@@ -62,7 +62,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Mention : IncomingSegmentFactory<BotIncomingSegment.Mention> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Mention? {
             val at = ctx.tryPeekType { text }
-                ?.takeIf { it.attr6Buf.size >= 11 && it.pbReserve.isNotEmpty() }
+                ?.takeIf { it.pbReserve.isNotEmpty() }
                 ?: return null
             ctx.consume()
             val attr = at.pbReserve.pbDecode<TextResvAttr>()
@@ -143,21 +143,19 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
                 ?: return null
             ctx.consume()
             if (ctx.remainingCount >= 2) {
-                ctx.skip(
-                    if (ctx.tryPeekType { generalFlags } != null) {
-                        when (ctx.scene) {
-                            MessageScene.FRIEND -> 2
-                            // generalFlags + elemFlags2
-                            MessageScene.GROUP -> min(4, ctx.remainingCount)
-                            // generalFlags + elemFlags2 + reply + text
-                            else -> 0
-                        }
-                    } else when (ctx.scene) {
-                        MessageScene.GROUP -> 2
-                        // reply + text
-                        else -> 0
+                if (ctx.tryPeekType { generalFlags } != null) {
+                    when (ctx.scene) {
+                        MessageScene.FRIEND -> ctx.skip(2)
+                        // generalFlags + elemFlags2
+                        MessageScene.GROUP -> ctx.skip(min(4, ctx.remainingCount))
+                        // generalFlags + elemFlags2 + mention + text(' ')
+                        else -> {}
                     }
-                )
+                } else if (ctx.tryPeekType { text }?.pbReserve?.isNotEmpty() == true) {
+                    if (ctx.scene == MessageScene.GROUP) {
+                        ctx.skip(2) // mention + text(' ')
+                    }
+                }
             }
             return BotIncomingSegment.Reply(
                 sequence = when (ctx.scene) {
