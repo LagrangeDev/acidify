@@ -62,7 +62,7 @@ internal interface IncomingSegmentFactory<T : BotIncomingSegment> {
     object Mention : IncomingSegmentFactory<BotIncomingSegment.Mention> {
         override fun tryParse(ctx: MessageParsingContext): BotIncomingSegment.Mention? {
             val at = ctx.tryPeekType { text }
-                ?.takeIf { it.pbReserve.isNotEmpty() }
+                ?.takeIf { it.attr6Buf.size >= 11 && it.pbReserve.isNotEmpty() }
                 ?: return null
             ctx.consume()
             val attr = at.pbReserve.pbDecode<TextResvAttr>()
