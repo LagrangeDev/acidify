@@ -77,7 +77,7 @@ suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): 
                     userId = if (segment.uin == 0L) {
                         bot.getUinByUid(segment.uid!!)
                     } else segment.uin!!,
-                    name = segment.name,
+                    name = segment.name.removePrefix("@"),
                 )
             )
         } else {
