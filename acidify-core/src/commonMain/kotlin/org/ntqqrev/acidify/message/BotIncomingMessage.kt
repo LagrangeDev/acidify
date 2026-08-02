@@ -1,6 +1,7 @@
 package org.ntqqrev.acidify.message
 
 import org.ntqqrev.acidify.internal.proto.message.CommonMessage
+import org.ntqqrev.acidify.struct.GroupMemberRole
 import kotlin.js.JsExport
 
 /**
@@ -47,6 +48,7 @@ data class BotIncomingMessage internal constructor(
     data class ExtraInfo internal constructor(
         val nick: String,
         val groupCard: String,
+        val role: GroupMemberRole,
         val specialTitle: String,
         val level: Int,
     )

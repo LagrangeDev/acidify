@@ -11,6 +11,7 @@ import org.ntqqrev.acidify.internal.proto.message.extra.PrivateFileExtra
 import org.ntqqrev.acidify.internal.util.pbDecode
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.message.BotIncomingMessage.ExtraInfo
+import org.ntqqrev.acidify.struct.GroupMemberRole
 
 internal fun AbstractBot.parseMessage(raw: CommonMessage): BotIncomingMessage? {
     val contentHead = raw.contentHead
@@ -93,6 +94,7 @@ internal inline fun AbstractBot.buildSegments(
 
     var extraInfoNick: String? = null
     var extraInfoGroupCard: String? = null
+    var extraInfoRole: GroupMemberRole? = null
     var extraInfoSpecialTitle: String? = null
     var extraInfoLevel: Int? = null
 
@@ -100,6 +102,11 @@ internal inline fun AbstractBot.buildSegments(
         ctx.tryPeekType { extraInfo }?.let {
             extraInfoNick = it.nick
             extraInfoGroupCard = it.groupCard
+            extraInfoRole = when {
+                it.flags and 0b01000 > 0 -> GroupMemberRole.OWNER
+                it.flags and 0b10000 > 0 -> GroupMemberRole.ADMIN
+                else -> GroupMemberRole.MEMBER
+            }
             extraInfoSpecialTitle = it.senderTitle
             ctx.consume()
             continue
@@ -122,8 +129,22 @@ internal inline fun AbstractBot.buildSegments(
         }
     }
 
-    if (extraInfoNick != null && extraInfoGroupCard != null && extraInfoSpecialTitle != null && extraInfoLevel != null) {
-        onExtraInfo(ExtraInfo(extraInfoNick, extraInfoGroupCard, extraInfoSpecialTitle, extraInfoLevel))
+    if (
+        extraInfoNick != null
+        && extraInfoGroupCard != null
+        && extraInfoRole != null
+        && extraInfoSpecialTitle != null
+        && extraInfoLevel != null
+    ) {
+        onExtraInfo(
+            ExtraInfo(
+                extraInfoNick,
+                extraInfoGroupCard,
+                extraInfoRole,
+                extraInfoSpecialTitle,
+                extraInfoLevel
+            )
+        )
     }
 
     return segments

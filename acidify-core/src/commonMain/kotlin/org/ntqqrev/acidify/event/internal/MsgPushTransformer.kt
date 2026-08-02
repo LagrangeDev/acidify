@@ -69,6 +69,7 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
                 memberData.copy(
                     nickname = msg.extraInfo.nick.ifEmpty { memberData.nickname },
                     card = msg.extraInfo.groupCard,
+                    role = msg.extraInfo.role,
                     specialTitle = msg.extraInfo.specialTitle,
                     level = msg.extraInfo.level,
                     lastSpokeAt = msg.timestamp,
