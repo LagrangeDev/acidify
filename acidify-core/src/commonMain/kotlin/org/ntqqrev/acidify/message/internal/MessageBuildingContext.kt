@@ -69,42 +69,41 @@ internal class MessageBuildingContext(
     fun BotOutgoingSegment.Face.build() = addAsync {
         val faceDetail = bot.faceDetailMap[faceId.toString()]
 
-        if (isLarge) {
-            requireNotNull(faceDetail) { "要发送的表情 ID 不存在: $faceId" }
-            Elem(
-                commonElem = CommonElem(
-                    serviceType = 37,
-                    pbElem = QBigFaceExtra(
-                        aniStickerPackId = faceDetail.aniStickerPackId.toString(),
-                        aniStickerId = faceDetail.aniStickerId.toString(),
-                        faceId = faceId,
-                        field4 = 1,
-                        aniStickerType = faceDetail.aniStickerType,
-                        field6 = "",
-                        preview = faceDetail.qDes,
-                        field9 = 1,
-                    ).pbEncode(),
-                    businessType = faceDetail.aniStickerType,
-                )
-            )
-        }
-
         if (faceId >= 260) {
             requireNotNull(faceDetail) { "要发送的表情 ID 不存在: $faceId" }
-            Elem(
-                commonElem = CommonElem(
-                    serviceType = 33,
-                    pbElem = QSmallFaceExtra(
-                        faceId = faceId,
-                        text = faceDetail.qDes,
-                        compatText = faceDetail.qDes,
-                    ).pbEncode(),
-                    businessType = faceDetail.aniStickerType,
+            if (isLarge) {
+                Elem(
+                    commonElem = CommonElem(
+                        serviceType = 37,
+                        pbElem = QBigFaceExtra(
+                            aniStickerPackId = faceDetail.aniStickerPackId.toString(),
+                            aniStickerId = faceDetail.aniStickerId.toString(),
+                            faceId = faceId,
+                            field4 = 1,
+                            aniStickerType = faceDetail.aniStickerType,
+                            field6 = "",
+                            preview = faceDetail.qDes,
+                            field9 = 1,
+                        ).pbEncode(),
+                        businessType = faceDetail.aniStickerType,
+                    )
                 )
-            )
+            } else {
+                Elem(
+                    commonElem = CommonElem(
+                        serviceType = 33,
+                        pbElem = QSmallFaceExtra(
+                            faceId = faceId,
+                            text = faceDetail.qDes,
+                            compatText = faceDetail.qDes,
+                        ).pbEncode(),
+                        businessType = faceDetail.aniStickerType,
+                    )
+                )
+            }
+        } else {
+            Elem(face = Face(index = faceId))
         }
-
-        Elem(face = Face(index = faceId))
     }
 
     fun BotOutgoingSegment.Reply.build() = addMultipleAsync {
