@@ -6,8 +6,6 @@ import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.io.buffered
-import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -211,7 +209,12 @@ suspend fun AbstractBot.getGroupAnnouncements(groupUin: Long): List<BotGroupAnno
             content = feed.message.text.unescapeHttp(),
             imageUrl = feed.message.images.firstOrNull()?.let {
                 "https://gdynamic.qpic.cn/gdynamic/${it.id}/0"
-            }
+            },
+            showEditCard = feed.settings.showEditCard == 1,
+            showTipWindow = feed.settings.tipWindowType == 1,
+            confirmRequired = feed.settings.confirmRequired == 1,
+            isPinned = feed.pinned == 1,
+            showToNewMember = feed.type == 20,
         )
     }
 }
@@ -327,7 +330,7 @@ suspend fun AbstractBot.sendGroupAnnouncement(
 private suspend fun AbstractBot.uploadGroupAnnouncementImage(
     imageData: ByteArray,
     imageFormat: ImageFormat
-): GroupAnnounceImage {
+): GroupAnnounceFeed.Message.Image {
     val response = httpClient.post("https://web.qun.qq.com/cgi-bin/announce/upload_img") {
         withBkn()
         withCookies("qun.qq.com")

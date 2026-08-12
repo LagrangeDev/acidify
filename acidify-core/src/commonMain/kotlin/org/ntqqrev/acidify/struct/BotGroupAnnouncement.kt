@@ -10,6 +10,11 @@ import kotlin.js.JsExport
  * @property time Unix 时间戳（秒）
  * @property content 公告内容
  * @property imageUrl 公告图片 URL，可能为 `null`
+ * @property showEditCard 是否引导新成员编辑群名片
+ * @property showTipWindow 是否在弹窗中展示公告
+ * @property confirmRequired 是否需要群成员显式确认
+ * @property isPinned 是否置顶
+ * @property showToNewMember 是否向新成员展示
  */
 @JsExport
 data class BotGroupAnnouncement internal constructor(
@@ -18,5 +23,10 @@ data class BotGroupAnnouncement internal constructor(
     val senderId: Long,
     val time: Long,
     val content: String,
-    val imageUrl: String? = null
+    val imageUrl: String?,
+    val showEditCard: Boolean,
+    val showTipWindow: Boolean,
+    val confirmRequired: Boolean,
+    val isPinned: Boolean,
+    val showToNewMember: Boolean,
 )
