@@ -125,6 +125,7 @@ internal abstract class WtLogin<T, R>(
             class Result(
                 val qrSig: ByteArray,
                 val qrCodeUrl: String,
+                val qrCodeString: String,
                 val qrCodePng: ByteArray
             )
 
@@ -160,6 +161,7 @@ internal abstract class WtLogin<T, R>(
                 return Result(
                     qrSig = sig,
                     qrCodeUrl = respD1Body.qrCodeUrl,
+                    qrCodeString = respD1Body.qrCodeString,
                     qrCodePng = tlv[0x17u]!!
                 )
             }

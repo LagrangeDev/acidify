@@ -18,5 +18,5 @@ internal class TlvQRCodeBodyD1Req(
 @Serializable
 internal class TlvQRCodeBodyD1Resp(
     @ProtoNumber(2) val qrCodeUrl: String = "",
-    @ProtoNumber(3) val qrSig: String = "",
+    @ProtoNumber(3) val qrCodeString: String = "",
 )

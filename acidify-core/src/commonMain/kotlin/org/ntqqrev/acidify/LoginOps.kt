@@ -1,5 +1,8 @@
 package org.ntqqrev.acidify
 
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.delay
 import org.ntqqrev.acidify.event.AndroidSessionStoreUpdatedEvent
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
@@ -8,6 +11,8 @@ import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.crypto.pow.POW
 import org.ntqqrev.acidify.internal.crypto.tea.TEA
+import org.ntqqrev.acidify.internal.json.NTLoginGetFaceRequest
+import org.ntqqrev.acidify.internal.json.NTLoginGetFaceResponse
 import org.ntqqrev.acidify.internal.proto.system.AndroidThirdPartyLoginResponse
 import org.ntqqrev.acidify.internal.service.system.WtLogin
 import org.ntqqrev.acidify.internal.util.*
@@ -56,6 +61,22 @@ suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolea
                     QRCodeState.CODE_EXPIRED -> throw IllegalStateException("二维码已过期")
                     QRCodeState.CANCELLED -> throw IllegalStateException("用户取消了登录")
                     QRCodeState.UNKNOWN -> throw IllegalStateException("未知的二维码状态")
+
+                    QRCodeState.WAITING_FOR_CONFIRMATION -> {
+                        val resp = httpClient.post("https://ntlogin.qq.com/qr/getFace") {
+                            contentType(ContentType.Application.Json)
+                            setBody(
+                                NTLoginGetFaceRequest(
+                                    appId = client.appInfo.appId,
+                                    faceUpdateTime = 0,
+                                    qrSig = qrCode.qrCodeString
+                                )
+                            )
+                        }
+                        val uin = resp.body<NTLoginGetFaceResponse>().uin
+                        logger.i { "二维码等待用户确认，登录用户：$uin" }
+                    }
+
                     else -> {} // pass
                 }
             }
