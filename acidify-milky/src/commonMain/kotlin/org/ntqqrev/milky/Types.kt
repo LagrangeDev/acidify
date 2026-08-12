@@ -1,4 +1,4 @@
-// Generated from Milky 1.3 (1.3.0-rc.2)
+// Generated from Milky 1.3 (1.3.0)
 @file:OptIn(ExperimentalSerializationApi::class)
 
 package org.ntqqrev.milky
@@ -10,7 +10,7 @@ import kotlinx.serialization.encoding.*
 import kotlinx.serialization.json.*
 
 const val milkyVersion = "1.3"
-const val milkyPackageVersion = "1.3.0-rc.2"
+const val milkyPackageVersion = "1.3.0"
 
 @Target(AnnotationTarget.PROPERTY)
 annotation class LiteralDefault(val value: String)
@@ -1998,14 +1998,20 @@ sealed class IncomingSegment {
         val xmlPayload: String get() = data.xmlPayload
     }
 
-    /** Markdown 消息段 */
+    /**
+     * Markdown 消息段
+     * @since 1.3
+     */
     @Serializable
     @SerialName("markdown")
     data class Markdown(
         /** 数据字段 */
         @SerialName("data") val data: Data
     ) : IncomingSegment() {
-        /** Markdown 消息段 */
+        /**
+         * Markdown 消息段
+         * @since 1.3
+         */
         @Serializable
         data class Data(
             /** Markdown 内容 */
@@ -3204,7 +3210,10 @@ data class GetPrivateFileDownloadUrlInput(
     @SerialName("file_id") val fileId: String,
     /** 文件的 TriSHA1 哈希值 */
     @SerialName("file_hash") val fileHash: String,
-    /** 是否为自己发送的文件 */
+    /**
+     * 是否为自己发送的文件
+     * @since 1.3
+     */
     @SerialName("is_self_send") @LiteralDefault("false") val isSelfSend: Boolean = false,
 )
 
