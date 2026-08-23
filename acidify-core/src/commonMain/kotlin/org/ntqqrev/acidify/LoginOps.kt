@@ -110,13 +110,7 @@ suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = fa
         qrCodeLogin(queryInterval, preloadContacts)
     } else {
         try {
-            try {
-                online(preloadContacts)
-            } catch (e: Exception) {
-                logger.w(e) { "使用现有 Session 登录失败，尝试刷新 DeviceGuid 后重新登录" }
-                sessionStore.refreshDeviceGuid()
-                online(preloadContacts)
-            }
+            online(preloadContacts)
         } catch (e: Exception) {
             logger.w(e) { "使用现有 Session 登录失败，尝试二维码登录" }
             sessionStore.clear()
