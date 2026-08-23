@@ -75,9 +75,9 @@ internal abstract class WtLogin<T, R>(
 
     abstract fun parseWtLoginPayload(client: AbstractClient, wtLogin: ByteArray): R
 
-    abstract class TransEmp<R>(val transEmpSubCmd: Short) : WtLogin<Unit, R>("trans_emp", 2066) {
-        override fun buildWtLoginPayload(client: AbstractClient, payload: Unit): ByteArray {
-            val tlvPack = buildCode2DPayload(client)
+    abstract class TransEmp<T, R>(val transEmpSubCmd: Short) : WtLogin<T, R>("trans_emp", 2066) {
+        override fun buildWtLoginPayload(client: AbstractClient, payload: T): ByteArray {
+            val tlvPack = buildCode2DPayload(client, payload)
             val requestBody = Buffer().apply {
                 writeInt(Clock.System.now().epochSeconds.toInt())
                 writeByte(0x2) // packet Start
@@ -117,11 +117,13 @@ internal abstract class WtLogin<T, R>(
             )
         }
 
-        abstract fun buildCode2DPayload(client: AbstractClient): ByteArray
+        abstract fun buildCode2DPayload(client: AbstractClient, payload: T): ByteArray
 
         abstract fun parseCode2DPayload(client: AbstractClient, code2D: ByteArray): R
 
-        object FetchQRCode : TransEmp<FetchQRCode.Result>(0x31) {
+        object FetchQRCode : TransEmp<FetchQRCode.Req, FetchQRCode.Result>(0x31) {
+            class Req(val unusualSig: ByteArray? = null)
+
             class Result(
                 val qrSig: ByteArray,
                 val qrCodeUrl: String,
@@ -129,7 +131,7 @@ internal abstract class WtLogin<T, R>(
                 val qrCodePng: ByteArray
             )
 
-            override fun buildCode2DPayload(client: AbstractClient): ByteArray = Buffer().apply {
+            override fun buildCode2DPayload(client: AbstractClient, payload: Req): ByteArray = Buffer().apply {
                 client.ensureLagrange()
                 writeUShort(0u)
                 writeUInt(client.appInfo.appId.toUInt())
@@ -138,6 +140,7 @@ internal abstract class WtLogin<T, R>(
                 writeByte(0)
                 writeBytes(ByteArray(0), Prefix.UINT_16 or Prefix.LENGTH_ONLY)
                 transferFrom(client.buildTlvQRCode {
+                    payload.unusualSig?.let(::tlv11)
                     tlv16()
                     tlv1b()
                     tlv1d()
@@ -167,7 +170,7 @@ internal abstract class WtLogin<T, R>(
             }
         }
 
-        object QueryQRCodeState : TransEmp<QueryQRCodeState.Result>(0x12) {
+        object QueryQRCodeState : TransEmp<Unit, QueryQRCodeState.Result>(0x12) {
             sealed class Result(val state: QRCodeState) {
                 class Success(
                     val uin: Long,
@@ -179,7 +182,7 @@ internal abstract class WtLogin<T, R>(
                 class Other(state: QRCodeState) : Result(state)
             }
 
-            override fun buildCode2DPayload(client: AbstractClient): ByteArray = Buffer().apply {
+            override fun buildCode2DPayload(client: AbstractClient, payload: Unit): ByteArray = Buffer().apply {
                 client.ensureLagrange()
                 writeUShort(0u)
                 writeUInt(client.appInfo.appId.toUInt())

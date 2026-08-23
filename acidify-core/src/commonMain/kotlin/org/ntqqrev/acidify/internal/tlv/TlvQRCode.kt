@@ -11,6 +11,10 @@ import org.ntqqrev.acidify.internal.util.writeBytes
 import org.ntqqrev.acidify.internal.util.writeString
 
 internal class TlvQRCode(val client: LagrangeClient) : TlvBuilder() {
+    fun tlv11(unusualSig: ByteArray) = writeTlv(0x11u) {
+        writeBytes(unusualSig)
+    }
+
     fun tlv16() = writeTlv(0x16u) {
         writeUInt(0u)
         writeInt(client.appInfo.appId)

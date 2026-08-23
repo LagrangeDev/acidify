@@ -3,6 +3,7 @@ package org.ntqqrev.acidify
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import org.ntqqrev.acidify.event.AndroidSessionStoreUpdatedEvent
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
@@ -14,6 +15,8 @@ import org.ntqqrev.acidify.internal.crypto.tea.TEA
 import org.ntqqrev.acidify.internal.json.NTLoginGetFaceRequest
 import org.ntqqrev.acidify.internal.json.NTLoginGetFaceResponse
 import org.ntqqrev.acidify.internal.proto.system.AndroidThirdPartyLoginResponse
+import org.ntqqrev.acidify.internal.service.system.KeyExchange
+import org.ntqqrev.acidify.internal.service.system.NTLogin
 import org.ntqqrev.acidify.internal.service.system.WtLogin
 import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
@@ -29,11 +32,18 @@ import kotlin.time.Duration.Companion.milliseconds
  * @throws IllegalStateException 当二维码过期或用户取消登录时抛出
  * @see QRCodeState
  */
-suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
+suspend fun Bot.qrCodeLogin(
+    queryInterval: Long = 3000L,
+    preloadContacts: Boolean = false,
+    unusualSig: ByteArray? = null // undocumented, for internal use only
+) {
     require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
 
     // Step 1: query QR code
-    val qrCode = client.callService(WtLogin.TransEmp.FetchQRCode)
+    val qrCode = client.callService(
+        WtLogin.TransEmp.FetchQRCode,
+        WtLogin.TransEmp.FetchQRCode.Req(unusualSig),
+    )
     client.sessionStore.qrSig = qrCode.qrSig
     logger.i { "二维码 URL：${qrCode.qrCodeUrl}" }
     sharedEventFlow.emit(QRCodeGeneratedEvent(qrCode.qrCodeUrl, qrCode.qrCodePng))
@@ -85,39 +95,104 @@ suspend fun Bot.qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolea
     }
 
     // Step 3: get login credentials and complete login
-    val result = client.callService(WtLogin.PCLogin)
-    client.sessionStore.apply {
-        uid = result.uid
-        a2 = result.a2
-        d2 = result.d2
-        d2Key = result.d2Key
-        encryptedA1 = result.encryptedA1
+    if (unusualSig == null) {
+        val result = client.callService(WtLogin.PCLogin)
+        client.sessionStore.apply {
+            uid = result.uid
+            a2 = result.a2
+            d2 = result.d2
+            d2Key = result.d2Key
+            encryptedA1 = result.encryptedA1
+        }
+    } else {
+        when (val result = client.callService(NTLogin.UnusualEasyLogin)) {
+            is NTLogin.UnusualEasyLogin.Result.Success -> {
+                sessionStore.apply {
+                    encryptedA1 = result.tickets.a1
+                    a2 = result.tickets.a2
+                    d2 = result.tickets.d2
+                    d2Key = result.tickets.d2Key
+                }
+            }
+
+            is NTLogin.UnusualEasyLogin.Result.Failure -> throw WtLoginException(
+                code = result.error.errCode.toInt(),
+                tag = result.error.strTipsTitle,
+                msg = result.error.strTipsContent,
+            )
+        }
     }
     sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
     online(preloadContacts)
 }
 
-
 /**
- * 如果 Session 为空则调用 [qrCodeLogin] 进行登录。
- * 如果 Session 不为空则尝试使用现有的 Session 信息登录，若失败则调用 [qrCodeLogin] 重新登录。
+ * 优先使用现有的 D2/A2 上线。Session 失效但 A1 可用时尝试 NTLogin，
+ * 无可用凭据或 NTLogin 失败时回退到 [qrCodeLogin]。
  * @param queryInterval 查询间隔（单位 ms），不能小于 `1000`
  * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
  */
 suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
-    if (sessionStore.a2.isEmpty()) {
-        logger.i { "Session 为空，尝试二维码登录" }
-        qrCodeLogin(queryInterval, preloadContacts)
-    } else {
+    require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
+
+    if (sessionStore.a2.isNotEmpty()) {
         try {
             online(preloadContacts)
+            return
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            logger.w(e) { "使用现有 Session 登录失败，尝试二维码登录" }
-            sessionStore.clear()
-            // sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
-            qrCodeLogin(queryInterval, preloadContacts)
+            logger.w(e) { "使用现有 Session 登录失败，尝试 EasyLogin" }
         }
     }
+
+    if (sessionStore.encryptedA1.isNotEmpty()) {
+        val easyLoginResult = try {
+            val keyExchange = client.callService(KeyExchange)
+            sessionStore.keySig = keyExchange.sessionTicket
+            sessionStore.exchangeKey = keyExchange.sessionKey
+            client.callService(NTLogin.EasyLogin)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.w(e) { "初始化 NTLogin 或 EasyLogin 失败，回退到二维码登录" }
+            null
+        }
+
+        when (easyLoginResult) {
+            is NTLogin.EasyLogin.Result.Success -> {
+                logger.i { "EasyLogin 成功" }
+                sessionStore.apply {
+                    encryptedA1 = easyLoginResult.tickets.a1
+                    a2 = easyLoginResult.tickets.a2
+                    d2 = easyLoginResult.tickets.d2
+                    d2Key = easyLoginResult.tickets.d2Key
+                }
+                sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
+                online(preloadContacts)
+                return
+            }
+
+            is NTLogin.EasyLogin.Result.UnusualDevice -> {
+                logger.i { "EasyLogin 需要异常设备确认，开始二维码验证" }
+                qrCodeLogin(queryInterval, preloadContacts, easyLoginResult.unusualSig)
+                return
+            }
+
+            is NTLogin.EasyLogin.Result.Failure -> {
+                val error = easyLoginResult.error
+                logger.w {
+                    "EasyLogin 失败 (${error.errCode}): ${error.strTipsTitle} ${error.strTipsContent}"
+                }
+            }
+
+            null -> Unit
+        }
+    }
+
+    logger.i { "无可用登录票据，尝试二维码登录" }
+    sessionStore.clear()
+    qrCodeLogin(queryInterval, preloadContacts)
 }
 
 /**
