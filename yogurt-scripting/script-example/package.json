@@ -8,6 +8,6 @@
   },
   "devDependencies": {
     "@acidify/yogurt-script-api": "workspace:*",
-    "tsdown": "^0.20.3"
+    "tsdown": "^0.22.14"
   }
 }
