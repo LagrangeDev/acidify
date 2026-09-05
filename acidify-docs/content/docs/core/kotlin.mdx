@@ -99,11 +99,19 @@ val bot = Bot(
 
 Bot 的所有功能需要在登录后才能使用。调用 [`Bot.login`](/kdoc/acidify-core/org.ntqqrev.acidify/-bot/login.html) 以登录。
 
-该方法会判断 Session，如果 Session 为空则调用 [`qrCodeLogin`](/kdoc/acidify-core/org.ntqqrev.acidify/-bot/qr-code-login.html) 进行登录；如果 Session 不为空则尝试调用 [`online`](/kdoc/acidify-core/org.ntqqrev.acidify/-bot/online.html)，使用现有的 Session 信息登录，若失败则再调用 `qrCodeLogin` 重新登录。
+该方法优先尝试使用现有 Session 上线，失败后会在 A1 可用时尝试续约。没有可用凭据或续约被拒绝时，会回退到二维码登录；需要设备验证时会发起二维码确认。
 
 如果你在初始化时正确配置了 `logHandler`，在首次登录时即可以在控制台看到二维码 URL。稍后将会介绍如何监听在登录过程中产生的事件。
 
 `Bot.login` 接收一个可选的 `preloadContacts` 参数，表示是否在登录完成后预加载好友和群聊等联系人的信息。预加载联系人可以提升部分操作的响应速度，同时修复部分情况下无法解析 uid 的问题，但会显著增加启动时间和内存占用。默认值为 `false`。
+
+### 续约登录凭据
+
+PC Bot 可以调用 `bot.renewSession()`，使用已有 A1 获取新的 A1/A2/D2/D2Key 并在新连接上重新上线。无需先调用 `offline()` 或随后再次调用 `online()`；续约不会重复启动事件消费任务。
+
+获取新凭据时会更新 `sessionStore.credentialsUpdatedAtEpochSeconds`（Unix 秒）并触发 `SessionStoreUpdatedEvent`，请监听并保存会话。存量会话的时间戳为 `null`，表示实际获取时间未知。即使之后注册上线失败，已取得的新凭据仍会保留。
+
+续约被拒绝、缺少 A1 或需要设备验证时抛出 `SessionRenewalException`；该方法不会自动弹出二维码。网络等临时故障使用原始异常。core 不内置周期调度，使用方可自行安排调用，Yogurt 默认提供自动续约。
 
 ### 好友和群聊管理
 

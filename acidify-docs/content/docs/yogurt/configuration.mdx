@@ -14,7 +14,8 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
     "version": "fetched",
     "signApiUrl": "...",
     "pcLagrangeSignToken": "",
-    "androidUseLegacySign": false
+    "androidUseLegacySign": false,
+    "autoReLogin": true
   },
   "milky": {
     "http": {
@@ -119,6 +120,12 @@ Yogurt 使用的协议类型。可选值有：
 是否使用的是旧版的 Android Sign API（需要进行设备 Register 操作，不支持 `/get_tlv553` 端点）。
 
 如果你在使用兼容 ICQQ 的签名服务时遇到登录问题，可以尝试将该选项设置为 `true`。如果你不确定使用的是否为旧版 API，请保持默认值 `false`，出现登录问题时再尝试将其设置为 `true`。
+
+### `protocol.autoReLogin`
+
+默认为 `true`，仅对 PC 协议生效。Yogurt 会在凭据获取或刷新满 15 天后使用 A1 自动续约并重新上线。
+
+旧版 SessionStore 未记录凭据获取时间时，上线后会随机等待 1～5 分钟进行首次续约。临时故障会退避重试；A1 被拒绝或需要设备验证时会暂停自动尝试并记录错误，需要手动重新登录。设置为 `false` 可关闭自动续约。
 
 ### `milky.http` 和 `milky.webhook.endpoints`
 
