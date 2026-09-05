@@ -9,7 +9,7 @@ import org.ntqqrev.acidify.logging.LogHandler
 import org.ntqqrev.acidify.logging.LogLevel
 import org.ntqqrev.acidify.login
 import org.ntqqrev.acidify.qrCodeLogin
-import kotlin.js.Promise
+import org.ntqqrev.acidify.renewSession
 
 @JsExport
 @JsName("Bot")
@@ -22,6 +22,8 @@ class JsBot internal constructor(override val bot: Bot) : JsAbstractBot(bot) {
     fun qrCodeLogin(queryInterval: Long = 3000L, preloadContacts: Boolean = false) = promise {
         bot.qrCodeLogin(queryInterval, preloadContacts)
     }
+
+    fun renewSession() = promise { bot.renewSession() }
 
     companion object {
         @JsStatic

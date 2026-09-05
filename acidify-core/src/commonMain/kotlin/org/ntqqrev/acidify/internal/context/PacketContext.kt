@@ -1,17 +1,12 @@
 package org.ntqqrev.acidify.internal.context
 
 import dev.karmakrafts.kompress.Inflater
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.ClosedByteChannelException
-import io.ktor.utils.io.ClosedWriteChannelException
-import io.ktor.utils.io.readByteArray
-import io.ktor.utils.io.writePacket
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
+import io.ktor.utils.io.*
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
@@ -44,13 +39,20 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
     private val connectRetryMaxDelay = 30_000L.milliseconds
     private val connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Connecting)
     private val onlineRequested = atomic(false)
-    private val connectionLoopJob = client.launch(start = CoroutineStart.LAZY) { runConnectionLoop() }
+    private val restartMutex = Mutex()
+    private var connectionLoopJob = launchConnectionLoop()
 
-    init {
-        connectionLoopJob.invokeOnCompletion { cause ->
-            connectionState.value = ConnectionState.Closed(IOException("连接管理已停止", cause))
+    private fun launchConnectionLoop(restart: ConnectionRestart? = null): Job {
+        val job = client.launch(start = CoroutineStart.LAZY) { runConnectionLoop(restart) }
+        job.invokeOnCompletion { cause ->
+            val error = IOException("连接管理已停止", cause)
+            if (connectionState.value != ConnectionState.Restarting) {
+                connectionState.value = ConnectionState.Closed(error)
+            }
+            restart?.result?.completeExceptionally(error)
         }
-        connectionLoopJob.start()
+        job.start()
+        return job
     }
 
     override suspend fun postOnline() {
@@ -87,20 +89,23 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         val boundSession = currentCoroutineContext()[SessionBinding]?.session
         // Connection cleanup preserves the intent to restore the online session.
         if (boundSession == null) onlineRequested.value = false
-        val session = boundSession ?: (connectionState.value as? ConnectionState.Connected)?.session
+        val session = boundSession ?: connectionState.value.session
         session?.stopHeartbeat()
     }
 
-    private suspend fun runConnectionLoop() {
+    private suspend fun runConnectionLoop(initialRestart: ConnectionRestart?) {
         val selectorManager = SelectorManager(currentCoroutineContext())
         var retryDelay = connectRetryInitialDelay
+        var restart = initialRestart
         try {
             while (currentCoroutineContext().isActive) {
                 try {
                     val socket = aSocket(selectorManager).tcp().connect(host, port) { keepAlive = true }
                     retryDelay = connectRetryInitialDelay
                     logger.d { "已连接到 $host:$port" }
-                    runSession(socket)
+                    val currentRestart = restart
+                    restart = null
+                    runSession(socket, currentRestart)
                 } catch (e: Exception) {
                     currentCoroutineContext().ensureActive()
                     logger.w(e) {
@@ -115,13 +120,15 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         }
     }
 
-    private suspend fun runSession(socket: Socket): Nothing = coroutineScope {
+    private suspend fun runSession(socket: Socket, restart: ConnectionRestart?): Nothing = coroutineScope {
         var session: ConnectionSession? = null
         var disconnectCause: Throwable = IOException("连接已断开")
         try {
             val activeSession = ConnectionSession(socket, this)
             session = activeSession
-            val connected = ConnectionState.Connected(activeSession)
+            val restoring = onlineRequested.value || restart?.result?.isActive == true
+            val connected = if (restoring) ConnectionState.Restoring(activeSession)
+            else ConnectionState.Connected(activeSession)
             if (!connectionState.compareAndSet(ConnectionState.Connecting, connected)) {
                 throw CancellationException("连接管理已停止")
             }
@@ -134,25 +141,41 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                         throw IOException("接收数据包失败", e)
                     }
                 }
-                if (onlineRequested.value) {
+                if (restart?.result?.isActive == true) {
+                    restart.execute {
+                        withContext(SessionBinding(activeSession, authenticating = true)) { restart.prepare() }
+                        onlineRequested.value = true
+                        client.sendOnlinePacket()
+                        client.doPostOnlineLogic()
+                    }
+                } else if (onlineRequested.value) {
                     client.sendOnlinePacket()
                     client.doPostOnlineLogic()
-                    logger.i { "上线包及初始化完成，重连成功" }
                 }
+                if (restoring) {
+                    if (!connectionState.compareAndSet(connected, ConnectionState.Connected(activeSession))) {
+                        throw CancellationException("连接恢复已取消")
+                    }
+                    logger.i { "上线包及初始化完成，连接已恢复" }
+                }
+                restart?.result?.complete(Unit)
                 throw activeSession.disconnection.await()
             }
         } catch (e: Exception) {
             disconnectCause = e
+            restart?.result?.completeExceptionally(e)
             throw e
         } finally {
             try {
                 if (session != null) {
                     val reconnecting = connectionState.compareAndSet(
                         ConnectionState.Connected(session), ConnectionState.Connecting
-                    )
+                    ) || connectionState.compareAndSet(ConnectionState.Restoring(session), ConnectionState.Connecting)
                     withContext(NonCancellable + SessionBinding(session)) {
                         session.finish(disconnectCause)
-                        if (reconnecting) client.doPreOfflineLogic()
+                        if (reconnecting || connectionState.value == ConnectionState.Restarting) {
+                            client.doPreOfflineLogic()
+                        }
                     }
                 }
             } finally {
@@ -161,16 +184,39 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         }
     }
 
+    // The old loop must finish before credentials can be changed on a new connection.
+    suspend fun reconnectAndAuthenticate(prepare: suspend () -> Unit) = restartMutex.withLock {
+        val restart = ConnectionRestart(prepare)
+        try {
+            withContext(NonCancellable) {
+                val previous = connectionState.getAndUpdate {
+                    if (it is ConnectionState.Closed) it else ConnectionState.Restarting
+                }
+                if (previous is ConnectionState.Closed) throw previous.cause
+                try {
+                    previous.session?.disconnect(IOException("开始续约，关闭旧连接"))
+                } finally {
+                    connectionLoopJob.cancelAndJoin()
+                    connectionState.value = ConnectionState.Connecting
+                    connectionLoopJob = launchConnectionLoop(restart)
+                }
+            }
+            restart.result.await()
+        } finally {
+            withContext(NonCancellable) { restart.cancelAndJoin() }
+        }
+    }
+
     suspend fun closeConnection(reconnect: Boolean = false) {
         val error = IOException(if (reconnect) "请求重新连接" else "连接已主动关闭")
         if (reconnect) {
-            (connectionState.value as? ConnectionState.Connected)?.session?.disconnect(error)
+            connectionState.value.session?.disconnect(error)
             return
         }
         onlineRequested.value = false
         val previous = connectionState.getAndUpdate { ConnectionState.Closed(error) }
         try {
-            (previous as? ConnectionState.Connected)?.session?.disconnect(error)
+            previous.session?.disconnect(error)
         } finally {
             withContext(NonCancellable) { connectionLoopJob.cancelAndJoin() }
         }
@@ -178,10 +224,12 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
 
     private suspend fun awaitSession(): ConnectionSession {
         currentCoroutineContext()[SessionBinding]?.let { return it.session }
-        return when (val state = connectionState.first { it !is ConnectionState.Connecting }) {
+        return when (val state = connectionState.first {
+            it is ConnectionState.Connected || it is ConnectionState.Closed
+        }) {
             is ConnectionState.Connected -> state.session
             is ConnectionState.Closed -> throw state.cause
-            ConnectionState.Connecting -> error("Unreachable connection state")
+            else -> error("Unreachable connection state")
         }
     }
 
@@ -227,20 +275,23 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         }
     }
 
-    private fun packetParameters() = PacketParameters(
-        uin = client.uin,
-        uid = client.uid,
-        subAppId = client.subAppId,
-        currentVersion = client.currentVersion,
-        d2 = client.d2,
-        d2Key = client.d2Key,
-        a2 = client.a2,
-        guid = client.guid,
-        ntCoreVersion = when (client) {
-            is LagrangeClient -> null
-            is KuromeClient -> 100
-        },
-    )
+    private suspend fun packetParameters(): PacketParameters {
+        val authenticating = currentCoroutineContext()[SessionBinding]?.authenticating == true
+        return PacketParameters(
+            uin = client.uin,
+            uid = client.uid,
+            subAppId = client.subAppId,
+            currentVersion = client.currentVersion,
+            d2 = if (authenticating) ByteArray(0) else client.d2,
+            d2Key = if (authenticating) ByteArray(16) else client.d2Key,
+            a2 = if (authenticating) ByteArray(0) else client.a2,
+            guid = client.guid,
+            ntCoreVersion = when (client) {
+                is LagrangeClient -> null
+                is KuromeClient -> 100
+            },
+        )
+    }
 
     private suspend fun handleReceiveLoop(session: ConnectionSession) {
         while (currentCoroutineContext().isActive) {
@@ -268,12 +319,45 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
 
 private sealed interface ConnectionState {
     data object Connecting : ConnectionState
+    data object Restarting : ConnectionState
+    data class Restoring(val connection: ConnectionSession) : ConnectionState
     data class Connected(val session: ConnectionSession) : ConnectionState
     data class Closed(val cause: IOException) : ConnectionState
 }
 
+private val ConnectionState.session: ConnectionSession?
+    get() = when (this) {
+        is ConnectionState.Connected -> session
+        is ConnectionState.Restoring -> connection
+        else -> null
+    }
+
+private class ConnectionRestart(val prepare: suspend () -> Unit) {
+    val result = CompletableDeferred<Unit>()
+    private val execution = atomic<Job?>(null)
+
+    suspend fun execute(block: suspend () -> Unit) = coroutineScope {
+        val task = async(start = CoroutineStart.LAZY) { block() }
+        execution.value = task
+        val cancellation = result.invokeOnCompletion { if (result.isCancelled) task.cancel() }
+        try {
+            task.await()
+        } finally {
+            cancellation.dispose()
+        }
+    }
+
+    suspend fun cancelAndJoin() {
+        result.cancel()
+        execution.value?.cancelAndJoin()
+    }
+}
+
 // Online initialization and heartbeats must never migrate to a newer connection.
-private class SessionBinding(val session: ConnectionSession) : AbstractCoroutineContextElement(Key) {
+private class SessionBinding(
+    val session: ConnectionSession,
+    val authenticating: Boolean = false,
+) : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<SessionBinding>
 }
 

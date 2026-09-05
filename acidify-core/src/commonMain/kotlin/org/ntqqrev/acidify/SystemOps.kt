@@ -19,21 +19,30 @@ import kotlin.time.Duration.Companion.hours
  * 若确定 Session 有效且不希望进行二维码登录，可调用此方法。
  * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
  */
-suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
+suspend fun AbstractBot.online(preloadContacts: Boolean = false) = loginMutex.withLock {
+    onlineInternal(preloadContacts)
+}
+
+internal suspend fun AbstractBot.onlineInternal(preloadContacts: Boolean = false) {
     client.sendOnlinePacket()
-    isLoggedIn = true
     logger.i { "发送上线包成功" }
     client.doPostOnlineLogic()
+    completeOnline(preloadContacts)
+}
 
-    eventCollectJob = launch {
+internal suspend fun AbstractBot.completeOnline(preloadContacts: Boolean = false) {
+    isLoggedIn = true
+    if (eventCollectJob?.isActive != true) eventCollectJob = launch {
         while (currentCoroutineContext().isActive) {
             val sso = client.pushChannel.receive()
             val transformer = transformers[sso.command]
             if (transformer != null) {
                 try {
-                    val parsed = transformer.parse(this@online, sso.response)
+                    val parsed = transformer.parse(this@completeOnline, sso.response)
                     logger.v { "由推送 ${sso.command} 解析出事件：$parsed" }
                     parsed.forEach { sharedEventFlow.emit(it) }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     logger.e(e) { "处理推送 ${sso.command} 时出现错误" }
                 }
@@ -41,13 +50,14 @@ suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
         }
     }
 
-    refreshFaceDetailsMap()
-
-    faceDetailRefreshJob = launch {
-        while (currentCoroutineContext().isActive) {
-            delay(1.hours)
-            logger.d { "开始定时刷新表情信息" }
-            refreshFaceDetailsMap()
+    if (faceDetailRefreshJob?.isActive != true) {
+        refreshFaceDetailsMap()
+        faceDetailRefreshJob = launch {
+            while (currentCoroutineContext().isActive) {
+                delay(1.hours)
+                logger.d { "开始定时刷新表情信息" }
+                refreshFaceDetailsMap()
+            }
         }
     }
 
@@ -66,15 +76,21 @@ suspend fun AbstractBot.online(preloadContacts: Boolean = false) {
 /**
  * 下线 Bot，释放资源。
  */
-suspend fun AbstractBot.offline() {
-    client.doPreOfflineLogic()
-    eventCollectJob?.cancel()
-    eventCollectJob = null
-    faceDetailRefreshJob?.cancel()
-    faceDetailRefreshJob = null
-    client.callService(BotOffline)
-    logger.i { "用户 $uin 已下线" }
-    client.packetContext.closeConnection()
+suspend fun AbstractBot.offline() = loginMutex.withLock {
+    try {
+        client.doPreOfflineLogic()
+        client.callService(BotOffline)
+        logger.i { "用户 $uin 已下线" }
+    } finally {
+        isLoggedIn = false
+        withContext(NonCancellable) {
+            eventCollectJob?.cancelAndJoin()
+            eventCollectJob = null
+            faceDetailRefreshJob?.cancelAndJoin()
+            faceDetailRefreshJob = null
+            client.packetContext.closeConnection()
+        }
+    }
 }
 
 /**

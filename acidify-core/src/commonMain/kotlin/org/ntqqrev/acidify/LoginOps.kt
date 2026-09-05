@@ -3,12 +3,13 @@ package org.ntqqrev.acidify
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.withLock
 import org.ntqqrev.acidify.event.AndroidSessionStoreUpdatedEvent
 import org.ntqqrev.acidify.event.QRCodeGeneratedEvent
 import org.ntqqrev.acidify.event.QRCodeStateQueryEvent
 import org.ntqqrev.acidify.event.SessionStoreUpdatedEvent
+import org.ntqqrev.acidify.exception.SessionRenewalException
 import org.ntqqrev.acidify.exception.WtLoginException
 import org.ntqqrev.acidify.internal.crypto.pow.POW
 import org.ntqqrev.acidify.internal.crypto.tea.TEA
@@ -21,6 +22,7 @@ import org.ntqqrev.acidify.internal.service.system.WtLogin
 import org.ntqqrev.acidify.internal.util.*
 import org.ntqqrev.acidify.struct.QRCodeState
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * 发起二维码登录请求。过程中会触发事件：
@@ -36,6 +38,12 @@ suspend fun Bot.qrCodeLogin(
     queryInterval: Long = 3000L,
     preloadContacts: Boolean = false,
     unusualSig: ByteArray? = null // undocumented, for internal use only
+) = loginMutex.withLock { qrCodeLoginInternal(queryInterval, preloadContacts, unusualSig) }
+
+private suspend fun Bot.qrCodeLoginInternal(
+    queryInterval: Long,
+    preloadContacts: Boolean,
+    unusualSig: ByteArray? = null,
 ) {
     require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
 
@@ -99,20 +107,14 @@ suspend fun Bot.qrCodeLogin(
         val result = client.callService(WtLogin.PCLogin)
         client.sessionStore.apply {
             uid = result.uid
-            a2 = result.a2
-            d2 = result.d2
-            d2Key = result.d2Key
-            encryptedA1 = result.encryptedA1
+            updateCredentials(result.encryptedA1, result.a2, result.d2, result.d2Key)
         }
     } else {
         when (val result = client.callService(NTLogin.UnusualEasyLogin)) {
             is NTLogin.UnusualEasyLogin.Result.Success -> {
-                sessionStore.apply {
-                    encryptedA1 = result.tickets.a1
-                    a2 = result.tickets.a2
-                    d2 = result.tickets.d2
-                    d2Key = result.tickets.d2Key
-                }
+                sessionStore.updateCredentials(
+                    result.tickets.a1, result.tickets.a2, result.tickets.d2, result.tickets.d2Key
+                )
             }
 
             is NTLogin.UnusualEasyLogin.Result.Failure -> throw WtLoginException(
@@ -123,7 +125,48 @@ suspend fun Bot.qrCodeLogin(
         }
     }
     sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
-    online(preloadContacts)
+    onlineInternal(preloadContacts)
+}
+
+/**
+ * 使用 A1 更新登录凭据并在新连接上重新上线，不发送下线包，也不自动发起二维码验证。
+ * 成功取得凭据时触发 [SessionStoreUpdatedEvent]，即使后续上线失败也保留新凭据。
+ * @throws SessionRenewalException A1 不可用、被服务器拒绝或需要设备验证
+ */
+suspend fun Bot.renewSession() = loginMutex.withLock { renewSessionInternal() }
+
+private suspend fun Bot.renewSessionInternal(preloadContacts: Boolean = false) {
+    if (sessionStore.encryptedA1.isEmpty()) {
+        throw SessionRenewalException(-1, "MissingA1", "没有可用于续约的 A1，请重新登录")
+    }
+    withTimeout(60.seconds) {
+        client.packetContext.reconnectAndAuthenticate {
+            val keyExchange = client.callService(KeyExchange)
+            sessionStore.keySig = keyExchange.sessionTicket
+            sessionStore.exchangeKey = keyExchange.sessionKey
+            sessionStore.unusualCookies = null
+            when (val result = client.callService(NTLogin.EasyLogin)) {
+                is NTLogin.EasyLogin.Result.Success -> {
+                    // Commit and publish before registration, so a later failure cannot lose fresh tickets.
+                    withContext(NonCancellable) {
+                        sessionStore.updateCredentials(
+                            result.tickets.a1, result.tickets.a2, result.tickets.d2, result.tickets.d2Key
+                        )
+                        sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
+                    }
+                }
+
+                is NTLogin.EasyLogin.Result.UnusualDevice -> throw SessionRenewalException(
+                    140022011, "UnusualDevice", "续约需要异常设备确认，请重新登录", result.unusualSig
+                )
+
+                is NTLogin.EasyLogin.Result.Failure -> throw SessionRenewalException(
+                    result.error.errCode.toInt(), result.error.strTipsTitle, result.error.strTipsContent
+                )
+            }
+        }
+    }
+    completeOnline(preloadContacts)
 }
 
 /**
@@ -132,13 +175,13 @@ suspend fun Bot.qrCodeLogin(
  * @param queryInterval 查询间隔（单位 ms），不能小于 `1000`
  * @param preloadContacts 是否预加载好友和群信息以初始化内存缓存
  */
-suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = false) {
+suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = false) = loginMutex.withLock {
     require(queryInterval >= 1000L) { "查询间隔不能小于 1000 毫秒" }
 
     if (sessionStore.a2.isNotEmpty()) {
         try {
-            online(preloadContacts)
-            return
+            onlineInternal(preloadContacts)
+            return@withLock
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -147,52 +190,28 @@ suspend fun Bot.login(queryInterval: Long = 3000L, preloadContacts: Boolean = fa
     }
 
     if (sessionStore.encryptedA1.isNotEmpty()) {
-        val easyLoginResult = try {
-            val keyExchange = client.callService(KeyExchange)
-            sessionStore.keySig = keyExchange.sessionTicket
-            sessionStore.exchangeKey = keyExchange.sessionKey
-            client.callService(NTLogin.EasyLogin)
+        val previousA2 = sessionStore.a2
+        try {
+            renewSessionInternal(preloadContacts)
+            return@withLock
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
-            logger.w(e) { "初始化 NTLogin 或 EasyLogin 失败，回退到二维码登录" }
-            null
-        }
-
-        when (easyLoginResult) {
-            is NTLogin.EasyLogin.Result.Success -> {
-                logger.i { "EasyLogin 成功" }
-                sessionStore.apply {
-                    encryptedA1 = easyLoginResult.tickets.a1
-                    a2 = easyLoginResult.tickets.a2
-                    d2 = easyLoginResult.tickets.d2
-                    d2Key = easyLoginResult.tickets.d2Key
-                }
-                sharedEventFlow.emit(SessionStoreUpdatedEvent(sessionStore))
-                online(preloadContacts)
-                return
-            }
-
-            is NTLogin.EasyLogin.Result.UnusualDevice -> {
+        } catch (e: SessionRenewalException) {
+            if (e.unusualSig != null) {
                 logger.i { "EasyLogin 需要异常设备确认，开始二维码验证" }
-                qrCodeLogin(queryInterval, preloadContacts, easyLoginResult.unusualSig)
-                return
+                qrCodeLoginInternal(queryInterval, preloadContacts, e.unusualSig)
+                return@withLock
             }
-
-            is NTLogin.EasyLogin.Result.Failure -> {
-                val error = easyLoginResult.error
-                logger.w {
-                    "EasyLogin 失败 (${error.errCode}): ${error.strTipsTitle} ${error.strTipsContent}"
-                }
-            }
-
-            null -> Unit
+            logger.w(e) { "EasyLogin 被拒绝，回退到二维码登录" }
+        } catch (e: Exception) {
+            if (sessionStore.a2 !== previousA2) throw e
+            logger.w(e) { "初始化 NTLogin 或 EasyLogin 失败，回退到二维码登录" }
         }
     }
 
     logger.i { "无可用登录票据，尝试二维码登录" }
     sessionStore.clear()
-    qrCodeLogin(queryInterval, preloadContacts)
+    qrCodeLoginInternal(queryInterval, preloadContacts)
 }
 
 /**

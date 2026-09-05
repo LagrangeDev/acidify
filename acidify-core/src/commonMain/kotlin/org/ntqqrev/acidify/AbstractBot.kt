@@ -47,6 +47,7 @@ sealed class AbstractBot(
     internal lateinit var faceDetailMapMut: Map<String, BotFaceDetail>
     internal var eventCollectJob: Job? = null
     internal var faceDetailRefreshJob: Job? = null
+    internal val loginMutex = Mutex()
     internal val friendCache = BotEntityCache(
         bot = this,
         updateCache = { bot -> bot.fetchFriends().associateBy { it.uin } },
