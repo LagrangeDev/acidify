@@ -15,7 +15,7 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
     "signApiUrl": "...",
     "pcLagrangeSignToken": "",
     "androidUseLegacySign": false,
-    "autoReLogin": true
+    "autoRenewSession": true
   },
   "milky": {
     "http": {
@@ -121,7 +121,7 @@ Yogurt 使用的协议类型。可选值有：
 
 如果你在使用兼容 ICQQ 的签名服务时遇到登录问题，可以尝试将该选项设置为 `true`。如果你不确定使用的是否为旧版 API，请保持默认值 `false`，出现登录问题时再尝试将其设置为 `true`。
 
-### `protocol.autoReLogin`
+### `protocol.autoRenewSession`
 
 默认为 `true`，仅对 PC 协议生效。Yogurt 会在凭据获取或刷新满 15 天后使用 A1 自动续约并重新上线。
 
