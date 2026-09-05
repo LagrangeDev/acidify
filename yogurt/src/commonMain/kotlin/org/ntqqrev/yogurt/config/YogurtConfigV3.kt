@@ -22,6 +22,7 @@ data class YogurtConfigV3(
         val signApiUrl: String = "",
         val pcLagrangeSignToken: String = "",
         val androidUseLegacySign: Boolean = false,
+        val autoRenewSession: Boolean = true,
     )
 
     @Serializable

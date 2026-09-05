@@ -155,6 +155,7 @@ object YogurtApp {
 
             launch {
                 botLogin()
+                configureSessionAutoRenewal()
             }
         }
     }
