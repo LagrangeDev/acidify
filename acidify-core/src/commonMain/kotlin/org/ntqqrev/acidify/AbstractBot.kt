@@ -151,7 +151,7 @@ sealed class AbstractBot(
      */
     @UnsafeAcidifyApi
     suspend fun sendPacket(cmd: String, payload: ByteArray, timeoutMillis: Long = 10000L): SsoResponse {
-        val sequence = client.ssoSequence++
+        val sequence = client.ssoSequence.getAndIncrement()
         return client.packetContext.sendPacket(
             command = cmd,
             sequence = sequence,

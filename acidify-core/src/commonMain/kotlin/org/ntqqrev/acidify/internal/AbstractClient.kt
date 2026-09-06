@@ -39,7 +39,7 @@ internal sealed class AbstractClient(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    var ssoSequence by atomic(Random.nextInt(0x10000, 0x20000))
+    val ssoSequence = atomic(Random.nextInt(0x10000, 0x20000))
 
     val flashTransferContext = FlashTransferContext(this)
     val highwayContext = HighwayContext(this)
@@ -75,7 +75,7 @@ internal sealed class AbstractClient(
     }
 
     suspend fun <T, R> callService(service: Service<T, R>, payload: T, timeout: Long = 10_000L): R {
-        val sequence = ssoSequence++
+        val sequence = ssoSequence.getAndIncrement()
         val byteArray = service.build(this, payload)
         val resp = packetContext.sendPacket(
             command = service.cmd,
