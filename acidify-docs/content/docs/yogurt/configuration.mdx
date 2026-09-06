@@ -123,9 +123,7 @@ Yogurt 使用的协议类型。可选值有：
 
 ### `protocol.autoRenewSession`
 
-默认为 `true`，仅对 PC 协议生效。Yogurt 会在凭据获取或刷新满 15 天后使用 A1 自动续约并重新上线。
-
-旧版 SessionStore 未记录凭据获取时间时，上线后会随机等待 1～5 分钟进行首次续约。临时故障会退避重试；A1 被拒绝或需要设备验证时会暂停自动尝试并记录错误，需要手动重新登录。设置为 `false` 可关闭自动续约。
+默认为 `true`，仅对 PC 协议生效。Yogurt 会在凭据获取或刷新满 15 天后使用 A1 自动续约并重新上线。旧版 SessionStore 未记录凭据获取时间，在上线后会随机等待 1～5 分钟进行首次续约。
 
 ### `milky.http` 和 `milky.webhook.endpoints`
 

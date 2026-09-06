@@ -109,9 +109,7 @@ Bot 的所有功能需要在登录后才能使用。调用 [`Bot.login`](/kdoc/a
 
 PC Bot 可以调用 `bot.renewSession()`，使用已有 A1 获取新的 A1/A2/D2/D2Key 并在新连接上重新上线。无需先调用 `offline()` 或随后再次调用 `online()`；续约不会重复启动事件消费任务。
 
-获取新凭据时会更新 `sessionStore.credentialsUpdatedAtEpochSeconds`（Unix 秒）并触发 `SessionStoreUpdatedEvent`，请监听并保存会话。存量会话的时间戳为 `null`，表示实际获取时间未知。即使之后注册上线失败，已取得的新凭据仍会保留。
-
-续约被拒绝、缺少 A1 或需要设备验证时抛出 `SessionRenewalException`；该方法不会自动弹出二维码。网络等临时故障使用原始异常。core 不内置周期调度，使用方可自行安排调用，Yogurt 默认提供自动续约。
+获取新凭据时会更新 `sessionStore.credentialsUpdatedAtEpochSeconds`（Unix 秒）并触发 `SessionStoreUpdatedEvent`，请监听并保存会话。存量会话的时间戳为 `null`，表示实际获取时间未知。即使之后注册上线失败，已取得的新凭据仍会保留。续约被拒绝、缺少 A1 或需要设备验证时会抛出 `SessionRenewalException`。
 
 ### 好友和群聊管理
 
