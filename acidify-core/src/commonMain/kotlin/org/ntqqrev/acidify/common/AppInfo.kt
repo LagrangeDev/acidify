@@ -74,6 +74,44 @@ data class AppInfo(
             ntLoginType = 1,
         )
 
+        val Mac_52194 = AppInfo(
+            os = "Mac",
+            kernel = "Darwin",
+            vendorOs = "macos",
+            currentVersion = "7.0.0-52194",
+            miscBitmap = 32764,
+            ptVersion = "2.0.0",
+            ssoVersion = 23,
+            packageName = "com.tencent.qq",
+            wtLoginSdk = "nt.wtlogin.0.0.1",
+            appId = 1600001602,
+            subAppId = 537379435,
+            appClientVersion = 52194,
+            mainSigMap = 169742560,
+            subSigMap = 0,
+            ntLoginType = 5,
+        )
+
+        val Mac_52892 = AppInfo(
+            os = "Mac",
+            kernel = "Darwin",
+            vendorOs = "macos",
+            currentVersion = "7.0.0-52892",
+            miscBitmap = 32764,
+            ptVersion = "2.0.0",
+            ssoVersion = 23,
+            packageName = "com.tencent.qq",
+            wtLoginSdk = "nt.wtlogin.0.0.1",
+            appId = 1600001602,
+            subAppId = 537382843,
+            appClientVersion = 52892,
+            mainSigMap = 169742560,
+            subSigMap = 0,
+            ntLoginType = 5,
+        )
+
         val Linux = Linux_39038
+
+        val Mac = Mac_52892
     }
 }
