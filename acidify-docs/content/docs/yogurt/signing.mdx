@@ -76,6 +76,65 @@ Content-Type: application/json
 }
 ```
 
+## PC 签名（Lagrange V2）
+
+此节介绍的是 Lagrange V2 签名 API 规范。在使用此种签名 API 时，请将配置文件中的 `protocol.pcLagrangeSignToken` 设为签名服务提供的 Token，并将 `protocol.uin` 设为实际登录的 QQ 号。`protocol.os` 必须为 `Windows`、`Mac` 或 `Linux`，`protocol.password` 可以留空。
+
+此种签名 API 不支持使用 `protocol.version = "fetched"`，必须指定具体的协议版本号，或者使用 `custom` 并提供 `app-info.json` 文件。所用协议类型和版本需要与签名服务相匹配。
+
+设配置文件中的 `protocol.signApiUrl` 为 `$BASE`，`protocol.pcLagrangeSignToken` 为 `$TOKEN`。`$BASE` 应为签名服务的基础地址，Yogurt 会自动追加 `/api/sign/sec-sign` 路径。
+
+### POST `$BASE/api/sign/sec-sign`
+
+提供签名功能，使用 Bearer Token 进行身份验证。
+
+#### 请求示例
+
+```http request
+POST $BASE/api/sign/sec-sign HTTP/1.1
+Authorization: Bearer $TOKEN
+Content-Type: application/json
+
+{
+  "command": "wtlogin.login",
+  "seq": 100,
+  "body": "0123456789abcdef",
+  "uin": 1234567890,
+  "guid": "0123456789abcdef0123456789abcdef",
+  "qua": "V1_LNX_NQ_3.2.19_39038_GW_B"
+}
+```
+
+其中：
+
+- `command` 为待签名数据包的命令名；
+- `seq` 为数据包序列号；
+- `body` 为待签名数据包内容的 HEX 字符串；
+- `uin` 为配置文件中的 `protocol.uin`，是 JSON 数字；
+- `guid` 为当前登录设备的 GUID，以 HEX 字符串表示；
+- `qua` 由协议类型和所用 AppInfo 的版本生成，格式为 `V1_{平台}_NQ_{版本}_GW_B`。平台分别为 `WIN`、`MAC` 或 `LNX`，版本为 `CurrentVersion` 中的 `-` 替换为 `_` 后的字符串。
+
+#### 响应示例
+
+```json
+{
+  "code": 0,
+  "message": "",
+  "value": {
+    "sec_sign": "0123456789abcdef",
+    "sec_token": "0123456789abcdef",
+    "sec_extra": "0123456789abcdef"
+  }
+}
+```
+
+其中：
+
+- `code` 的值为 `0` 表示成功，非 `0` 表示失败；
+- `message` 为错误信息，成功时可以为空字符串，也可以省略或为 `null`；
+- `value` 在成功时必须包含，缺失或为 `null` 时 Yogurt 也会视为签名失败；
+- `value` 中的 `sec_sign`、`sec_token` 和 `sec_extra` 为签名所需字段，必须是 HEX 字符串或空字符串。
+
 ## Android 签名
 
 设配置文件中的 `protocol.signApiUrl` 为 `$BASE`。
