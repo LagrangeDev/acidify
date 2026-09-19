@@ -96,7 +96,7 @@ data class AppInfo(
             os = "Mac",
             kernel = "Darwin",
             vendorOs = "macos",
-            currentVersion = "7.0.0-52892",
+            currentVersion = "7.0.1-52892",
             miscBitmap = 32764,
             ptVersion = "2.0.0",
             ssoVersion = 23,
