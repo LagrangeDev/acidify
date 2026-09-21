@@ -86,7 +86,7 @@ internal sealed class AbstractClient(
             timeoutMillis = timeout,
             requestType = service.ssoRequestType,
             encryptType = service.ssoEncryptType,
-            ssoSecureInfo = try {
+            ssoSecureInfo = if (service.cmd == "HeartBeat.Alive") null else try {
                 getSsoSecureInfo(service.cmd, sequence, byteArray)
             } catch (e: UrlSignException) {
                 if (service.cmd in criticalCommand) {
