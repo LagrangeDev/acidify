@@ -16,6 +16,7 @@ import org.ntqqrev.acidify.exception.UrlSignException
  * @param url 签名服务的 URL 地址
  * @param httpProxy 可选的 HTTP 代理地址，例如 `http://127.0.0.1:7890`
  */
+@Deprecated("请使用 LagrangeUrlSignProvider 以对接 Lagrange V2 Sign API")
 class UrlSignProvider(val url: String, val httpProxy: String? = null) : SignProvider {
     private val signUrl = Url(url)
     private val jsonModule = Json {
@@ -33,7 +34,10 @@ class UrlSignProvider(val url: String, val httpProxy: String? = null) : SignProv
         }
     }
 
-    override suspend fun sign(cmd: String, seq: Int, src: ByteArray): SignResult {
+    override suspend fun sign(cmd: String, seq: Int, src: ByteArray): SignResult? {
+        if (!linuxCommandWhitelist.contains(cmd)) {
+            return null
+        }
         val resp = client.post {
             url(signUrl)
             contentType(ContentType.Application.Json)

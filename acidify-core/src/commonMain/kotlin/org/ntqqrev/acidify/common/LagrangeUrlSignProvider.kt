@@ -36,6 +36,7 @@ class LagrangeUrlSignProvider(
     private val jsonModule = Json {
         ignoreUnknownKeys = true
     }
+    private val isLinuxQua = qua.startsWith("V1_LNX_")
 
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -59,7 +60,11 @@ class LagrangeUrlSignProvider(
         cmd: String,
         seq: Int,
         src: ByteArray
-    ): SignResult {
+    ): SignResult? {
+        // Sign whitelist only applies to Linux QUA
+        if (isLinuxQua && !linuxCommandWhitelist.contains(cmd)) {
+            return null
+        }
         val resp = client.post {
             url {
                 takeFrom(signUrl)
