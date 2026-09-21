@@ -60,6 +60,7 @@ internal sealed class AbstractClient(
     private val criticalCommand = setOf(
         "wtlogin.trans_emp",
         "wtlogin.login",
+        "MessageSvc.PbSendMsg",
     )
 
     suspend fun doPostOnlineLogic() {
