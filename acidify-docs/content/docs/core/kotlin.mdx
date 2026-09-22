@@ -56,9 +56,9 @@ val sessionStore = if (File("session-store.json").exists()) {
     SessionStore.empty()
 }
 
-// 创建一个 UrlSignProvider 实例，参数为签名服务的 URL
-// 如果要对接新版 Lagrange V2 Sign API，请使用 LagrangeUrlSignProvider
-val signProvider = UrlSignProvider("...")
+val signProvider = LagrangeUrlSignProvider(
+    // url, token, uin 等参数
+)
 val scope = CoroutineScope(SupervisorJob())
 
 // 创建 Bot 实例
@@ -80,7 +80,7 @@ val bot = Bot(
 - `sessionStore`：用于存储和加载会话数据的存储对象。可以通过以下方式提供：
   - [`SessionStore.empty`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-session-store/empty.html) 方法创建一个空的 [`SessionStore`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-session-store/index.html)；
   - [`SessionStore.fromJson`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-session-store/from-json.html) 方法可以从 JSON 字符串中解析 `SessionStore`。同样，也可以通过 [`toJson`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-session-store/to-json.html) 方法将 `SessionStore` 序列化为 JSON 字符串以便存储。
-- `signProvider`：QQ 要求对部分数据包进行签名，Acidify 并不内置签名算法的实现，而是通过 [`SignProvider`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-sign-provider/index.html) 接口来要求使用者提供签名实现。`acidify-core` 提供了 [`UrlSignProvider`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-url-sign-provider/index.html) 类，可以通过 URL 获取签名。
+- `signProvider`：QQ 要求对部分数据包进行签名，Acidify 并不内置签名算法的实现，而是通过 [`SignProvider`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-sign-provider/index.html) 接口来要求使用者提供签名实现。`acidify-core` 提供了 [`LagrangeUrlSignProvider`](/kdoc/acidify-core/org.ntqqrev.acidify.common/-lagrange-url-sign-provider/index.html) 类，用于对接 Lagrange V2 Sign API。
 - `scope`：用于 Bot 运行的 [`CoroutineScope`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/)。
 - `minLogLevel`：日志的最低输出级别，低于该级别的日志将不会被输出。
 - `logHandler`：日志处理器，用于处理输出的日志信息。你可以自行实现该接口。`acidify-core` 提供了两种简单的内置日志处理器：

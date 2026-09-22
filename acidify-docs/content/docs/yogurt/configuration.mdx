@@ -56,7 +56,7 @@ Yogurt 在启动后，会在当前工作目录下生成 `config.json` 文件，�
 
 在使用 `AndroidPhone` 或 `AndroidPad` 协议时，需要同时提供 `uin` 和 `password` 来登录。
 
-在使用 `Windows`、`Mac` 或 `Linux` 协议，并且 `pcLagrangeSignToken` 不为空时，也需要提供 `uin`。`password` 可以留空。
+在使用 `Windows`、`Mac` 或 `Linux` 协议时需要提供 `uin`，但 `password` 可以留空。
 
 {/* prettier-ignore */}
 <Callout type="warning">
@@ -80,8 +80,7 @@ Yogurt 使用的协议类型。可选值有：
 
 使用的协议版本。支持以下几种配置方式：
 
-- `fetched`：启动时从签名服务获取最新版本。只有在使用 `Windows`、`Mac`、`Linux` 协议时可用。
-- 指定具体的协议版本号，例如 `39038`、`9.1.60`。目前仅有如下几种内置的协议版本可用：
+- 指定具体的协议版本号。目前仅有如下几种内置的协议版本可用：
   - `Linux` 的：
     - `39038` 版本
     - `46494` 版本
@@ -110,13 +109,7 @@ Yogurt 使用的协议类型。可选值有：
 
 ### `protocol.pcLagrangeSignToken`
 
-默认为空。若填写该字段，则 Yogurt 会在使用 `Windows`、`Mac` 或 `Linux` 协议时，使用新版 Lagrange Sign API 来获取签名。如果你不确定是否使用的是新版 API，请保持该字段为空。
-
-{/* prettier-ignore */}
-<Callout type="warning">
-使用新版 Lagrange Sign API 时，将不能使用 `fetched` 版本，必须指定具体的协议版本号，或者使用 `custom` 版本并提供 `app-info.json` 文件。此外，还需要填写 `uin` 字段，且 `uin` 需要与实际登录的 QQ 号一致。`password` 字段可以留空。
-</Callout>
-{/* prettier-ignore-end */}
+对接 Lagrange V2 风格的 Sign API 时使用的访问令牌，请咨询签名服务提供者获取。
 
 ### `protocol.androidUseLegacySign`
 
