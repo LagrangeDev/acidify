@@ -37,6 +37,7 @@ class LagrangeUrlSignProvider(
         ignoreUnknownKeys = true
     }
     private val isLinuxQua = qua.startsWith("V1_LNX_")
+    private val isMacQua = qua.startsWith("V1_MAC_")
 
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -61,8 +62,10 @@ class LagrangeUrlSignProvider(
         seq: Int,
         src: ByteArray
     ): SignResult? {
-        // Sign whitelist only applies to Linux QUA
         if (isLinuxQua && !linuxCommandWhitelist.contains(cmd)) {
+            return null
+        }
+        if (isMacQua && !macCommandWhitelist.contains(cmd)) {
             return null
         }
         val resp = client.post {
