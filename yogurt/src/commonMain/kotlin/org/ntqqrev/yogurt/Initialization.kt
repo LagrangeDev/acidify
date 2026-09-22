@@ -14,60 +14,37 @@ import org.ntqqrev.yogurt.YogurtApp.config
 import org.ntqqrev.yogurt.YogurtApp.t
 import org.ntqqrev.yogurt.util.logHandler
 
-suspend fun Application.initializePC(): Bot = withFs {
+fun Application.initializePC(): Bot = withFs {
+    require(config.protocol.uin != 0L) {
+        "请在配置文件中填写 uin 字段"
+    }
+
     val sessionStore: SessionStore = if (sessionStorePath.exists) {
         SessionStore.fromJson(sessionStorePath.readText())
     } else SessionStore.empty()
-
-    var signProvider: SignProvider
-    var appInfo: AppInfo
-
-    fun readCustomAppInfo(): AppInfo {
-        return if (customAppInfoPath.exists) {
+    val appInfo: AppInfo = when (config.protocol.version) {
+        "custom" -> if (customAppInfoPath.exists) {
             AppInfo.fromJson(customAppInfoPath.readText())
         } else {
             throw IllegalStateException("未在 $customAppInfoPath 下找到自定义 AppInfo 文件")
         }
-    }
-
-    fun readBundledAppInfo(): AppInfo {
-        return bundledPCAppInfo["${config.protocol.os}/${config.protocol.version}"]
+        else -> bundledPCAppInfo["${config.protocol.os}/${config.protocol.version}"]
             ?: throw IllegalStateException("未找到匹配的内置 AppInfo，请检查配置的 OS 和 Version 是否正确")
     }
-
-    if (config.protocol.pcLagrangeSignToken.isNotEmpty()) {
-        require(config.protocol.uin != 0L) {
-            "使用 Lagrange Sign API 时，请在配置文件中填写 uin 字段"
-        }
-        appInfo = when (config.protocol.version) {
-            "fetched" -> throw IllegalStateException("在使用 Lagrange Sign API 时，必须显式指定 AppInfo 版本或自行提供 AppInfo 文件，无法使用 fetched 版本")
-            "custom" -> readCustomAppInfo()
-            else -> readBundledAppInfo()
-        }
-        signProvider = LagrangeUrlSignProvider(
-            url = config.protocol.signApiUrl,
-            token = config.protocol.pcLagrangeSignToken,
-            uin = config.protocol.uin,
-            guid = sessionStore.guid.toHexString(),
-            qua = "V1_${
-                when (config.protocol.os) {
-                    "Windows" -> "WIN"
-                    "Mac" -> "MAC"
-                    "Linux" -> "LNX"
-                    else -> throw IllegalStateException()
-                }
-            }_NQ_${appInfo.currentVersion.replace('-', '_')}_GW_B",
-        )
-    } else {
-        signProvider = UrlSignProvider(config.protocol.signApiUrl)
-        appInfo = when (config.protocol.version) {
-            "fetched" -> signProvider.getAppInfo()
-                ?: throw IllegalStateException("通过 Sign API 获取 AppInfo 失败，请检查地址是否正确并且支持获取 AppInfo 功能")
-
-            "custom" -> readCustomAppInfo()
-            else -> readBundledAppInfo()
-        }
-    }
+    val signProvider = LagrangeUrlSignProvider(
+        url = config.protocol.signApiUrl,
+        token = config.protocol.pcLagrangeSignToken,
+        uin = config.protocol.uin,
+        guid = sessionStore.guid.toHexString(),
+        qua = "V1_${
+            when (appInfo.os) {
+                "Windows" -> "WIN"
+                "Mac" -> "MAC"
+                "Linux" -> "LNX"
+                else -> throw IllegalStateException()
+            }
+        }_NQ_${appInfo.currentVersion.replace('-', '_')}_GW_B",
+    )
 
     t.println("使用协议 ${appInfo.os} ${appInfo.currentVersion} (AppId: ${appInfo.subAppId})")
     val bot = Bot(
@@ -84,7 +61,7 @@ suspend fun Application.initializePC(): Bot = withFs {
     return bot
 }
 
-suspend fun Application.initializeAndroid(): AndroidBot = withFs {
+fun Application.initializeAndroid(): AndroidBot = withFs {
     require(config.protocol.uin != 0L && config.protocol.password.isNotEmpty()) {
         "使用 Android 协议登录时，请在配置文件中填写 uin 和 password 字段"
     }

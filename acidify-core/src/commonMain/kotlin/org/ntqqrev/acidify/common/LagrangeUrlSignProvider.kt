@@ -16,7 +16,6 @@ import org.ntqqrev.acidify.exception.UrlSignException
 
 /**
  * 通过 HTTP 接口进行签名的 [SignProvider] 实现，用于对接 Lagrange V2 Sign API。
- * 要对接普通的 Sign API，请使用 [UrlSignProvider]。
  * @param url 签名服务的 URL 地址
  * @param token 访问签名服务所需的 Token
  * @param uin 访问签名服务所用的 uin（QQ 号）
