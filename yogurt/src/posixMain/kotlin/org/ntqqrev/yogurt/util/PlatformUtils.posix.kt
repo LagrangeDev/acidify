@@ -9,6 +9,8 @@ import platform.posix.errno
 import platform.posix.strerror
 import platform.posix.system
 
+internal actual fun normalizeFileUriPath(path: String): String = path
+
 actual fun executeCommand(vararg args: String): CommandExecutionResult = withFs {
     withCommandTempFile { stdout, stderr ->
         require(args.isNotEmpty()) { "Command arguments must not be empty." }

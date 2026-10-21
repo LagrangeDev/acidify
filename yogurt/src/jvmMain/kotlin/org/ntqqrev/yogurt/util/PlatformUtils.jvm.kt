@@ -3,6 +3,11 @@ package org.ntqqrev.yogurt.util
 import org.ntqqrev.ktfs.withFs
 import java.io.File
 
+private val isWindows: Boolean = File.separatorChar == '\\'
+
+internal actual fun normalizeFileUriPath(path: String): String =
+    if (isWindows) stripWindowsDrivePrefix(path) else path
+
 actual fun executeCommand(vararg args: String): CommandExecutionResult = withFs {
     withCommandTempFile { stdout, stderr ->
         require(args.isNotEmpty()) { "Command arguments must not be empty." }

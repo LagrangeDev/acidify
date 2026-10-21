@@ -24,7 +24,7 @@ private val httpClient = HttpClient()
 suspend fun resolveUri(uri: String): MediaSource = withContext(Dispatchers.IO) {
     when {
         uri.startsWith("file://") -> withFs {
-            val filePath = Path(uri.removePrefix("file://").decodeURLPart())
+            val filePath = Path(normalizeFileUriPath(uri.removePrefix("file://").decodeURLPart()))
             if (!filePath.exists) {
                 throw IOException("File not found: $filePath")
             }
