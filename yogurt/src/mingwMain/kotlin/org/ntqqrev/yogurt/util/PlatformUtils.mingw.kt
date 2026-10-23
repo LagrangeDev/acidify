@@ -7,6 +7,8 @@ import org.ntqqrev.ktfs.withFs
 import platform.windows.*
 import platform.windows.CloseHandle as closeHandle
 
+internal actual fun normalizeFileUriPath(path: String): String = stripWindowsDrivePrefix(path)
+
 actual fun executeCommand(vararg args: String): CommandExecutionResult =
     withCommandTempFile { stdout, stderr ->
         memScoped {
