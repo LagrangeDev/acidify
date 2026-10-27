@@ -127,7 +127,8 @@ internal class MessageBuildingContext(
                 senderUin = replied.senderUin,
                 time = replied.timestamp,
                 flag = 0,
-                elems = replied.raw.messageBody.richText.elems,
+                // 不嵌入原消息中的引用，避免连续回复导致引用链逐轮增长
+                elems = replied.raw.messageBody.richText.elems.filterNot { it.srcMsg != null },
                 pbReserve = SourceMsgResvAttr(
                     oriMsgType = 2,
                     sourceMsgId = replied.messageUid,
