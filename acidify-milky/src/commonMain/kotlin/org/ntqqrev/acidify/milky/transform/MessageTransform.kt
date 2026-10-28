@@ -3,6 +3,7 @@ package org.ntqqrev.acidify.milky.transform
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
 import org.ntqqrev.acidify.message.*
@@ -24,9 +25,11 @@ suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): Inco
                 messageSeq = msg.sequence,
                 senderId = msg.senderUin,
                 time = msg.timestamp,
-                segments = msg.segments.map {
-                    async { transformIncomingSegment(it) }
-                }.awaitAll(),
+                segments = coroutineScope {
+                    msg.segments.map {
+                        async { transformIncomingSegment(it) }
+                    }.awaitAll()
+                },
                 friend = friend.toMilkyEntity()
             )
         }
@@ -39,9 +42,11 @@ suspend fun MilkyContext.transformIncomingMessage(msg: BotIncomingMessage): Inco
                 messageSeq = msg.sequence,
                 senderId = msg.senderUin,
                 time = msg.timestamp,
-                segments = msg.segments.map {
-                    async { transformIncomingSegment(it) }
-                }.awaitAll(),
+                segments = coroutineScope {
+                    msg.segments.map {
+                        async { transformIncomingSegment(it) }
+                    }.awaitAll()
+                },
                 group = group.toMilkyEntity(),
                 groupMember = member.toMilkyEntity(),
             )
@@ -57,9 +62,11 @@ suspend fun MilkyContext.transformForwardedMessage(msg: BotForwardedMessage): In
         senderName = msg.senderName,
         avatarUrl = msg.avatarUrl,
         time = msg.timestamp,
-        segments = msg.segments.map { segment ->
-            async { transformIncomingSegment(segment) }
-        }.awaitAll()
+        segments = coroutineScope {
+            msg.segments.map { segment ->
+                async { transformIncomingSegment(segment) }
+            }.awaitAll()
+        }
     )
 }
 
@@ -99,9 +106,11 @@ suspend fun MilkyContext.transformIncomingSegment(segment: BotIncomingSegment): 
                 senderId = segment.senderUin,
                 senderName = segment.senderName,
                 time = segment.timestamp,
-                segments = segment.segments.map {
-                    async { transformIncomingSegment(it) }
-                }.awaitAll(),
+                segments = coroutineScope {
+                    segment.segments.map {
+                        async { transformIncomingSegment(it) }
+                    }.awaitAll()
+                },
             )
         )
 
@@ -287,9 +296,11 @@ suspend fun MilkyContext.transformOutgoingSegment(
                 BotOutgoingSegment.Forward.Node(
                     senderUin = msg.userId,
                     senderName = msg.senderName,
-                    segments = msg.segments.map { seg ->
-                        async { transformOutgoingSegment(scene, peerUin, seg) }
-                    }.awaitAll(),
+                    segments = coroutineScope {
+                        msg.segments.map { seg ->
+                            async { transformOutgoingSegment(scene, peerUin, seg) }
+                        }.awaitAll()
+                    },
                     timestamp = msg.time ?: Clock.System.now().epochSeconds,
                 )
             }
@@ -348,9 +359,11 @@ suspend fun MilkyContext.transformEssenceMessage(msg: BotEssenceMessage): GroupE
         operatorId = msg.operatorUin,
         operatorName = msg.operatorName,
         operationTime = msg.operationTime,
-        segments = msg.segments.map { segment ->
-            async { transformEssenceSegment(segment) }
-        }.awaitAll()
+        segments = coroutineScope {
+            msg.segments.map { segment ->
+                async { transformEssenceSegment(segment) }
+            }.awaitAll()
+        }
     )
 }
 

@@ -2,6 +2,7 @@ package org.ntqqrev.acidify.milky.api.handler
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.milky.api.MilkyApiException
 import org.ntqqrev.acidify.milky.api.define
@@ -92,12 +93,16 @@ val GetGroupMemberInfo = ApiEndpoint.GetGroupMemberInfo.define {
 val GetPeerPins = ApiEndpoint.GetPeerPins.define {
     val pins = bot.getPins()
     GetPeerPinsOutput(
-        friends = pins.friendUins.map { friendUin ->
-            async { bot.getFriend(friendUin)?.toMilkyEntity() }
-        }.awaitAll().filterNotNull(),
-        groups = pins.groupUins.map { groupUin ->
-            async { bot.getGroup(groupUin)?.toMilkyEntity() }
-        }.awaitAll().filterNotNull(),
+        friends = coroutineScope {
+            pins.friendUins.map { friendUin ->
+                async { bot.getFriend(friendUin)?.toMilkyEntity() }
+            }.awaitAll().filterNotNull()
+        },
+        groups = coroutineScope {
+            pins.groupUins.map { groupUin ->
+                async { bot.getGroup(groupUin)?.toMilkyEntity() }
+            }.awaitAll().filterNotNull()
+        },
     )
 }
 

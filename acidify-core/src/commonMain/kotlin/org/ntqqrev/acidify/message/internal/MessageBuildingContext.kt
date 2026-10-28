@@ -1,9 +1,9 @@
 package org.ntqqrev.acidify.message.internal
 
 import dev.karmakrafts.kompress.Deflater
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
@@ -39,14 +39,15 @@ internal class MessageBuildingContext(
     private val nestedForwardTrace: MutableMap<String, List<CommonMessage>>? = null
 ) {
     private val logger = bot.createLogger(this)
-    private val elemsList = mutableListOf<Deferred<List<Elem>>>()
+    // Deferred until build() so that the work is bound to the caller's coroutine.
+    private val elemsList = mutableListOf<suspend () -> List<Elem>>()
 
     private fun addAsync(elem: suspend () -> Elem) {
-        elemsList.add(bot.async { listOf(elem()) })
+        elemsList.add { listOf(elem()) }
     }
 
     private fun addMultipleAsync(elems: suspend () -> List<Elem>) {
-        elemsList.add(bot.async { elems() })
+        elemsList.add(elems)
     }
 
     fun BotOutgoingSegment.Text.build() = addAsync {
@@ -503,18 +504,20 @@ internal class MessageBuildingContext(
                 is BotOutgoingSegment.LightApp -> it.build()
             }
         }
-        return elemsList.awaitAll().flatten()
+        return coroutineScope {
+            elemsList.map { async { it() } }.awaitAll().flatten()
+        }
     }
 
     internal class Forward(
         val ctx: MessageBuildingContext,
         val nodes: List<BotOutgoingSegment.Forward.Node>,
     ) {
-        private val commonMsgList = mutableListOf<Deferred<CommonMessage>>()
+        private val commonMsgList = mutableListOf<suspend () -> CommonMessage>()
         val nestedForwardTrace = mutableMapOf<String, List<CommonMessage>>()
 
         private fun addAsync(elem: suspend () -> CommonMessage) {
-            commonMsgList.add(ctx.bot.async { elem() })
+            commonMsgList.add(elem)
         }
 
         fun BotOutgoingSegment.Forward.Node.build() = addAsync {
@@ -571,7 +574,9 @@ internal class MessageBuildingContext(
 
         suspend fun build(): List<CommonMessage> {
             nodes.forEach { it.build() }
-            return commonMsgList.awaitAll()
+            return coroutineScope {
+                commonMsgList.map { async { it() } }.awaitAll()
+            }
         }
     }
 }

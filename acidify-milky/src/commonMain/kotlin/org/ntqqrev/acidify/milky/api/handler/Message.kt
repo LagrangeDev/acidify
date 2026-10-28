@@ -2,6 +2,7 @@ package org.ntqqrev.acidify.milky.api.handler
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.message.MessageScene
 import org.ntqqrev.acidify.milky.api.MilkyApiException
@@ -17,8 +18,8 @@ val SendPrivateMessage = ApiEndpoint.SendPrivateMessage.define {
         ?: throw MilkyApiException(-404, "Friend not found")
     val result = bot.sendFriendMessage(
         friendUin = it.userId,
-        segments = it.message.map { segment ->
-            with(application) {
+        segments = coroutineScope {
+            it.message.map { segment ->
                 async {
                     transformOutgoingSegment(
                         scene = MessageScene.FRIEND,
@@ -26,8 +27,8 @@ val SendPrivateMessage = ApiEndpoint.SendPrivateMessage.define {
                         segment = segment
                     )
                 }
-            }
-        }.awaitAll()
+            }.awaitAll()
+        }
     )
     SendPrivateMessageOutput(
         messageSeq = result.sequence,
@@ -40,8 +41,8 @@ val SendGroupMessage = ApiEndpoint.SendGroupMessage.define {
         ?: throw MilkyApiException(-404, "Group not found")
     val result = bot.sendGroupMessage(
         groupUin = it.groupId,
-        segments = it.message.map { segment ->
-            with(application) {
+        segments = coroutineScope {
+            it.message.map { segment ->
                 async {
                     transformOutgoingSegment(
                         scene = MessageScene.GROUP,
@@ -49,8 +50,8 @@ val SendGroupMessage = ApiEndpoint.SendGroupMessage.define {
                         segment = segment
                     )
                 }
-            }
-        }.awaitAll()
+            }.awaitAll()
+        }
     )
     SendGroupMessageOutput(
         messageSeq = result.sequence,
@@ -153,11 +154,11 @@ val GetResourceTempUrl = ApiEndpoint.GetResourceTempUrl.define {
 
 val GetForwardedMessages = ApiEndpoint.GetForwardedMessages.define {
     val forwardedMessages = bot.getForwardedMessages(it.forwardId)
-    val transformedMessages = forwardedMessages.map { msg ->
-        with(application) {
+    val transformedMessages = coroutineScope {
+        forwardedMessages.map { msg ->
             async { transformForwardedMessage(msg) }
-        }
-    }.awaitAll()
+        }.awaitAll()
+    }
     GetForwardedMessagesOutput(
         messages = transformedMessages
     )

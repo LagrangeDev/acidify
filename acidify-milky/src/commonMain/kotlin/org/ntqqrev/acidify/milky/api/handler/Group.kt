@@ -2,6 +2,7 @@ package org.ntqqrev.acidify.milky.api.handler
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.ntqqrev.acidify.*
 import org.ntqqrev.acidify.milky.api.MilkyApiException
 import org.ntqqrev.acidify.milky.api.define
@@ -115,9 +116,11 @@ val GetGroupEssenceMessages = ApiEndpoint.GetGroupEssenceMessages.define {
         pageSize = it.pageSize
     )
     GetGroupEssenceMessagesOutput(
-        messages = essenceMessageResult.messages.map {
-            async { transformEssenceMessage(it) }
-        }.awaitAll(),
+        messages = coroutineScope {
+            essenceMessageResult.messages.map {
+                async { transformEssenceMessage(it) }
+            }.awaitAll()
+        },
         isEnd = essenceMessageResult.isEnd
     )
 }
