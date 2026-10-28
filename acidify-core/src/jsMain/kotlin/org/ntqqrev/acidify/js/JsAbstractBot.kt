@@ -11,6 +11,7 @@ import org.ntqqrev.acidify.event.*
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.struct.*
 import kotlin.js.Promise
+import kotlin.reflect.KClass
 
 @JsExport
 @JsName("AbstractBot")
@@ -18,22 +19,29 @@ import kotlin.js.Promise
 abstract class JsAbstractBot internal constructor(
     protected open val bot: AbstractBot
 ) : CoroutineScope by bot {
-    private val jobMap = mutableMapOf<dynamic, Job>()
+    // Keyed by event type as well, so one callback can listen to several event types.
+    private val jobMap = mutableMapOf<Pair<KClass<*>, dynamic>, Job>()
 
     val uin: Long get() = bot.uin
     val uid: String get() = bot.uid
     val isLoggedIn: Boolean get() = bot.isLoggedIn
 
     private inline fun <reified T : AcidifyEvent> subscribeTracking(noinline callback: (T) -> Unit): ((T) -> Unit) {
+        val key = T::class to callback
+        // Subscribing the same callback twice is a no-op, like EventTarget.addEventListener.
+        if (jobMap[key]?.isActive == true) return callback
         val job = launch {
             bot.eventFlow.filterIsInstance<T>().collect { callback(it) }
         }
-        jobMap[callback] = job
+        jobMap[key] = job
+        job.invokeOnCompletion {
+            if (jobMap[key] === job) jobMap.remove(key)
+        }
         return callback
     }
 
-    private fun tryUnsubscribe(callback: dynamic): Boolean {
-        val job = jobMap[callback] ?: return false
+    private inline fun <reified T : AcidifyEvent> tryUnsubscribe(noinline callback: (T) -> Unit): Boolean {
+        val job = jobMap.remove(T::class to callback) ?: return false
         job.cancel()
         return true
     }
