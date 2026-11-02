@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   build-native:
-    if: contains(github.event.head_commit.message, '[skip build]') == false
+    if: contains(github.event.head_commit.message, '[skip yogurt]') == false
     runs-on: ${{ matrix.runs-on }}
 
     strategy:
@@ -85,7 +85,7 @@ jobs:
           path: yogurt/build/bin/${{ matrix.target }}/releaseExecutable/**
 
   build-jvm:
-    if: contains(github.event.head_commit.message, '[skip build]') == false
+    if: contains(github.event.head_commit.message, '[skip yogurt]') == false
     runs-on: ubuntu-latest
     env:
       GITHUB_ACTIONS_BUILD_TARGET: jvm
@@ -111,7 +111,7 @@ jobs:
           path: yogurt-jvm/build/libs/yogurt-jvm-all.jar
 
   publish-npm:
-    if: contains(github.event.head_commit.message, '[skip build]') == false
+    if: contains(github.event.head_commit.message, '[skip yogurt]') == false
     needs:
       - build-native
     runs-on: ubuntu-latest
@@ -241,7 +241,7 @@ jobs:
           done
 
   release-yogurt:
-    if: contains(github.event.head_commit.message, '[skip build]') == false
+    if: contains(github.event.head_commit.message, '[skip yogurt]') == false
     needs:
       - build-native
       - build-jvm
