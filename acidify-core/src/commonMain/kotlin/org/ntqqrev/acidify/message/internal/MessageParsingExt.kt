@@ -96,27 +96,20 @@ internal inline fun AbstractBot.buildSegments(
     var extraInfoGroupCard: String? = null
     var extraInfoRole: GroupMemberRole? = null
     var extraInfoSpecialTitle: String? = null
-    var extraInfoLevel: Int? = null
+    elems.firstNotNullOfOrNull { it.extraInfo }?.let {
+        extraInfoNick = it.nick
+        extraInfoGroupCard = it.groupCard
+        extraInfoRole = when {
+            it.flags and 0b01000 > 0 -> GroupMemberRole.OWNER
+            it.flags and 0b10000 > 0 -> GroupMemberRole.ADMIN
+            else -> GroupMemberRole.MEMBER
+        }
+        extraInfoSpecialTitle = it.senderTitle
+    }
+
+    val extraInfoLevel: Int = elems.firstNotNullOfOrNull { it.generalFlags }?.pbReserve?.levelInfo?.level ?: 0
 
     while (ctx.hasNext()) {
-        ctx.tryPeekType { extraInfo }?.let {
-            extraInfoNick = it.nick
-            extraInfoGroupCard = it.groupCard
-            extraInfoRole = when {
-                it.flags and 0b01000 > 0 -> GroupMemberRole.OWNER
-                it.flags and 0b10000 > 0 -> GroupMemberRole.ADMIN
-                else -> GroupMemberRole.MEMBER
-            }
-            extraInfoSpecialTitle = it.senderTitle
-            ctx.consume()
-            continue
-        }
-
-        ctx.tryPeekType { generalFlags }?.let {
-            extraInfoLevel = it.pbReserve.levelInfo.level
-            // do not consume
-        }
-
         var matched = false
         for (factory in IncomingSegmentFactory.factories) {
             val segment = factory.tryParse(ctx) ?: continue
