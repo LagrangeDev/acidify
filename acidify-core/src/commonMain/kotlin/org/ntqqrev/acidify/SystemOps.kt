@@ -228,8 +228,12 @@ suspend fun AbstractBot.getUidByUin(uin: Long, mayComeFromGroupUin: Long? = null
  * 刷新 [faceDetailMap]，从服务器获取最新的表情信息并更新内存缓存
  */
 suspend fun AbstractBot.refreshFaceDetailsMap() {
-    faceDetailMapMut = client.callService(FetchFaceDetails).associateBy { it.qSid }
-    logger.d { "加载了 ${faceDetailMap.size} 条表情信息" }
+    try {
+        faceDetailMapMut = client.callService(FetchFaceDetails).associateBy { it.qSid }
+        logger.d { "加载了 ${faceDetailMap.size} 条表情信息" }
+    } catch (e: Exception) {
+        logger.w(e) { "刷新表情信息失败" }
+    }
 }
 
 /**
