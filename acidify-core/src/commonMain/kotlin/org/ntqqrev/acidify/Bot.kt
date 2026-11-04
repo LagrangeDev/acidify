@@ -20,7 +20,7 @@ class Bot(
     minLogLevel: LogLevel,
     logHandler: LogHandler,
 ) : AbstractBot(scope, minLogLevel, logHandler) {
-    override val client = LagrangeClient(appInfo, sessionStore, signProvider, this::createLogger, scope)
+    override val client = LagrangeClient(appInfo, sessionStore, signProvider, this::createLogger, sharedEventFlow, scope)
 
     override val uin: Long
         get() = sessionStore.uin.takeIf { it != 0L }

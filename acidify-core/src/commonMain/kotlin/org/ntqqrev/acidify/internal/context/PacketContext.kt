@@ -17,6 +17,8 @@ import kotlinx.io.IOException
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
 import org.ntqqrev.acidify.common.SsoResponse
+import org.ntqqrev.acidify.event.BotOfflineEvent
+import org.ntqqrev.acidify.exception.ServiceException
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.KuromeClient
 import org.ntqqrev.acidify.internal.LagrangeClient
@@ -74,6 +76,13 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                     }
                 } catch (e: CancellationException) {
                     throw e
+                } catch (e: ServiceException) {
+                    // A non-zero retCode on heartbeat means the server has invalidated this session.
+                    logger.e(e) { "心跳包返回错误码 ${e.retCode}，Bot 已离线" }
+                    client.eventFlow.emit(
+                        BotOfflineEvent(e.extra.ifEmpty { "心跳包返回错误码 ${e.retCode}" })
+                    )
+                    break
                 } catch (e: Exception) {
                     logger.w(e) { "心跳包发送失败" }
                     if (session.isDisconnected) {
@@ -190,7 +199,7 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
         try {
             withContext(NonCancellable) {
                 val previous = connectionState.getAndUpdate {
-                    if (it is ConnectionState.Closed) it else ConnectionState.Restarting
+                    it as? ConnectionState.Closed ?: ConnectionState.Restarting
                 }
                 if (previous is ConnectionState.Closed) throw previous.cause
                 try {

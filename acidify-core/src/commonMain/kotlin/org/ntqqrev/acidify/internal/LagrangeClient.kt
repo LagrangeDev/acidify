@@ -1,9 +1,11 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.common.SessionStore
 import org.ntqqrev.acidify.common.SignProvider
+import org.ntqqrev.acidify.event.AcidifyEvent
 import org.ntqqrev.acidify.exception.UrlSignException
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.system.BotOnline
@@ -14,8 +16,9 @@ internal class LagrangeClient(
     val sessionStore: SessionStore,
     val signProvider: SignProvider,
     loggerFactory: (Any) -> Logger,
+    eventFlow: MutableSharedFlow<AcidifyEvent>,
     scope: CoroutineScope,
-) : AbstractClient(loggerFactory, scope) {
+) : AbstractClient(loggerFactory, eventFlow, scope) {
     override val os: String
         get() = appInfo.os
 

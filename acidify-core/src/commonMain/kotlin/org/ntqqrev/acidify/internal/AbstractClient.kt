@@ -4,7 +4,9 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.ntqqrev.acidify.common.SsoResponse
+import org.ntqqrev.acidify.event.AcidifyEvent
 import org.ntqqrev.acidify.exception.ServiceException
 import org.ntqqrev.acidify.exception.UrlSignException
 import org.ntqqrev.acidify.internal.context.FlashTransferContext
@@ -18,6 +20,7 @@ import kotlin.random.Random
 
 internal sealed class AbstractClient(
     val loggerFactory: (Any) -> Logger,
+    val eventFlow: MutableSharedFlow<AcidifyEvent>,
     scope: CoroutineScope
 ) : CoroutineScope by scope {
     abstract val os: String

@@ -1,9 +1,11 @@
 package org.ntqqrev.acidify.internal
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.ntqqrev.acidify.common.android.AndroidAppInfo
 import org.ntqqrev.acidify.common.android.AndroidSessionStore
 import org.ntqqrev.acidify.common.android.AndroidSignProvider
+import org.ntqqrev.acidify.event.AcidifyEvent
 import org.ntqqrev.acidify.internal.proto.system.SsoSecureInfo
 import org.ntqqrev.acidify.internal.service.system.AndroidInfoSync
 import org.ntqqrev.acidify.logging.Logger
@@ -13,8 +15,9 @@ internal class KuromeClient(
     val sessionStore: AndroidSessionStore,
     val signProvider: AndroidSignProvider,
     loggerFactory: (Any) -> Logger,
+    eventFlow: MutableSharedFlow<AcidifyEvent>,
     scope: CoroutineScope,
-) : AbstractClient(loggerFactory, scope) {
+) : AbstractClient(loggerFactory, eventFlow, scope) {
     override val os: String
         get() = appInfo.os
 

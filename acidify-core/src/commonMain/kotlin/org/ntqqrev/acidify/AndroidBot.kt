@@ -17,7 +17,7 @@ class AndroidBot(
     minLogLevel: LogLevel,
     logHandler: LogHandler
 ) : AbstractBot(scope, minLogLevel, logHandler) {
-    override val client = KuromeClient(appInfo, sessionStore, signProvider, this::createLogger, scope)
+    override val client = KuromeClient(appInfo, sessionStore, signProvider, this::createLogger, sharedEventFlow, scope)
 
     override val uin: Long
         get() = sessionStore.uin.takeIf { it != 0L }
