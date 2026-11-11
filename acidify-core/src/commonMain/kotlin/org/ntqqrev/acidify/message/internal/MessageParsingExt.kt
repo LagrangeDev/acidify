@@ -127,7 +127,7 @@ internal inline fun AbstractBot.buildSegments(
         && extraInfoGroupCard != null
         && extraInfoRole != null
         && extraInfoSpecialTitle != null
-        && extraInfoLevel != null
+        // && extraInfoLevel != null
     ) {
         onExtraInfo(
             ExtraInfo(
