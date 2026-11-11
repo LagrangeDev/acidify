@@ -4,8 +4,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: "./src/index.ts",
   outputOptions: {
-    file: `./dist/${packageJson.name.split("/").pop()}.yogurtx.js`,
-    cleanDir: true,
+    entryFileNames: `${packageJson.name.split("/").pop()}.yogurtx.js`,
   },
   format: "esm",
 });

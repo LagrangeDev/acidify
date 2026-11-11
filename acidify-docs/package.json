@@ -12,24 +12,23 @@
     "format": "biome format --write"
   },
   "dependencies": {
-    "@orama/orama": "^3.1.18",
     "cnfast": "^0.0.8",
-    "fumadocs-core": "16.11.3",
-    "fumadocs-mdx": "15.1.0",
-    "fumadocs-ui": "npm:@fumadocs/base-ui@16.11.3",
+    "fumadocs-core": "16.17.9",
+    "fumadocs-mdx": "15.4.10",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.17.9",
     "lucide-react": "^1.33.0",
     "next": "16.2.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.10",
+    "@biomejs/biome": "^2.6.4",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/mdx": "^2.0.14",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "postcss": "^8.5.26",
+    "postcss": "^8.5.32",
     "serve": "^14.2.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
