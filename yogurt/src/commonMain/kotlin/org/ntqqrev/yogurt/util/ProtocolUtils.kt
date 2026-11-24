@@ -7,3 +7,6 @@ val isPC: Boolean
 
 val isAndroid: Boolean
     get() = config.protocol.os in setOf("AndroidPhone", "AndroidPad")
+
+internal val isHarmony: Boolean
+    get() = config.protocol.os == "Harmony"

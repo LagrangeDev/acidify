@@ -307,8 +307,34 @@ class AndroidAppInfo(
             appClientVersion = 0
         )
 
+        val Harmony_9_2_71 = AndroidAppInfo(
+            os = "Harmony",
+            vendorOs = "HarmonyOS",
+            qua = "",
+            currentVersion = "9.2.71",
+            ptVersion = "9.2.71",
+            ssoVersion = 22,
+            packageName = "com.tencent.mqq",
+            apkSignatureMd5 = byteArrayOf(),
+            sdkInfo = WtLoginSdkInfo(
+                sdkBuildTime = 1757058014,
+                sdkVersion = "6.0.0.2589",
+                miscBitMap = 150470524,
+                subSigMap = 66560,
+                mainSigMap = Sig.WLOGIN_A5 or Sig.WLOGIN_RESERVED or Sig.WLOGIN_STWEB or Sig.WLOGIN_A2 or Sig.WLOGIN_ST
+                        or Sig.WLOGIN_LSKEY or Sig.WLOGIN_SKEY or Sig.WLOGIN_SIG64 or Sig.WLOGIN_VKEY or Sig.WLOGIN_D2
+                        or Sig.WLOGIN_SID or Sig.WLOGIN_PSKEY or Sig.WLOGIN_AQSIG or Sig.WLOGIN_LHSIG or Sig.WLOGIN_PAYTOKEN
+                        or 65536L
+            ),
+            appId = 16,
+            subAppId = 537390531,
+            appClientVersion = 0
+        )
+
         val AndroidPhone = AndroidPhone_9_2_80
 
         val AndroidPad = AndroidPad_9_2_80
+
+        val Harmony = Harmony_9_2_71
     }
 }
