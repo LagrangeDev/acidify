@@ -40,6 +40,15 @@ internal class LagrangeClient(
     override val appClientVersion: Int
         get() = appInfo.appClientVersion
 
+    override val deviceName: String
+        get() = sessionStore.deviceName
+
+    override val packageName: String
+        get() = appInfo.packageName
+
+    override val qua: String
+        get() = appInfo.qua
+
     override val a2: ByteArray
         get() = sessionStore.a2
 
@@ -51,6 +60,27 @@ internal class LagrangeClient(
 
     override val guid: ByteArray
         get() = sessionStore.guid
+
+    override val ntLoginDeviceType: String
+        get() = os
+
+    override val ntLoginPlatform: Int
+        get() = appInfo.platform
+
+    override val ntLoginVersion: String
+        get() = appInfo.kernel
+
+    override val ntLoginSessionTicket: ByteArray?
+        get() = sessionStore.keySig
+
+    override val ntLoginSessionKey: ByteArray?
+        get() = sessionStore.exchangeKey
+
+    override var ntLoginCookie: String?
+        get() = sessionStore.unusualCookies
+        set(value) {
+            sessionStore.unusualCookies = value
+        }
 
     override suspend fun getSsoSecureInfo(cmd: String, seq: Int, src: ByteArray): SsoSecureInfo? {
         return signProvider.sign(cmd, seq, src)?.let {
@@ -64,3 +94,22 @@ internal class LagrangeClient(
 
     override suspend fun sendOnlinePacket() = callService(BotOnline)
 }
+
+private val AppInfo.platform: Int
+    get() = when (os.lowercase()) {
+        "windows" -> 4
+        "mac", "macos" -> 5
+        "linux" -> 7
+        else -> 0
+    }
+
+private val AppInfo.qua: String
+    get() {
+        val platform = when (os.lowercase()) {
+            "windows" -> "WIN"
+            "mac", "macos" -> "MAC"
+            "linux" -> "LNX"
+            else -> error("Unsupported NTLogin platform: $os")
+        }
+        return "V1_${platform}_NQ_${currentVersion.replace('-', '_')}_GW_B"
+    }

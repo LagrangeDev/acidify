@@ -39,6 +39,15 @@ internal class KuromeClient(
     override val appClientVersion: Int
         get() = appInfo.appClientVersion
 
+    override val deviceName: String
+        get() = sessionStore.deviceName
+
+    override val packageName: String
+        get() = appInfo.packageName
+
+    override val qua: String
+        get() = appInfo.qua
+
     override val a2: ByteArray
         get() = sessionStore.wloginSigs.a2
 
@@ -50,6 +59,31 @@ internal class KuromeClient(
 
     override val guid: ByteArray
         get() = sessionStore.guid
+
+    override val ntLoginDeviceType: String
+        get() = os.uppercase()
+
+    override val ntLoginPlatform: Int
+        get() = when (os.lowercase()) {
+            "android" -> 2
+            "harmony" -> 8
+            else -> 0
+        }
+
+    override val ntLoginVersion: String
+        get() = appInfo.ptVersion
+
+    override val ntLoginSessionTicket: ByteArray?
+        get() = sessionStore.state.keyExchangeSession?.sessionTicket
+
+    override val ntLoginSessionKey: ByteArray?
+        get() = sessionStore.state.keyExchangeSession?.sessionKey
+
+    override var ntLoginCookie: String?
+        get() = sessionStore.state.cookie
+        set(value) {
+            sessionStore.state.cookie = value
+        }
 
     val signRequiredCommand = setOf(
         "trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access",

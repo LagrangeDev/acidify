@@ -1,6 +1,5 @@
 package org.ntqqrev.acidify.internal.service.system
 
-import org.ntqqrev.acidify.common.AppInfo
 import org.ntqqrev.acidify.internal.AbstractClient
 import org.ntqqrev.acidify.internal.crypto.aes.AesGcmProvider
 import org.ntqqrev.acidify.internal.proto.login.*
@@ -14,30 +13,29 @@ internal abstract class NTLogin<T, R>(cmd: String) : Service<T, R>(cmd) {
     override val ssoEncryptType = EncryptType.WithEmptyKey
 
     final override fun build(client: AbstractClient, payload: T): ByteArray {
-        client.ensureLagrange()
-        val sessionTicket = requireNotNull(client.sessionStore.keySig) {
+        val sessionTicket = requireNotNull(client.ntLoginSessionTicket) {
             "NTLogin session ticket is not initialized"
         }
-        val sessionKey = requireNotNull(client.sessionStore.exchangeKey) {
+        val sessionKey = requireNotNull(client.ntLoginSessionKey) {
             "NTLogin session key is not initialized"
         }
         val common = NTLoginCommon(
             head = NTLoginHead(
                 userInfo = NTLoginUserInfo(account = client.uin.toString()),
                 clientInfo = NTLoginClientInfo(
-                    deviceType = client.appInfo.os,
-                    deviceName = client.sessionStore.deviceName,
-                    platform = client.appInfo.platform,
-                    guid = client.sessionStore.guid,
+                    deviceType = client.ntLoginDeviceType,
+                    deviceName = client.deviceName,
+                    platform = client.ntLoginPlatform,
+                    guid = client.guid,
                 ),
                 appInfo = NTLoginAppInfo(
-                    version = client.appInfo.kernel,
-                    appId = client.appInfo.appId,
-                    appName = client.appInfo.packageName,
-                    qua = client.appInfo.qua,
+                    version = client.ntLoginVersion,
+                    appId = client.appId,
+                    appName = client.packageName,
+                    qua = client.qua,
                 ),
                 cookie = NTLoginCookie(
-                    cookieContent = client.sessionStore.unusualCookies.orEmpty(),
+                    cookieContent = client.ntLoginCookie.orEmpty(),
                 ),
                 sdkInfo = NTLoginSdkInfo(version = 1u),
             ),
@@ -51,15 +49,14 @@ internal abstract class NTLogin<T, R>(cmd: String) : Service<T, R>(cmd) {
     }
 
     final override fun parse(client: AbstractClient, payload: ByteArray): R {
-        client.ensureLagrange()
-        val sessionKey = requireNotNull(client.sessionStore.exchangeKey) {
+        val sessionKey = requireNotNull(client.ntLoginSessionKey) {
             "NTLogin session key is not initialized"
         }
         val forward = payload.pbDecode<NTLoginForwardRequest>()
         val common = AesGcmProvider.decrypt(forward.buffer, sessionKey)
             .pbDecode<NTLoginCommon>()
         common.head.cookie.cookieContent.takeIf(String::isNotEmpty)?.let {
-            client.sessionStore.unusualCookies = it
+            client.ntLoginCookie = it
         }
         return parseBody(client, common)
     }
@@ -125,22 +122,3 @@ internal abstract class NTLogin<T, R>(cmd: String) : Service<T, R>(cmd) {
         }
     }
 }
-
-private val AppInfo.platform: Int
-    get() = when (os.lowercase()) {
-        "windows" -> 4
-        "mac", "macos" -> 5
-        "linux" -> 7
-        else -> 0
-    }
-
-private val AppInfo.qua: String
-    get() {
-        val platform = when (os.lowercase()) {
-            "windows" -> "WIN"
-            "mac", "macos" -> "MAC"
-            "linux" -> "LNX"
-            else -> error("Unsupported NTLogin platform: $os")
-        }
-        return "V1_${platform}_NQ_${currentVersion.replace('-', '_')}_GW_B"
-    }

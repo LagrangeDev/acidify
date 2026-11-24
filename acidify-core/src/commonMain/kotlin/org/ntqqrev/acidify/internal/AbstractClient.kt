@@ -31,11 +31,21 @@ internal sealed class AbstractClient(
     abstract val subAppId: Int
     abstract val currentVersion: String
     abstract val appClientVersion: Int
+    abstract val deviceName: String
+    abstract val packageName: String
+    abstract val qua: String
 
     abstract val d2: ByteArray
     abstract val d2Key: ByteArray
     abstract val a2: ByteArray
     abstract val guid: ByteArray
+
+    abstract val ntLoginDeviceType: String
+    abstract val ntLoginPlatform: Int
+    abstract val ntLoginVersion: String
+    abstract val ntLoginSessionTicket: ByteArray?
+    abstract val ntLoginSessionKey: ByteArray?
+    abstract var ntLoginCookie: String?
 
     val pushChannel = Channel<SsoResponse>(
         capacity = 15,
