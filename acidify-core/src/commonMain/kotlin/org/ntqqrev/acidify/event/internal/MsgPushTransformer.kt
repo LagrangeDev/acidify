@@ -1,8 +1,7 @@
 package org.ntqqrev.acidify.event.internal
 
 import io.ktor.http.*
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -421,7 +420,13 @@ internal object MsgPushTransformer : AbstractTransformer("trpc.msg.olpush.OlPush
         val (scene, targetUin) = if (groupUin != null) {
             MessageScene.GROUP to groupUin
         } else {
-            val uin = runCatching { bot.getUinByUid(uid) }.getOrNull() ?: return emptyList()
+            val uin = runCatching {
+                bot.getUinByUid(uid)
+            }.onFailure {
+                if (it is CancellationException) {
+                    currentCoroutineContext().ensureActive()
+                }
+            }.getOrNull() ?: return emptyList()
             MessageScene.FRIEND to uin
         }
 

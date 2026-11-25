@@ -2,10 +2,9 @@ package org.ntqqrev.acidify.milky
 
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 import org.ntqqrev.acidify.AbstractBot
 import org.ntqqrev.acidify.common.MediaSource
 import org.ntqqrev.acidify.milky.transform.transformAcidifyEvent
@@ -47,6 +46,9 @@ open class MilkyContext(
                         val milkyEvent = transformAcidifyEvent(it) ?: return@collect
                         eventFlow.emit(milkyEvent)
                     } catch (e: Exception) {
+                        if (e is CancellationException) {
+                            currentCoroutineContext().ensureActive()
+                        }
                         logger.w(e) { "处理事件 ${it::class.simpleName} 时发生错误" }
                     }
                 }

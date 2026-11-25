@@ -366,6 +366,9 @@ suspend fun AndroidBot.login(
         try {
             online(preloadContacts)
         } catch (e: Exception) {
+            if (e is CancellationException) {
+                ensureActive()
+            }
             logger.w(e) { "使用现有 Session 登录失败，尝试密码登录" }
             sessionStore.clear()
             // sharedEventFlow.emit(AndroidSessionStoreUpdatedEvent(sessionStore))

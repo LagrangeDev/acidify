@@ -84,6 +84,9 @@ internal class PacketContext(client: AbstractClient) : AbstractContext(client) {
                     )
                     break
                 } catch (e: Exception) {
+                    if (e is CancellationException) {
+                        ensureActive()
+                    }
                     logger.w(e) { "心跳包发送失败" }
                     if (session.isDisconnected) {
                         break

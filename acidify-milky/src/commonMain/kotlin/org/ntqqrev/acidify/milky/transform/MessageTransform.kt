@@ -1,11 +1,11 @@
 package org.ntqqrev.acidify.milky.transform
 
-import io.ktor.server.plugins.di.*
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import org.ntqqrev.acidify.*
+import kotlinx.coroutines.*
 import org.ntqqrev.acidify.common.MediaSource.Companion.toMediaSource
+import org.ntqqrev.acidify.getDownloadUrl
+import org.ntqqrev.acidify.getFriend
+import org.ntqqrev.acidify.getGroup
+import org.ntqqrev.acidify.getUinByUid
 import org.ntqqrev.acidify.message.*
 import org.ntqqrev.acidify.milky.ImageInfo
 import org.ntqqrev.acidify.milky.MediaSourceScope
@@ -257,6 +257,9 @@ suspend fun MilkyContext.transformOutgoingSegment(
             val pcmData = try {
                 codec.audioToPcm(audioData)
             } catch (e: Exception) {
+                if (e is CancellationException) {
+                    ensureActive()
+                }
                 logger.w(e) { "语音 ${segment.data.uri} 转 PCM 失败，尝试直接编码" }
                 audioData
             }
@@ -389,6 +392,9 @@ suspend fun MilkyContext.transformEssenceSegment(segment: BotEssenceSegment): In
             val imageInfo = try {
                 codec.getImageInfo(imageData)
             } catch (e: Exception) {
+                if (e is CancellationException) {
+                    ensureActive()
+                }
                 logger.w(e) { "解析精华消息图像信息失败，使用缺省值" }
                 ImageInfo(
                     format = ImageFormat.PNG,

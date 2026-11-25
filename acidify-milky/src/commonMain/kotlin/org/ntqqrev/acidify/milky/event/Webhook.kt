@@ -7,7 +7,9 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.di.dependencies
+import io.ktor.server.plugins.di.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import org.ntqqrev.acidify.AbstractBot
@@ -40,7 +42,7 @@ fun Application.eventWebhook() = monitor.subscribe(ApplicationStarted) {
                 val inFlight = Semaphore(WEBHOOK_MAX_IN_FLIGHT_PER_ENDPOINT)
                 ctx.eventFlow.collect {
                     inFlight.acquire()
-                    launch {
+                    this.launch {
                         try {
                             webhookClient.post(webhook.url) {
                                 if (webhook.accessToken.isNotEmpty()) {
@@ -50,6 +52,9 @@ fun Application.eventWebhook() = monitor.subscribe(ApplicationStarted) {
                                 setBody(it)
                             }
                         } catch (e: Exception) {
+                            if (e is CancellationException) {
+                                ensureActive()
+                            }
                             logger.w(e) { "发送事件到 Webhook URL ${webhook.url} 失败" }
                         } finally {
                             inFlight.release()

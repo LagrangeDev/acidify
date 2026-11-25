@@ -1,6 +1,9 @@
 package org.ntqqrev.acidify.entity.internal
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.ntqqrev.acidify.AbstractBot
@@ -42,6 +45,9 @@ internal class BotEntityCache<K, V : BotEntity<D>, D>(
                     val data = updateCache(bot)
                     acceptData(data)
                 } catch (e: Exception) {
+                    if (e is CancellationException) {
+                        currentCoroutineContext().ensureActive()
+                    }
                     logger.w(e) { "缓存刷新失败" }
                 } finally {
                     updating = false

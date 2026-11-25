@@ -41,9 +41,10 @@ internal suspend fun AbstractBot.completeOnline(preloadContacts: Boolean = false
                     val parsed = transformer.parse(this@completeOnline, sso.response)
                     logger.v { "由推送 ${sso.command} 解析出事件：$parsed" }
                     parsed.forEach { sharedEventFlow.emit(it) }
-                } catch (e: CancellationException) {
-                    throw e
                 } catch (e: Exception) {
+                    if (e is CancellationException) {
+                        ensureActive()
+                    }
                     logger.e(e) { "处理推送 ${sso.command} 时出现错误" }
                 }
             }
@@ -232,6 +233,9 @@ suspend fun AbstractBot.refreshFaceDetailsMap() {
         faceDetailMapMut = client.callService(FetchFaceDetails).associateBy { it.qSid }
         logger.d { "加载了 ${faceDetailMap.size} 条表情信息" }
     } catch (e: Exception) {
+        if (e is CancellationException) {
+            ensureActive()
+        }
         logger.w(e) { "刷新表情信息失败" }
     }
 }

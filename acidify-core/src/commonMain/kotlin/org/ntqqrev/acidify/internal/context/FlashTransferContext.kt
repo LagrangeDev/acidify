@@ -4,6 +4,9 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.io.buffered
 import kotlinx.io.readTo
 import org.ntqqrev.acidify.common.MediaSource
@@ -128,6 +131,9 @@ internal class FlashTransferContext(client: AbstractClient) : AbstractContext(cl
             }
             return true
         } catch (e: Exception) {
+            if (e is CancellationException) {
+                currentCoroutineContext().ensureActive()
+            }
             logger.e(e) { "FlashTransfer 上传块 $start 异常: ${e.message}" }
             return false
         }

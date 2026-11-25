@@ -4,6 +4,9 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
@@ -67,6 +70,9 @@ private fun <T : Any, R : Any> Route.serve(handler: MilkyApiHandler<T, R>) = pos
                     message = e.message
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) {
+                    currentCoroutineContext().ensureActive()
+                }
                 logger.e(e) { "${call.request.local.remoteAddress} 调用 API ${handler.path}（失败 ${e::class.simpleName}）" }
                 when (e) {
                     is OidbException -> ApiGeneralResponse(
@@ -100,6 +106,9 @@ private fun <T : Any, R : Any> Route.serve(handler: MilkyApiHandler<T, R>) = pos
             )
         )
     } catch (e: Exception) {
+        if (e is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
         logger.e(e) { "${call.request.local.remoteAddress} 调用 API ${handler.path}（失败 ${e::class.simpleName}）" }
         call.respond(
             ApiGeneralResponse(
